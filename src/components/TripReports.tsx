@@ -60,9 +60,9 @@ export function TripReports() {
     reportType: 'all',
     startDate: '',
     endDate: '',
-    sectorId: '',
-    vehicleId: '',
-    employeeId: ''
+    sectorId: 'all',
+    vehicleId: 'all',
+    employeeId: 'all'
   });
 
   useEffect(() => {
@@ -92,8 +92,7 @@ export function TripReports() {
         .from('trips')
         .select(`
           *,
-          vehicle:vehicles(brand, model, plate),
-          employees!inner(name)
+          vehicle:vehicles(brand, model, plate)
         `)
         .order('trip_date', { ascending: false });
 
@@ -106,13 +105,13 @@ export function TripReports() {
       }
 
       // Filtros específicos
-      if (filters.sectorId) {
+      if (filters.sectorId && filters.sectorId !== 'all') {
         query = query.eq('sector_id', filters.sectorId);
       }
-      if (filters.vehicleId) {
+      if (filters.vehicleId && filters.vehicleId !== 'all') {
         query = query.eq('vehicle_id', filters.vehicleId);
       }
-      if (filters.employeeId) {
+      if (filters.employeeId && filters.employeeId !== 'all') {
         query = query.contains('employee_ids', [filters.employeeId]);
       }
 
@@ -248,7 +247,7 @@ export function TripReports() {
                     <SelectValue placeholder="Todos os setores" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Todos os setores</SelectItem>
+                    <SelectItem value="all">Todos os setores</SelectItem>
                     {sectors.map(sector => (
                       <SelectItem key={sector.id} value={sector.id}>
                         {sector.name}
@@ -270,7 +269,7 @@ export function TripReports() {
                     <SelectValue placeholder="Todos os veículos" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Todos os veículos</SelectItem>
+                    <SelectItem value="all">Todos os veículos</SelectItem>
                     {vehicles.map(vehicle => (
                       <SelectItem key={vehicle.id} value={vehicle.id}>
                         {vehicle.brand} {vehicle.model} - {vehicle.plate}
@@ -292,7 +291,7 @@ export function TripReports() {
                     <SelectValue placeholder="Todos os funcionários" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Todos os funcionários</SelectItem>
+                    <SelectItem value="all">Todos os funcionários</SelectItem>
                     {employees.map(employee => (
                       <SelectItem key={employee.id} value={employee.id}>
                         {employee.name}
@@ -360,13 +359,16 @@ export function TripReports() {
                         )}
                       </TableCell>
                       <TableCell>
-                        {trip.employees && trip.employees.length > 0 ? (
+                        {trip.employee_ids && trip.employee_ids.length > 0 ? (
                           <div className="flex flex-wrap gap-1">
-                            {trip.employees.map((emp, idx) => (
-                              <Badge key={idx} variant="secondary" className="text-xs">
-                                {emp.name}
-                              </Badge>
-                            ))}
+                            {trip.employee_ids.map((empId, idx) => {
+                              const employee = employees.find(e => e.id === empId);
+                              return employee ? (
+                                <Badge key={idx} variant="secondary" className="text-xs">
+                                  {employee.name}
+                                </Badge>
+                              ) : null;
+                            })}
                           </div>
                         ) : (
                           <span className="text-muted-foreground">Nenhum</span>
