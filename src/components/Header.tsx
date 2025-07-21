@@ -17,22 +17,22 @@ export function Header() {
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-white/80 backdrop-blur-md supports-[backdrop-filter]:bg-white/60 dark:bg-slate-950/80 dark:supports-[backdrop-filter]:bg-slate-950/60 shadow-sm">
-      <div className="container flex h-16 items-center justify-between">
-        <div className="flex items-center space-x-3">
-          <div className="flex items-center justify-center w-10 h-10 bg-gradient-to-br from-travel-primary to-travel-secondary rounded-xl">
-            <Plane className="h-5 w-5 text-white" />
+      <div className="container mx-auto px-4 flex h-14 md:h-16 items-center justify-between">
+        <div className="flex items-center space-x-2 md:space-x-3 min-w-0 flex-1">
+          <div className="flex items-center justify-center w-8 h-8 md:w-10 md:h-10 bg-gradient-to-br from-travel-primary to-travel-secondary rounded-xl flex-shrink-0">
+            <Plane className="h-4 w-4 md:h-5 md:w-5 text-white" />
           </div>
-          <div>
-            <h1 className="text-xl font-bold bg-gradient-to-r from-travel-primary to-travel-secondary bg-clip-text text-transparent">
+          <div className="min-w-0 flex-1">
+            <h1 className="text-sm md:text-xl font-bold bg-gradient-to-r from-travel-primary to-travel-secondary bg-clip-text text-transparent truncate">
               Sistema de Viagens
             </h1>
-            <p className="text-xs text-muted-foreground">Opportunity</p>
+            <p className="text-xs text-muted-foreground hidden sm:block">Opportunity</p>
           </div>
         </div>
         
         {user && (
-          <div className="flex items-center space-x-4">
-            <div className="text-right">
+          <div className="flex items-center space-x-2 md:space-x-4 flex-shrink-0">
+            <div className="text-right hidden sm:block">
               <span className="text-sm font-medium text-foreground block">
                 {user.user_metadata?.name || user.email?.split('@')[0]}
               </span>
@@ -40,9 +40,14 @@ export function Header() {
                 {user.email}
               </span>
             </div>
-            <Button variant="outline" size="sm" onClick={handleSignOut} className="border-travel-primary/20 hover:bg-travel-primary hover:text-white transition-colors">
-              <LogOut className="h-4 w-4 mr-2" />
-              Sair
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={handleSignOut} 
+              className="border-travel-primary/20 hover:bg-travel-primary hover:text-white transition-colors h-8 md:h-9 px-2 md:px-3"
+            >
+              <LogOut className="h-3.5 w-3.5 md:h-4 md:w-4 md:mr-2" />
+              <span className="hidden md:inline">Sair</span>
             </Button>
           </div>
         )}
