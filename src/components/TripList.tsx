@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { MapPin, Users, Calendar, MoreVertical, Edit, Trash2 } from 'lucide-react';
+import { MapPin, Users, Calendar, MoreVertical, Edit, Trash2, Car } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { supabase } from '@/integrations/supabase/client';
 import { format, parseISO, isToday, isFuture } from 'date-fns';
@@ -17,6 +17,13 @@ interface Trip {
   sector: string;
   travelers: string[];
   status: string;
+  vehicle?: {
+    id: string;
+    brand: string;
+    model: string;
+    plate: string;
+    capacity: number;
+  };
 }
 
 interface TripListProps {
@@ -36,7 +43,10 @@ export function TripList({ onTripUpdated }: TripListProps) {
     try {
       const { data, error } = await supabase
         .from('trips')
-        .select('*')
+        .select(`
+          *,
+          vehicle:vehicles(id, brand, model, plate, capacity)
+        `)
         .order('trip_date', { ascending: true })
         .limit(10);
 
@@ -188,6 +198,14 @@ export function TripList({ onTripUpdated }: TripListProps) {
                       {trip.travelers.length} pessoa{trip.travelers.length !== 1 ? 's' : ''}
                     </span>
                   </div>
+                  {trip.vehicle && (
+                    <div className="flex items-center gap-2 px-3 py-1.5 bg-travel-secondary/10 text-travel-secondary rounded-lg border border-travel-secondary/20">
+                      <Car className="h-3.5 w-3.5" />
+                      <span className="font-medium">
+                        {trip.vehicle.brand} {trip.vehicle.model} • {trip.vehicle.plate}
+                      </span>
+                    </div>
+                  )}
                 </div>
 
                 {trip.travelers.length > 0 && (

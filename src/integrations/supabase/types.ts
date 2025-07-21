@@ -53,6 +53,7 @@ export type Database = {
           travelers: string[]
           trip_date: string
           updated_at: string
+          vehicle_id: string | null
         }
         Insert: {
           created_at?: string
@@ -65,6 +66,7 @@ export type Database = {
           travelers?: string[]
           trip_date: string
           updated_at?: string
+          vehicle_id?: string | null
         }
         Update: {
           created_at?: string
@@ -77,6 +79,51 @@ export type Database = {
           travelers?: string[]
           trip_date?: string
           updated_at?: string
+          vehicle_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "trips_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "vehicles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vehicles: {
+        Row: {
+          brand: string
+          capacity: number
+          created_at: string
+          id: string
+          model: string
+          plate: string
+          status: string | null
+          updated_at: string
+          year: number
+        }
+        Insert: {
+          brand: string
+          capacity?: number
+          created_at?: string
+          id?: string
+          model: string
+          plate: string
+          status?: string | null
+          updated_at?: string
+          year: number
+        }
+        Update: {
+          brand?: string
+          capacity?: number
+          created_at?: string
+          id?: string
+          model?: string
+          plate?: string
+          status?: string | null
+          updated_at?: string
+          year?: number
         }
         Relationships: []
       }

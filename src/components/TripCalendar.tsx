@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Calendar } from '@/components/ui/calendar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { CalendarIcon, MapPin, Users, Clock } from 'lucide-react';
+import { CalendarIcon, MapPin, Users, Clock, Car } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { format, parseISO, isSameDay } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -15,6 +15,13 @@ interface Trip {
   sector: string;
   travelers: string[];
   status: string;
+  vehicle?: {
+    id: string;
+    brand: string;
+    model: string;
+    plate: string;
+    capacity: number;
+  };
 }
 
 export function TripCalendar() {
@@ -30,7 +37,10 @@ export function TripCalendar() {
     try {
       const { data, error } = await supabase
         .from('trips')
-        .select('*')
+        .select(`
+          *,
+          vehicle:vehicles(id, brand, model, plate, capacity)
+        `)
         .order('trip_date', { ascending: true });
 
       if (error) throw error;
@@ -128,18 +138,26 @@ export function TripCalendar() {
                   {trip.description && (
                     <p className="text-sm text-muted-foreground mb-3 leading-relaxed">{trip.description}</p>
                   )}
-                  <div className="flex flex-wrap gap-3 text-sm">
-                    <div className="flex items-center gap-2 px-3 py-1.5 bg-travel-primary/10 text-travel-primary rounded-lg border border-travel-primary/20">
-                      <MapPin className="h-3.5 w-3.5" />
-                      <span className="font-medium">{trip.sector}</span>
-                    </div>
-                    <div className="flex items-center gap-2 px-3 py-1.5 bg-travel-accent/10 text-travel-accent rounded-lg border border-travel-accent/20">
-                      <Users className="h-3.5 w-3.5" />
-                      <span className="font-medium">
-                        {trip.travelers.length} viajante{trip.travelers.length !== 1 ? 's' : ''}
-                      </span>
-                    </div>
-                  </div>
+                   <div className="flex flex-wrap gap-3 text-sm">
+                     <div className="flex items-center gap-2 px-3 py-1.5 bg-travel-primary/10 text-travel-primary rounded-lg border border-travel-primary/20">
+                       <MapPin className="h-3.5 w-3.5" />
+                       <span className="font-medium">{trip.sector}</span>
+                     </div>
+                     <div className="flex items-center gap-2 px-3 py-1.5 bg-travel-accent/10 text-travel-accent rounded-lg border border-travel-accent/20">
+                       <Users className="h-3.5 w-3.5" />
+                       <span className="font-medium">
+                         {trip.travelers.length} viajante{trip.travelers.length !== 1 ? 's' : ''}
+                       </span>
+                     </div>
+                     {trip.vehicle && (
+                       <div className="flex items-center gap-2 px-3 py-1.5 bg-travel-secondary/10 text-travel-secondary rounded-lg border border-travel-secondary/20">
+                         <Car className="h-3.5 w-3.5" />
+                         <span className="font-medium">
+                           {trip.vehicle.brand} {trip.vehicle.model} • {trip.vehicle.plate}
+                         </span>
+                       </div>
+                     )}
+                   </div>
                   {trip.travelers.length > 0 && (
                     <div className="mt-4 p-3 bg-muted/50 rounded-lg border">
                       <p className="text-sm font-semibold text-muted-foreground mb-2 flex items-center gap-2">

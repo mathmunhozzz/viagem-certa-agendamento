@@ -6,11 +6,14 @@ import { TripCalendar } from '@/components/TripCalendar';
 import { TripForm } from '@/components/TripForm';
 import { TripStats } from '@/components/TripStats';
 import { TripList } from '@/components/TripList';
+import { VehicleForm } from '@/components/VehicleForm';
+import { VehicleList } from '@/components/VehicleList';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 const Index = () => {
   const { user, loading } = useAuth();
   const [refreshKey, setRefreshKey] = useState(0);
+  const [vehicleRefreshKey, setVehicleRefreshKey] = useState(0);
 
   if (loading) {
     return (
@@ -29,6 +32,10 @@ const Index = () => {
 
   const handleTripCreated = () => {
     setRefreshKey(prev => prev + 1);
+  };
+
+  const handleVehicleCreated = () => {
+    setVehicleRefreshKey(prev => prev + 1);
   };
 
   return (
@@ -51,7 +58,7 @@ const Index = () => {
 
         <Tabs defaultValue="calendar" className="space-y-8">
           <div className="flex justify-center">
-            <TabsList className="grid w-full max-w-lg grid-cols-3 bg-muted/50 p-1 h-12">
+            <TabsList className="grid w-full max-w-4xl grid-cols-5 bg-muted/50 p-1 h-12">
               <TabsTrigger 
                 value="calendar" 
                 className="data-[state=active]:bg-travel-primary data-[state=active]:text-white font-semibold"
@@ -68,7 +75,19 @@ const Index = () => {
                 value="trips-list" 
                 className="data-[state=active]:bg-travel-accent data-[state=active]:text-white font-semibold"
               >
-                📋 Lista
+                📋 Viagens
+              </TabsTrigger>
+              <TabsTrigger 
+                value="vehicles" 
+                className="data-[state=active]:bg-travel-primary data-[state=active]:text-white font-semibold"
+              >
+                🚗 Carros
+              </TabsTrigger>
+              <TabsTrigger 
+                value="new-vehicle" 
+                className="data-[state=active]:bg-travel-secondary data-[state=active]:text-white font-semibold"
+              >
+                🔧 Novo Carro
               </TabsTrigger>
             </TabsList>
           </div>
@@ -86,6 +105,18 @@ const Index = () => {
           <TabsContent value="trips-list" className="space-y-6">
             <div className="max-w-4xl mx-auto">
               <TripList onTripUpdated={handleTripCreated} />
+            </div>
+          </TabsContent>
+
+          <TabsContent value="vehicles" className="space-y-6">
+            <div className="max-w-6xl mx-auto">
+              <VehicleList key={vehicleRefreshKey} />
+            </div>
+          </TabsContent>
+
+          <TabsContent value="new-vehicle" className="space-y-6">
+            <div className="max-w-3xl mx-auto">
+              <VehicleForm onVehicleCreated={handleVehicleCreated} />
             </div>
           </TabsContent>
         </Tabs>

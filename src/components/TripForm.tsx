@@ -13,6 +13,7 @@ import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
+import { VehicleSelect } from './VehicleSelect';
 
 interface TripFormProps {
   onTripCreated: () => void;
@@ -24,6 +25,7 @@ export function TripForm({ onTripCreated }: TripFormProps) {
   const [loading, setLoading] = useState(false);
   const [date, setDate] = useState<Date>();
   const [travelers, setTravelers] = useState<string[]>(['']);
+  const [selectedVehicle, setSelectedVehicle] = useState<string>('');
 
   const addTraveler = () => {
     setTravelers([...travelers, '']);
@@ -43,7 +45,7 @@ export function TripForm({ onTripCreated }: TripFormProps) {
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!user || !date) return;
+    if (!user || !date || !selectedVehicle) return;
 
     setLoading(true);
     
@@ -63,7 +65,8 @@ export function TripForm({ onTripCreated }: TripFormProps) {
           trip_date: format(date, 'yyyy-MM-dd'),
           sector,
           travelers: validTravelers,
-          created_by: user.id
+          created_by: user.id,
+          vehicle_id: selectedVehicle
         });
 
       if (error) throw error;
@@ -78,6 +81,7 @@ export function TripForm({ onTripCreated }: TripFormProps) {
       form.reset();
       setDate(undefined);
       setTravelers(['']);
+      setSelectedVehicle('');
       onTripCreated();
 
     } catch (error) {
@@ -179,6 +183,13 @@ export function TripForm({ onTripCreated }: TripFormProps) {
             </Popover>
           </div>
 
+          <VehicleSelect
+            value={selectedVehicle}
+            onValueChange={setSelectedVehicle}
+            tripDate={date ? format(date, 'yyyy-MM-dd') : undefined}
+            error={!selectedVehicle && loading ? 'Selecione um veículo' : undefined}
+          />
+
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <Label className="text-sm font-semibold flex items-center gap-2">
@@ -230,7 +241,7 @@ export function TripForm({ onTripCreated }: TripFormProps) {
           <Button 
             type="submit" 
             className="w-full h-12 bg-gradient-to-r from-travel-primary to-travel-secondary hover:from-travel-primary-light hover:to-travel-secondary/90 text-white shadow-lg font-semibold text-base" 
-            disabled={loading || !date}
+            disabled={loading || !date || !selectedVehicle}
           >
             {loading ? (
               <div className="flex items-center gap-2">
