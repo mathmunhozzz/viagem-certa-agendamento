@@ -132,6 +132,7 @@ export type Database = {
         Row: {
           created_at: string
           created_by: string
+          departure_time: string | null
           description: string | null
           employee_ids: string[] | null
           id: string
@@ -147,6 +148,7 @@ export type Database = {
         Insert: {
           created_at?: string
           created_by: string
+          departure_time?: string | null
           description?: string | null
           employee_ids?: string[] | null
           id?: string
@@ -162,6 +164,7 @@ export type Database = {
         Update: {
           created_at?: string
           created_by?: string
+          departure_time?: string | null
           description?: string | null
           employee_ids?: string[] | null
           id?: string

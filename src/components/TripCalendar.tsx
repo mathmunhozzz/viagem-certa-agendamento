@@ -12,8 +12,11 @@ interface Trip {
   title: string;
   description: string;
   trip_date: string;
+  departure_time?: string;
   sector: string;
   travelers: string[];
+  employee_ids: string[];
+  employeeNames?: string[];
   status: string;
   vehicle?: {
     id: string;
@@ -44,7 +47,26 @@ export function TripCalendar() {
         .order('trip_date', { ascending: true });
 
       if (error) throw error;
-      setTrips(data || []);
+      
+      // Para cada viagem, buscar os nomes dos funcionários
+      const tripsWithEmployeeNames = await Promise.all(
+        (data || []).map(async (trip) => {
+          if (trip.employee_ids && trip.employee_ids.length > 0) {
+            const { data: employees } = await supabase
+              .from('employees')
+              .select('id, name')
+              .in('id', trip.employee_ids);
+            
+            return {
+              ...trip,
+              employeeNames: employees?.map(emp => emp.name) || []
+            };
+          }
+          return { ...trip, employeeNames: [] };
+        })
+      );
+      
+      setTrips(tripsWithEmployeeNames);
     } catch (error) {
       console.error('Erro ao carregar viagens:', error);
     } finally {
@@ -139,16 +161,22 @@ export function TripCalendar() {
                     <p className="text-sm text-muted-foreground mb-3 leading-relaxed">{trip.description}</p>
                   )}
                    <div className="flex flex-wrap gap-3 text-sm">
-                     <div className="flex items-center gap-2 px-3 py-1.5 bg-travel-primary/10 text-travel-primary rounded-lg border border-travel-primary/20">
-                       <MapPin className="h-3.5 w-3.5" />
-                       <span className="font-medium">{trip.sector}</span>
-                     </div>
-                     <div className="flex items-center gap-2 px-3 py-1.5 bg-travel-accent/10 text-travel-accent rounded-lg border border-travel-accent/20">
-                       <Users className="h-3.5 w-3.5" />
-                       <span className="font-medium">
-                         {trip.travelers.length} viajante{trip.travelers.length !== 1 ? 's' : ''}
-                       </span>
-                     </div>
+                      <div className="flex items-center gap-2 px-3 py-1.5 bg-travel-primary/10 text-travel-primary rounded-lg border border-travel-primary/20">
+                        <MapPin className="h-3.5 w-3.5" />
+                        <span className="font-medium">{trip.sector}</span>
+                      </div>
+                      <div className="flex items-center gap-2 px-3 py-1.5 bg-travel-accent/10 text-travel-accent rounded-lg border border-travel-accent/20">
+                        <Users className="h-3.5 w-3.5" />
+                        <span className="font-medium">
+                          {(trip.travelers?.length || 0) + (trip.employee_ids?.length || 0)} viajante{((trip.travelers?.length || 0) + (trip.employee_ids?.length || 0)) !== 1 ? 's' : ''}
+                        </span>
+                      </div>
+                      {trip.departure_time && (
+                        <div className="flex items-center gap-2 px-3 py-1.5 bg-travel-warning/10 text-travel-warning rounded-lg border border-travel-warning/20">
+                          <Clock className="h-3.5 w-3.5" />
+                          <span className="font-medium">{trip.departure_time}</span>
+                        </div>
+                      )}
                      {trip.vehicle && (
                        <div className="flex items-center gap-2 px-3 py-1.5 bg-travel-secondary/10 text-travel-secondary rounded-lg border border-travel-secondary/20">
                          <Car className="h-3.5 w-3.5" />
@@ -158,21 +186,26 @@ export function TripCalendar() {
                        </div>
                      )}
                    </div>
-                  {trip.travelers.length > 0 && (
-                    <div className="mt-4 p-3 bg-muted/50 rounded-lg border">
-                      <p className="text-sm font-semibold text-muted-foreground mb-2 flex items-center gap-2">
-                        <Users className="h-3.5 w-3.5" />
-                        Viajantes:
-                      </p>
-                      <div className="flex flex-wrap gap-1.5">
-                        {trip.travelers.map((traveler, idx) => (
-                          <Badge key={idx} variant="outline" className="text-xs bg-background/80">
-                            {traveler}
-                          </Badge>
-                        ))}
+                   {(trip.travelers?.length > 0 || trip.employee_ids?.length > 0) && (
+                     <div className="mt-4 p-3 bg-muted/50 rounded-lg border">
+                       <p className="text-sm font-semibold text-muted-foreground mb-2 flex items-center gap-2">
+                         <Users className="h-3.5 w-3.5" />
+                         Viajantes ({(trip.travelers?.length || 0) + (trip.employee_ids?.length || 0)} total):
+                       </p>
+                       <div className="flex flex-wrap gap-1.5">
+                          {trip.travelers?.map((traveler, idx) => (
+                            <Badge key={`manual-${idx}`} variant="outline" className="text-xs bg-background/80">
+                              {traveler}
+                            </Badge>
+                          ))}
+                          {trip.employeeNames?.map((employeeName, idx) => (
+                            <Badge key={`employee-${idx}`} variant="secondary" className="text-xs">
+                              {employeeName}
+                            </Badge>
+                          ))}
+                        </div>
                       </div>
-                    </div>
-                  )}
+                    )}
                 </div>
               ))}
             </div>
