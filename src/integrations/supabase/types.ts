@@ -14,6 +14,69 @@ export type Database = {
   }
   public: {
     Tables: {
+      employee_sectors: {
+        Row: {
+          created_at: string
+          employee_id: string
+          id: string
+          sector_id: string
+        }
+        Insert: {
+          created_at?: string
+          employee_id: string
+          id?: string
+          sector_id: string
+        }
+        Update: {
+          created_at?: string
+          employee_id?: string
+          id?: string
+          sector_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "employee_sectors_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "employee_sectors_sector_id_fkey"
+            columns: ["sector_id"]
+            isOneToOne: false
+            referencedRelation: "sectors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      employees: {
+        Row: {
+          created_at: string
+          email: string | null
+          id: string
+          name: string
+          position: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          email?: string | null
+          id?: string
+          name: string
+          position?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          email?: string | null
+          id?: string
+          name?: string
+          position?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string
@@ -41,13 +104,39 @@ export type Database = {
         }
         Relationships: []
       }
+      sectors: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       trips: {
         Row: {
           created_at: string
           created_by: string
           description: string | null
+          employee_ids: string[] | null
           id: string
           sector: string
+          sector_id: string | null
           status: string | null
           title: string
           travelers: string[]
@@ -59,8 +148,10 @@ export type Database = {
           created_at?: string
           created_by: string
           description?: string | null
+          employee_ids?: string[] | null
           id?: string
           sector: string
+          sector_id?: string | null
           status?: string | null
           title: string
           travelers?: string[]
@@ -72,8 +163,10 @@ export type Database = {
           created_at?: string
           created_by?: string
           description?: string | null
+          employee_ids?: string[] | null
           id?: string
           sector?: string
+          sector_id?: string | null
           status?: string | null
           title?: string
           travelers?: string[]
@@ -82,6 +175,13 @@ export type Database = {
           vehicle_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "trips_sector_id_fkey"
+            columns: ["sector_id"]
+            isOneToOne: false
+            referencedRelation: "sectors"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "trips_vehicle_id_fkey"
             columns: ["vehicle_id"]

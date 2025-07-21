@@ -8,12 +8,18 @@ import { TripStats } from '@/components/TripStats';
 import { TripList } from '@/components/TripList';
 import { VehicleForm } from '@/components/VehicleForm';
 import { VehicleList } from '@/components/VehicleList';
+import { SectorForm } from '@/components/SectorForm';
+import { SectorList } from '@/components/SectorList';
+import { EmployeeForm } from '@/components/EmployeeForm';
+import { EmployeeList } from '@/components/EmployeeList';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 const Index = () => {
   const { user, loading } = useAuth();
   const [refreshKey, setRefreshKey] = useState(0);
   const [vehicleRefreshKey, setVehicleRefreshKey] = useState(0);
+  const [sectorRefreshKey, setSectorRefreshKey] = useState(0);
+  const [employeeRefreshKey, setEmployeeRefreshKey] = useState(0);
 
   if (loading) {
     return (
@@ -38,6 +44,14 @@ const Index = () => {
     setVehicleRefreshKey(prev => prev + 1);
   };
 
+  const handleSectorCreated = () => {
+    setSectorRefreshKey(prev => prev + 1);
+  };
+
+  const handleEmployeeCreated = () => {
+    setEmployeeRefreshKey(prev => prev + 1);
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
       <Header />
@@ -58,7 +72,7 @@ const Index = () => {
 
         <Tabs defaultValue="calendar" className="space-y-8">
           <div className="flex justify-center">
-            <TabsList className="grid w-full max-w-4xl grid-cols-5 bg-muted/50 p-1 h-12">
+            <TabsList className="grid w-full max-w-7xl grid-cols-7 bg-muted/50 p-1 h-12 text-sm">
               <TabsTrigger 
                 value="calendar" 
                 className="data-[state=active]:bg-travel-primary data-[state=active]:text-white font-semibold"
@@ -78,14 +92,26 @@ const Index = () => {
                 📋 Viagens
               </TabsTrigger>
               <TabsTrigger 
-                value="vehicles" 
+                value="sectors" 
                 className="data-[state=active]:bg-travel-primary data-[state=active]:text-white font-semibold"
+              >
+                🏢 Setores
+              </TabsTrigger>
+              <TabsTrigger 
+                value="employees" 
+                className="data-[state=active]:bg-travel-secondary data-[state=active]:text-white font-semibold"
+              >
+                👥 Funcionários
+              </TabsTrigger>
+              <TabsTrigger 
+                value="vehicles" 
+                className="data-[state=active]:bg-travel-accent data-[state=active]:text-white font-semibold"
               >
                 🚗 Carros
               </TabsTrigger>
               <TabsTrigger 
                 value="new-vehicle" 
-                className="data-[state=active]:bg-travel-secondary data-[state=active]:text-white font-semibold"
+                className="data-[state=active]:bg-travel-primary data-[state=active]:text-white font-semibold"
               >
                 🔧 Novo Carro
               </TabsTrigger>
@@ -105,6 +131,20 @@ const Index = () => {
           <TabsContent value="trips-list" className="space-y-6">
             <div className="max-w-4xl mx-auto">
               <TripList onTripUpdated={handleTripCreated} />
+            </div>
+          </TabsContent>
+
+          <TabsContent value="sectors" className="space-y-6">
+            <div className="max-w-4xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <SectorForm onSectorCreated={handleSectorCreated} />
+              <SectorList refreshKey={sectorRefreshKey} />
+            </div>
+          </TabsContent>
+
+          <TabsContent value="employees" className="space-y-6">
+            <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <EmployeeForm onEmployeeCreated={handleEmployeeCreated} />
+              <EmployeeList refreshKey={employeeRefreshKey} />
             </div>
           </TabsContent>
 

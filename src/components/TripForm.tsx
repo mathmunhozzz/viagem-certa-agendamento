@@ -14,6 +14,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { VehicleSelect } from './VehicleSelect';
+import { SectorSelect } from './SectorSelect';
+import { EmployeeSelect } from './EmployeeSelect';
 
 interface TripFormProps {
   onTripCreated: () => void;
@@ -26,6 +28,8 @@ export function TripForm({ onTripCreated }: TripFormProps) {
   const [date, setDate] = useState<Date>();
   const [travelers, setTravelers] = useState<string[]>(['']);
   const [selectedVehicle, setSelectedVehicle] = useState<string>('');
+  const [selectedSector, setSelectedSector] = useState<string>('');
+  const [selectedEmployees, setSelectedEmployees] = useState<string[]>([]);
 
   const addTraveler = () => {
     setTravelers([...travelers, '']);
@@ -43,18 +47,34 @@ export function TripForm({ onTripCreated }: TripFormProps) {
     setTravelers(newTravelers);
   };
 
+  const handleEmployeeToggle = (employeeId: string, checked: boolean) => {
+    if (checked) {
+      setSelectedEmployees([...selectedEmployees, employeeId]);
+    } else {
+      setSelectedEmployees(selectedEmployees.filter(id => id !== employeeId));
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!user || !date || !selectedVehicle) return;
+    if (!user || !date || !selectedVehicle || !selectedSector) return;
+
+    // Verificar se pelo menos um funcionário foi selecionado ou se há viajantes manuais
+    const validTravelers = travelers.filter(t => t.trim() !== '');
+    if (selectedEmployees.length === 0 && validTravelers.length === 0) {
+      toast({
+        title: "Erro",
+        description: "Selecione pelo menos um funcionário ou adicione um viajante.",
+        variant: "destructive"
+      });
+      return;
+    }
 
     setLoading(true);
     
     const formData = new FormData(e.currentTarget);
     const title = formData.get('title') as string;
     const description = formData.get('description') as string;
-    const sector = formData.get('sector') as string;
-    
-    const validTravelers = travelers.filter(t => t.trim() !== '');
 
     try {
       const { error } = await supabase
@@ -63,8 +83,10 @@ export function TripForm({ onTripCreated }: TripFormProps) {
           title,
           description,
           trip_date: format(date, 'yyyy-MM-dd'),
-          sector,
+          sector: selectedSector, // Agora é o antigo campo de texto
+          sector_id: selectedSector, // Nova referência ao setor
           travelers: validTravelers,
+          employee_ids: selectedEmployees,
           created_by: user.id,
           vehicle_id: selectedVehicle
         });
@@ -76,12 +98,14 @@ export function TripForm({ onTripCreated }: TripFormProps) {
         description: `A viagem "${title}" foi criada para ${format(date, 'dd/MM/yyyy', { locale: ptBR })}.`
       });
 
-      // Reset form - fix the error
+      // Reset form
       const form = e.currentTarget;
       form.reset();
       setDate(undefined);
       setTravelers(['']);
       setSelectedVehicle('');
+      setSelectedSector('');
+      setSelectedEmployees([]);
       onTripCreated();
 
     } catch (error) {
@@ -129,16 +153,14 @@ export function TripForm({ onTripCreated }: TripFormProps) {
             </div>
             
             <div className="space-y-2">
-              <Label htmlFor="sector" className="text-sm font-semibold flex items-center gap-2">
+              <Label className="text-sm font-semibold flex items-center gap-2">
                 <MapPin className="h-4 w-4 text-travel-accent" />
                 Setor *
               </Label>
-              <Input
-                id="sector"
-                name="sector"
-                placeholder="Ex: Vendas, TI, Administrativo"
-                required
-                className="border-travel-accent/20 focus:border-travel-accent focus:ring-travel-accent/20"
+              <SectorSelect
+                value={selectedSector}
+                onValueChange={setSelectedSector}
+                placeholder="Selecione o setor"
               />
             </div>
           </div>
@@ -190,11 +212,19 @@ export function TripForm({ onTripCreated }: TripFormProps) {
             error={!selectedVehicle && loading ? 'Selecione um veículo' : undefined}
           />
 
+          {/* Seleção de Funcionários por Setor */}
+          <EmployeeSelect
+            sectorId={selectedSector}
+            selectedEmployees={selectedEmployees}
+            onEmployeeToggle={handleEmployeeToggle}
+          />
+
+          {/* Viajantes Adicionais (Opcional) */}
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <Label className="text-sm font-semibold flex items-center gap-2">
                 <Users className="h-4 w-4 text-travel-secondary" />
-                Viajantes *
+                Viajantes Adicionais (Opcional)
               </Label>
               <Button
                 type="button"
@@ -207,18 +237,20 @@ export function TripForm({ onTripCreated }: TripFormProps) {
                 Adicionar
               </Button>
             </div>
+            <p className="text-sm text-muted-foreground">
+              Adicione viajantes que não estão cadastrados no sistema ou externos à empresa
+            </p>
             <div className="space-y-3">
               {travelers.map((traveler, index) => (
                 <div key={index} className="flex gap-3 items-end">
                   <div className="flex-1 space-y-1">
                     <Label className="text-xs text-muted-foreground">
-                      Viajante {index + 1}
+                      Viajante adicional {index + 1}
                     </Label>
                     <Input
                       placeholder={`Nome completo do viajante ${index + 1}`}
                       value={traveler}
                       onChange={(e) => updateTraveler(index, e.target.value)}
-                      required={index === 0}
                       className="border-travel-secondary/20 focus:border-travel-secondary focus:ring-travel-secondary/20"
                     />
                   </div>
@@ -241,7 +273,7 @@ export function TripForm({ onTripCreated }: TripFormProps) {
           <Button 
             type="submit" 
             className="w-full h-12 bg-gradient-to-r from-travel-primary to-travel-secondary hover:from-travel-primary-light hover:to-travel-secondary/90 text-white shadow-lg font-semibold text-base" 
-            disabled={loading || !date || !selectedVehicle}
+            disabled={loading || !date || !selectedVehicle || !selectedSector}
           >
             {loading ? (
               <div className="flex items-center gap-2">
