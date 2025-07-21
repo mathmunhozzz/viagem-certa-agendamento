@@ -1,6 +1,7 @@
 
 import { useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
+import { useUserRole } from '@/hooks/useUserRole';
 import { Navigate } from 'react-router-dom';
 import { Header } from '@/components/Header';
 import { TripCalendar } from '@/components/TripCalendar';
@@ -14,10 +15,13 @@ import { SectorForm } from '@/components/SectorForm';
 import { SectorList } from '@/components/SectorList';
 import { EmployeeForm } from '@/components/EmployeeForm';
 import { EmployeeList } from '@/components/EmployeeList';
+import { UserRoleManager } from '@/components/UserRoleManager';
+import { RoleGuard } from '@/components/RoleGuard';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 const Index = () => {
   const { user, loading } = useAuth();
+  const { hasRole, isManager } = useUserRole();
   const [refreshKey, setRefreshKey] = useState(0);
   const [vehicleRefreshKey, setVehicleRefreshKey] = useState(0);
   const [sectorRefreshKey, setSectorRefreshKey] = useState(0);
@@ -74,7 +78,7 @@ const Index = () => {
 
         <Tabs defaultValue="calendar" className="space-y-6">
           <div className="flex justify-center px-2">
-            <TabsList className="grid w-full max-w-7xl grid-cols-3 md:grid-cols-7 bg-muted/50 p-1 h-auto md:h-12 text-xs md:text-sm gap-1">
+            <TabsList className={`grid w-full max-w-7xl ${hasRole('admin') ? 'grid-cols-4 md:grid-cols-8' : 'grid-cols-3 md:grid-cols-7'} bg-muted/50 p-1 h-auto md:h-12 text-xs md:text-sm gap-1`}>
               <TabsTrigger 
                 value="calendar" 
                 className="data-[state=active]:bg-travel-primary data-[state=active]:text-white font-semibold p-2 md:p-3 text-center min-h-[2.5rem]"
@@ -124,6 +128,15 @@ const Index = () => {
                 <span className="block md:hidden">🚗</span>
                 <span className="hidden md:block">🚗 Carros</span>
               </TabsTrigger>
+              {hasRole('admin') && (
+                <TabsTrigger 
+                  value="admin" 
+                  className="data-[state=active]:bg-red-600 data-[state=active]:text-white font-semibold p-2 md:p-3 text-center min-h-[2.5rem]"
+                >
+                  <span className="block md:hidden">⚙️</span>
+                  <span className="hidden md:block">⚙️ Admin</span>
+                </TabsTrigger>
+              )}
             </TabsList>
           </div>
 
@@ -132,9 +145,17 @@ const Index = () => {
           </TabsContent>
 
           <TabsContent value="new-trip" className="space-y-6">
-            <div className="max-w-3xl mx-auto">
-              <TripForm onTripCreated={handleTripCreated} />
-            </div>
+            <RoleGuard requiredRole="manager" fallback={
+              <div className="max-w-3xl mx-auto">
+                <div className="text-center p-8 border-2 border-dashed border-muted-foreground/25 rounded-lg">
+                  <p className="text-muted-foreground">Apenas gerentes e administradores podem criar novas viagens.</p>
+                </div>
+              </div>
+            }>
+              <div className="max-w-3xl mx-auto">
+                <TripForm onTripCreated={handleTripCreated} />
+              </div>
+            </RoleGuard>
           </TabsContent>
 
           <TabsContent value="trips-list" className="space-y-6">
@@ -150,25 +171,51 @@ const Index = () => {
           </TabsContent>
 
           <TabsContent value="sectors" className="space-y-6">
-            <div className="max-w-4xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <SectorForm onSectorCreated={handleSectorCreated} />
-              <SectorList refreshKey={sectorRefreshKey} />
-            </div>
+            <RoleGuard requiredRole="manager" fallback={
+              <div className="max-w-4xl mx-auto">
+                <SectorList refreshKey={sectorRefreshKey} />
+              </div>
+            }>
+              <div className="max-w-4xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <SectorForm onSectorCreated={handleSectorCreated} />
+                <SectorList refreshKey={sectorRefreshKey} />
+              </div>
+            </RoleGuard>
           </TabsContent>
 
           <TabsContent value="employees" className="space-y-6">
-            <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <EmployeeForm onEmployeeCreated={handleEmployeeCreated} />
-              <EmployeeList refreshKey={employeeRefreshKey} />
-            </div>
+            <RoleGuard requiredRole="manager" fallback={
+              <div className="max-w-6xl mx-auto">
+                <EmployeeList refreshKey={employeeRefreshKey} />
+              </div>
+            }>
+              <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <EmployeeForm onEmployeeCreated={handleEmployeeCreated} />
+                <EmployeeList refreshKey={employeeRefreshKey} />
+              </div>
+            </RoleGuard>
           </TabsContent>
 
           <TabsContent value="vehicles" className="space-y-6">
-            <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <VehicleForm onVehicleCreated={handleVehicleCreated} />
-              <VehicleList key={vehicleRefreshKey} />
-            </div>
+            <RoleGuard requiredRole="manager" fallback={
+              <div className="max-w-6xl mx-auto">
+                <VehicleList key={vehicleRefreshKey} />
+              </div>
+            }>
+              <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <VehicleForm onVehicleCreated={handleVehicleCreated} />
+                <VehicleList key={vehicleRefreshKey} />
+              </div>
+            </RoleGuard>
           </TabsContent>
+
+          {hasRole('admin') && (
+            <TabsContent value="admin" className="space-y-6">
+              <div className="max-w-6xl mx-auto">
+                <UserRoleManager />
+              </div>
+            </TabsContent>
+          )}
         </Tabs>
       </main>
     </div>

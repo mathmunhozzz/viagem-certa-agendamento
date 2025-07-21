@@ -1,11 +1,30 @@
 import { useAuth } from '@/hooks/useAuth';
+import { useUserRole } from '@/hooks/useUserRole';
 import { Button } from '@/components/ui/button';
-import { LogOut, Plane } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { LogOut, Plane, Shield } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 export function Header() {
   const { user, signOut } = useAuth();
+  const { role, loading: roleLoading } = useUserRole();
   const { toast } = useToast();
+
+  const getRoleLabel = () => {
+    switch (role) {
+      case 'admin': return 'Admin';
+      case 'manager': return 'Gerente';
+      default: return 'Usuário';
+    }
+  };
+
+  const getRoleBadgeVariant = () => {
+    switch (role) {
+      case 'admin': return 'destructive';
+      case 'manager': return 'default';
+      default: return 'secondary';
+    }
+  };
 
   const handleSignOut = async () => {
     await signOut();
@@ -33,10 +52,18 @@ export function Header() {
         {user && (
           <div className="flex items-center space-x-2 md:space-x-4 flex-shrink-0">
             <div className="text-right hidden sm:block">
-              <span className="text-sm font-medium text-foreground block">
-                {user.user_metadata?.name || user.email?.split('@')[0]}
-              </span>
-              <span className="text-xs text-muted-foreground">
+              <div className="flex items-center justify-end space-x-2 mb-1">
+                <span className="text-sm font-medium text-foreground">
+                  {user.user_metadata?.name || user.email?.split('@')[0]}
+                </span>
+                {!roleLoading && (
+                  <Badge variant={getRoleBadgeVariant()} className="text-xs">
+                    <Shield className="h-3 w-3 mr-1" />
+                    {getRoleLabel()}
+                  </Badge>
+                )}
+              </div>
+              <span className="text-xs text-muted-foreground block">
                 {user.email}
               </span>
             </div>
