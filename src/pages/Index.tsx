@@ -59,10 +59,10 @@ const Index = () => {
         <div className="mb-8 animate-fade-in">
           <div className="text-center space-y-4">
             <h2 className="text-4xl font-bold tracking-tight bg-gradient-to-r from-travel-primary via-travel-secondary to-travel-accent bg-clip-text text-transparent">
-              Dashboard de Viagens Corporativas
+              Dashboard de Viagens
             </h2>
             <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-              Sistema completo para gestão e acompanhamento de viagens empresariais
+              Sistema completo para gestão e acompanhamento de viagens da Opportunity
             </p>
           </div>
         </div>
