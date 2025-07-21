@@ -14,8 +14,9 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { VehicleSelect } from './VehicleSelect';
-import { SectorSelect } from './SectorSelect';
-import { EmployeeSelect } from './EmployeeSelect';
+import { SectorMultiSelect } from './SectorMultiSelect';
+import { EmployeeMultiSelect } from './EmployeeMultiSelect';
+import { Clock } from 'lucide-react';
 
 interface TripFormProps {
   onTripCreated: () => void;
@@ -26,9 +27,10 @@ export function TripForm({ onTripCreated }: TripFormProps) {
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [date, setDate] = useState<Date>();
+  const [time, setTime] = useState<string>('08:00');
   const [travelers, setTravelers] = useState<string[]>(['']);
   const [selectedVehicle, setSelectedVehicle] = useState<string>('');
-  const [selectedSector, setSelectedSector] = useState<string>('');
+  const [selectedSectors, setSelectedSectors] = useState<string[]>([]);
   const [selectedEmployees, setSelectedEmployees] = useState<string[]>([]);
 
   const addTraveler = () => {
@@ -55,9 +57,22 @@ export function TripForm({ onTripCreated }: TripFormProps) {
     }
   };
 
+  const handleSectorToggle = (sectorId: string, checked: boolean) => {
+    if (checked) {
+      setSelectedSectors([...selectedSectors, sectorId]);
+    } else {
+      setSelectedSectors(selectedSectors.filter(id => id !== sectorId));
+      // Remover funcionários do setor desmarcado
+      setSelectedEmployees(selectedEmployees.filter(empId => {
+        // Esta lógica será refinada quando buscarmos os funcionários
+        return true;
+      }));
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!user || !date || !selectedVehicle || !selectedSector) return;
+    if (!user || !date || !selectedVehicle || selectedSectors.length === 0) return;
 
     // Verificar se pelo menos um funcionário foi selecionado ou se há viajantes manuais
     const validTravelers = travelers.filter(t => t.trim() !== '');
@@ -77,14 +92,25 @@ export function TripForm({ onTripCreated }: TripFormProps) {
     const description = formData.get('description') as string;
 
     try {
-      // Buscar o nome do setor selecionado
-      const { data: sectorData, error: sectorError } = await supabase
+      // Buscar os nomes dos setores selecionados
+      const { data: sectorsData, error: sectorsError } = await supabase
         .from('sectors')
         .select('name')
-        .eq('id', selectedSector)
-        .single();
+        .in('id', selectedSectors);
 
-      if (sectorError) throw sectorError;
+      if (sectorsError) throw sectorsError;
+
+      // Buscar nomes dos funcionários selecionados
+      const { data: employeesData, error: employeesError } = await supabase
+        .from('employees')
+        .select('name')
+        .in('id', selectedEmployees);
+
+      if (employeesError) throw employeesError;
+
+      // Combinar viajantes manuais com funcionários selecionados
+      const employeeNames = employeesData?.map(emp => emp.name) || [];
+      const allTravelers = [...validTravelers, ...employeeNames];
 
       const { error } = await supabase
         .from('trips')
@@ -92,9 +118,10 @@ export function TripForm({ onTripCreated }: TripFormProps) {
           title,
           description,
           trip_date: format(date, 'yyyy-MM-dd'),
-          sector: sectorData.name, // Nome do setor para compatibilidade
-          sector_id: selectedSector, // Nova referência ao setor
-          travelers: validTravelers,
+          departure_time: time,
+          sector: sectorsData?.map(s => s.name).join(', '), // Nomes dos setores para compatibilidade
+          sector_id: selectedSectors[0], // Primeira sector como referência principal
+          travelers: allTravelers, // Todos os viajantes (manuais + funcionários)
           employee_ids: selectedEmployees,
           created_by: user.id,
           vehicle_id: selectedVehicle
@@ -110,9 +137,10 @@ export function TripForm({ onTripCreated }: TripFormProps) {
       // Reset form
       (e.target as HTMLFormElement).reset();
       setDate(undefined);
+      setTime('08:00');
       setTravelers(['']);
       setSelectedVehicle('');
-      setSelectedSector('');
+      setSelectedSectors([]);
       setSelectedEmployees([]);
       onTripCreated();
 
@@ -161,14 +189,17 @@ export function TripForm({ onTripCreated }: TripFormProps) {
             </div>
             
             <div className="space-y-2">
-              <Label className="text-sm font-semibold flex items-center gap-2">
-                <MapPin className="h-4 w-4 text-travel-accent" />
-                Setor *
+              <Label htmlFor="time" className="text-sm font-semibold flex items-center gap-2">
+                <Clock className="h-4 w-4 text-travel-accent" />
+                Horário de Saída *
               </Label>
-              <SectorSelect
-                value={selectedSector}
-                onValueChange={setSelectedSector}
-                placeholder="Selecione o setor"
+              <Input
+                id="time"
+                type="time"
+                value={time}
+                onChange={(e) => setTime(e.target.value)}
+                required
+                className="border-travel-accent/20 focus:border-travel-accent focus:ring-travel-accent/20"
               />
             </div>
           </div>
@@ -213,16 +244,15 @@ export function TripForm({ onTripCreated }: TripFormProps) {
             </Popover>
           </div>
 
-          <VehicleSelect
-            value={selectedVehicle}
-            onValueChange={setSelectedVehicle}
-            tripDate={date ? format(date, 'yyyy-MM-dd') : undefined}
-            error={!selectedVehicle && loading ? 'Selecione um veículo' : undefined}
+          {/* Seleção de Setores */}
+          <SectorMultiSelect
+            selectedSectors={selectedSectors}
+            onSectorToggle={handleSectorToggle}
           />
 
-          {/* Seleção de Funcionários por Setor */}
-          <EmployeeSelect
-            sectorId={selectedSector}
+          {/* Seleção de Funcionários */}
+          <EmployeeMultiSelect
+            selectedSectors={selectedSectors}
             selectedEmployees={selectedEmployees}
             onEmployeeToggle={handleEmployeeToggle}
           />
@@ -278,10 +308,17 @@ export function TripForm({ onTripCreated }: TripFormProps) {
             </div>
           </div>
 
+          <VehicleSelect
+            value={selectedVehicle}
+            onValueChange={setSelectedVehicle}
+            tripDate={date ? format(date, 'yyyy-MM-dd') : undefined}
+            error={!selectedVehicle && loading ? 'Selecione um veículo' : undefined}
+          />
+
           <Button 
             type="submit" 
             className="w-full h-12 bg-gradient-to-r from-travel-primary to-travel-secondary hover:from-travel-primary-light hover:to-travel-secondary/90 text-white shadow-lg font-semibold text-base" 
-            disabled={loading || !date || !selectedVehicle || !selectedSector}
+            disabled={loading || !date || !selectedVehicle || selectedSectors.length === 0}
           >
             {loading ? (
               <div className="flex items-center gap-2">
