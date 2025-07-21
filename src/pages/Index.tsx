@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { Navigate } from 'react-router-dom';
@@ -6,6 +7,7 @@ import { TripCalendar } from '@/components/TripCalendar';
 import { TripForm } from '@/components/TripForm';
 import { TripStats } from '@/components/TripStats';
 import { TripList } from '@/components/TripList';
+import { TripReports } from '@/components/TripReports';
 import { VehicleForm } from '@/components/VehicleForm';
 import { VehicleList } from '@/components/VehicleList';
 import { SectorForm } from '@/components/SectorForm';
@@ -72,7 +74,7 @@ const Index = () => {
 
         <Tabs defaultValue="calendar" className="space-y-6">
           <div className="flex justify-center px-2">
-            <TabsList className="grid w-full max-w-6xl grid-cols-3 md:grid-cols-6 bg-muted/50 p-1 h-auto md:h-12 text-xs md:text-sm gap-1">
+            <TabsList className="grid w-full max-w-7xl grid-cols-3 md:grid-cols-7 bg-muted/50 p-1 h-auto md:h-12 text-xs md:text-sm gap-1">
               <TabsTrigger 
                 value="calendar" 
                 className="data-[state=active]:bg-travel-primary data-[state=active]:text-white font-semibold p-2 md:p-3 text-center min-h-[2.5rem]"
@@ -95,22 +97,29 @@ const Index = () => {
                 <span className="hidden md:block">📋 Viagens</span>
               </TabsTrigger>
               <TabsTrigger 
-                value="sectors" 
+                value="reports" 
                 className="data-[state=active]:bg-travel-primary data-[state=active]:text-white font-semibold p-2 md:p-3 text-center min-h-[2.5rem]"
+              >
+                <span className="block md:hidden">📊</span>
+                <span className="hidden md:block">📊 Relatórios</span>
+              </TabsTrigger>
+              <TabsTrigger 
+                value="sectors" 
+                className="data-[state=active]:bg-travel-secondary data-[state=active]:text-white font-semibold p-2 md:p-3 text-center min-h-[2.5rem]"
               >
                 <span className="block md:hidden">🏢</span>
                 <span className="hidden md:block">🏢 Setores</span>
               </TabsTrigger>
               <TabsTrigger 
                 value="employees" 
-                className="data-[state=active]:bg-travel-secondary data-[state=active]:text-white font-semibold p-2 md:p-3 text-center min-h-[2.5rem]"
+                className="data-[state=active]:bg-travel-accent data-[state=active]:text-white font-semibold p-2 md:p-3 text-center min-h-[2.5rem]"
               >
                 <span className="block md:hidden">👥</span>
                 <span className="hidden md:block">👥 Funcionários</span>
               </TabsTrigger>
               <TabsTrigger 
                 value="vehicles" 
-                className="data-[state=active]:bg-travel-accent data-[state=active]:text-white font-semibold p-2 md:p-3 text-center min-h-[2.5rem]"
+                className="data-[state=active]:bg-travel-primary data-[state=active]:text-white font-semibold p-2 md:p-3 text-center min-h-[2.5rem]"
               >
                 <span className="block md:hidden">🚗</span>
                 <span className="hidden md:block">🚗 Carros</span>
@@ -131,6 +140,12 @@ const Index = () => {
           <TabsContent value="trips-list" className="space-y-6">
             <div className="max-w-4xl mx-auto">
               <TripList onTripUpdated={handleTripCreated} />
+            </div>
+          </TabsContent>
+
+          <TabsContent value="reports" className="space-y-6">
+            <div className="max-w-7xl mx-auto">
+              <TripReports />
             </div>
           </TabsContent>
 
