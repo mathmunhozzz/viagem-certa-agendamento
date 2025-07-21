@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { Navigate } from 'react-router-dom';
+import { Plane } from 'lucide-react';
 
 export default function Auth() {
   const { signIn, signUp, user, loading } = useAuth();
@@ -82,19 +83,25 @@ export default function Auth() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/5 to-secondary/5 p-4">
-      <Card className="w-full max-w-md">
-        <CardHeader className="text-center">
-          <CardTitle className="text-2xl font-bold">Sistema de Viagens</CardTitle>
-          <CardDescription>
-            Faça login ou cadastre-se para acessar o sistema
+    <div className="min-h-screen flex items-center justify-center hero-gradient p-4">
+      <div className="absolute inset-0 bg-grid-slate-100 [mask-image:linear-gradient(0deg,white,rgba(255,255,255,0.6))] dark:bg-grid-slate-700/25 dark:[mask-image:linear-gradient(0deg,rgba(255,255,255,0.1),rgba(255,255,255,0.5))]"></div>
+      <Card className="w-full max-w-md travel-card travel-card-dark travel-shadow animate-scale-in relative z-10">
+        <CardHeader className="text-center space-y-4">
+          <div className="mx-auto w-16 h-16 bg-gradient-to-br from-travel-primary to-travel-secondary rounded-2xl flex items-center justify-center mb-2">
+            <Plane className="h-8 w-8 text-white" />
+          </div>
+          <CardTitle className="text-3xl font-bold bg-gradient-to-r from-travel-primary to-travel-secondary bg-clip-text text-transparent">
+            Sistema de Viagens
+          </CardTitle>
+          <CardDescription className="text-base">
+            Faça login ou cadastre-se para acessar o sistema de gestão de viagens
           </CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="space-y-6">
           <Tabs defaultValue="login" className="w-full">
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="login">Login</TabsTrigger>
-              <TabsTrigger value="register">Cadastro</TabsTrigger>
+            <TabsList className="grid w-full grid-cols-2 bg-muted/50">
+              <TabsTrigger value="login" className="data-[state=active]:bg-travel-primary data-[state=active]:text-white">Login</TabsTrigger>
+              <TabsTrigger value="register" className="data-[state=active]:bg-travel-primary data-[state=active]:text-white">Cadastro</TabsTrigger>
             </TabsList>
             
             <TabsContent value="login">
@@ -119,7 +126,7 @@ export default function Auth() {
                     required
                   />
                 </div>
-                <Button type="submit" className="w-full" disabled={isLoading}>
+                <Button type="submit" className="w-full bg-travel-primary hover:bg-travel-primary-light text-white shadow-lg" disabled={isLoading}>
                   {isLoading ? "Entrando..." : "Entrar"}
                 </Button>
               </form>
@@ -158,7 +165,7 @@ export default function Auth() {
                     minLength={6}
                   />
                 </div>
-                <Button type="submit" className="w-full" disabled={isLoading}>
+                <Button type="submit" className="w-full bg-travel-secondary hover:bg-travel-secondary/90 text-white shadow-lg" disabled={isLoading}>
                   {isLoading ? "Cadastrando..." : "Cadastrar"}
                 </Button>
               </form>
