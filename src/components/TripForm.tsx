@@ -77,13 +77,22 @@ export function TripForm({ onTripCreated }: TripFormProps) {
     const description = formData.get('description') as string;
 
     try {
+      // Buscar o nome do setor selecionado
+      const { data: sectorData, error: sectorError } = await supabase
+        .from('sectors')
+        .select('name')
+        .eq('id', selectedSector)
+        .single();
+
+      if (sectorError) throw sectorError;
+
       const { error } = await supabase
         .from('trips')
         .insert({
           title,
           description,
           trip_date: format(date, 'yyyy-MM-dd'),
-          sector: selectedSector, // Agora é o antigo campo de texto
+          sector: sectorData.name, // Nome do setor para compatibilidade
           sector_id: selectedSector, // Nova referência ao setor
           travelers: validTravelers,
           employee_ids: selectedEmployees,
@@ -99,8 +108,7 @@ export function TripForm({ onTripCreated }: TripFormProps) {
       });
 
       // Reset form
-      const form = e.currentTarget;
-      form.reset();
+      (e.target as HTMLFormElement).reset();
       setDate(undefined);
       setTravelers(['']);
       setSelectedVehicle('');

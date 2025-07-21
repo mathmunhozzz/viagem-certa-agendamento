@@ -101,7 +101,7 @@ export function EmployeeForm({ onEmployeeCreated }: EmployeeFormProps) {
         description: "Funcionário criado com sucesso!",
       });
 
-      e.currentTarget.reset();
+      (e.target as HTMLFormElement).reset();
       setSelectedSectors([]);
       onEmployeeCreated();
     } catch (error) {
