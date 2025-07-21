@@ -72,7 +72,7 @@ const Index = () => {
 
         <Tabs defaultValue="calendar" className="space-y-8">
           <div className="flex justify-center">
-            <TabsList className="grid w-full max-w-7xl grid-cols-7 bg-muted/50 p-1 h-12 text-sm">
+            <TabsList className="grid w-full max-w-6xl grid-cols-6 bg-muted/50 p-1 h-12 text-sm">
               <TabsTrigger 
                 value="calendar" 
                 className="data-[state=active]:bg-travel-primary data-[state=active]:text-white font-semibold"
@@ -109,12 +109,6 @@ const Index = () => {
               >
                 🚗 Carros
               </TabsTrigger>
-              <TabsTrigger 
-                value="new-vehicle" 
-                className="data-[state=active]:bg-travel-primary data-[state=active]:text-white font-semibold"
-              >
-                🔧 Novo Carro
-              </TabsTrigger>
             </TabsList>
           </div>
 
@@ -149,14 +143,9 @@ const Index = () => {
           </TabsContent>
 
           <TabsContent value="vehicles" className="space-y-6">
-            <div className="max-w-6xl mx-auto">
-              <VehicleList key={vehicleRefreshKey} />
-            </div>
-          </TabsContent>
-
-          <TabsContent value="new-vehicle" className="space-y-6">
-            <div className="max-w-3xl mx-auto">
+            <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-6">
               <VehicleForm onVehicleCreated={handleVehicleCreated} />
+              <VehicleList key={vehicleRefreshKey} />
             </div>
           </TabsContent>
         </Tabs>
