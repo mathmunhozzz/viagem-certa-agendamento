@@ -26,7 +26,7 @@ export function Header() {
             <h1 className="text-xl font-bold bg-gradient-to-r from-travel-primary to-travel-secondary bg-clip-text text-transparent">
               Sistema de Viagens
             </h1>
-            <p className="text-xs text-muted-foreground">Gestão Corporativa</p>
+            <p className="text-xs text-muted-foreground">Opportunity</p>
           </div>
         </div>
         
