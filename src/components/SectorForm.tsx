@@ -47,7 +47,7 @@ export function SectorForm({ onSectorCreated }: SectorFormProps) {
         description: "Setor criado com sucesso!",
       });
 
-      e.currentTarget.reset();
+      (e.target as HTMLFormElement).reset();
       onSectorCreated();
     } catch (error) {
       console.error("Erro ao criar setor:", error);
