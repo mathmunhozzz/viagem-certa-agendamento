@@ -171,7 +171,7 @@ export function TripForm({ onTripCreated }: TripFormProps) {
       </CardHeader>
       <CardContent className="space-y-6">
         <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
             <div className="space-y-2">
               <Label htmlFor="title" className="text-sm font-semibold flex items-center gap-2">
                 <FileText className="h-4 w-4 text-travel-primary" />
@@ -182,7 +182,7 @@ export function TripForm({ onTripCreated }: TripFormProps) {
                 name="title"
                 placeholder="Ex: Reunião em São Paulo"
                 required
-                className="border-travel-primary/20 focus:border-travel-primary focus:ring-travel-primary/20"
+                className="border-travel-primary/20 focus:border-travel-primary focus:ring-travel-primary/20 h-11"
               />
             </div>
             
@@ -197,7 +197,7 @@ export function TripForm({ onTripCreated }: TripFormProps) {
                 value={time}
                 onChange={(e) => setTime(e.target.value)}
                 required
-                className="border-travel-accent/20 focus:border-travel-accent focus:ring-travel-accent/20"
+                className="border-travel-accent/20 focus:border-travel-accent focus:ring-travel-accent/20 h-11"
               />
             </div>
           </div>
@@ -278,7 +278,7 @@ export function TripForm({ onTripCreated }: TripFormProps) {
             </p>
             <div className="space-y-3">
               {travelers.map((traveler, index) => (
-                <div key={index} className="flex gap-3 items-end">
+                <div key={index} className="flex flex-col sm:flex-row gap-2 sm:gap-3 sm:items-end">
                   <div className="flex-1 space-y-1">
                     <Label className="text-xs text-muted-foreground">
                       Viajante adicional {index + 1}
@@ -287,7 +287,7 @@ export function TripForm({ onTripCreated }: TripFormProps) {
                       placeholder={`Nome completo do viajante ${index + 1}`}
                       value={traveler}
                       onChange={(e) => updateTraveler(index, e.target.value)}
-                      className="border-travel-secondary/20 focus:border-travel-secondary focus:ring-travel-secondary/20"
+                      className="border-travel-secondary/20 focus:border-travel-secondary focus:ring-travel-secondary/20 h-11"
                     />
                   </div>
                   {travelers.length > 1 && (
@@ -296,9 +296,10 @@ export function TripForm({ onTripCreated }: TripFormProps) {
                       variant="outline"
                       size="sm"
                       onClick={() => removeTraveler(index)}
-                      className="h-10 w-10 p-0 border-destructive/30 hover:border-destructive hover:bg-destructive/10 text-destructive"
+                      className="h-11 w-full sm:w-11 p-0 border-destructive/30 hover:border-destructive hover:bg-destructive/10 text-destructive"
                     >
                       <X className="h-4 w-4" />
+                      <span className="ml-2 sm:hidden">Remover</span>
                     </Button>
                   )}
                 </div>

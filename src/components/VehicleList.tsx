@@ -113,20 +113,20 @@ export function VehicleList() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex flex-col sm:flex-row gap-4 mb-6">
+          <div className="flex flex-col gap-4 mb-6">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
               <Input
                 placeholder="Buscar por marca, modelo ou placa..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
+                className="pl-10 h-11"
               />
             </div>
             <div className="flex items-center gap-2">
-              <Filter className="h-4 w-4 text-muted-foreground" />
+              <Filter className="h-4 w-4 text-muted-foreground flex-shrink-0" />
               <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="w-[180px]">
+                <SelectTrigger className="w-full">
                   <SelectValue placeholder="Filtrar por status" />
                 </SelectTrigger>
                 <SelectContent>
@@ -151,49 +151,51 @@ export function VehicleList() {
               }
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
               {filteredVehicles.map((vehicle) => (
                 <Card key={vehicle.id} className="hover:shadow-lg transition-shadow">
                   <CardContent className="p-4">
-                    <div className="flex justify-between items-start mb-3">
-                      <div>
-                        <h3 className="font-semibold text-lg">
+                    <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start mb-3 gap-2">
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-semibold text-base md:text-lg truncate">
                           {vehicle.brand} {vehicle.model}
                         </h3>
-                        <p className="text-muted-foreground">{vehicle.plate}</p>
+                        <p className="text-muted-foreground text-sm">{vehicle.plate}</p>
                       </div>
-                      {getStatusBadge(vehicle.status)}
+                      <div className="flex-shrink-0">
+                        {getStatusBadge(vehicle.status)}
+                      </div>
                     </div>
                     
                     <div className="space-y-2 text-sm text-muted-foreground mb-4">
                       <div className="flex justify-between">
                         <span>Ano:</span>
-                        <span>{vehicle.year}</span>
+                        <span className="font-medium">{vehicle.year}</span>
                       </div>
                       <div className="flex justify-between">
                         <span>Capacidade:</span>
-                        <span>{vehicle.capacity} passageiros</span>
+                        <span className="font-medium">{vehicle.capacity} passageiros</span>
                       </div>
                     </div>
 
-                    <div className="flex gap-2 justify-end">
+                    <div className="flex flex-col sm:flex-row gap-2">
                       <Button
                         variant="outline"
                         size="sm"
                         onClick={() => setEditingVehicle(vehicle)}
-                        className="flex items-center gap-1 px-3 py-1.5 h-8"
+                        className="flex items-center justify-center gap-2 h-9 flex-1"
                       >
-                        <Edit className="h-3.5 w-3.5" />
-                        <span className="text-xs">Editar</span>
+                        <Edit className="h-4 w-4" />
+                        <span className="text-sm">Editar</span>
                       </Button>
                       <Button
                         variant="destructive"
                         size="sm"
                         onClick={() => handleDelete(vehicle.id)}
-                        className="flex items-center gap-1 px-3 py-1.5 h-8"
+                        className="flex items-center justify-center gap-2 h-9 flex-1"
                       >
-                        <Trash2 className="h-3.5 w-3.5" />
-                        <span className="text-xs">Excluir</span>
+                        <Trash2 className="h-4 w-4" />
+                        <span className="text-sm">Excluir</span>
                       </Button>
                     </div>
                   </CardContent>

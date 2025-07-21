@@ -55,13 +55,13 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
       <Header />
-      <main className="container mx-auto py-8 px-4">
-        <div className="mb-8 animate-fade-in">
-          <div className="text-center space-y-4">
-            <h2 className="text-4xl font-bold tracking-tight bg-gradient-to-r from-travel-primary via-travel-secondary to-travel-accent bg-clip-text text-transparent">
+      <main className="container mx-auto py-4 md:py-8 px-4">
+        <div className="mb-6 md:mb-8 animate-fade-in">
+          <div className="text-center space-y-2 md:space-y-4">
+            <h2 className="text-2xl md:text-4xl font-bold tracking-tight bg-gradient-to-r from-travel-primary via-travel-secondary to-travel-accent bg-clip-text text-transparent">
               Dashboard de Viagens
             </h2>
-            <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
+            <p className="text-muted-foreground text-sm md:text-lg max-w-2xl mx-auto px-2">
               Sistema completo para gestão e acompanhamento de viagens da Opportunity
             </p>
           </div>
@@ -70,44 +70,50 @@ const Index = () => {
         {/* Estatísticas */}
         <TripStats />
 
-        <Tabs defaultValue="calendar" className="space-y-8">
-          <div className="flex justify-center">
-            <TabsList className="grid w-full max-w-6xl grid-cols-6 bg-muted/50 p-1 h-12 text-sm">
+        <Tabs defaultValue="calendar" className="space-y-6">
+          <div className="flex justify-center px-2">
+            <TabsList className="grid w-full max-w-6xl grid-cols-3 md:grid-cols-6 bg-muted/50 p-1 h-auto md:h-12 text-xs md:text-sm gap-1">
               <TabsTrigger 
                 value="calendar" 
-                className="data-[state=active]:bg-travel-primary data-[state=active]:text-white font-semibold"
+                className="data-[state=active]:bg-travel-primary data-[state=active]:text-white font-semibold p-2 md:p-3 text-center min-h-[2.5rem]"
               >
-                📅 Calendário
+                <span className="block md:hidden">📅</span>
+                <span className="hidden md:block">📅 Calendário</span>
               </TabsTrigger>
               <TabsTrigger 
                 value="new-trip" 
-                className="data-[state=active]:bg-travel-secondary data-[state=active]:text-white font-semibold"
+                className="data-[state=active]:bg-travel-secondary data-[state=active]:text-white font-semibold p-2 md:p-3 text-center min-h-[2.5rem]"
               >
-                ➕ Nova Viagem
+                <span className="block md:hidden">➕</span>
+                <span className="hidden md:block">➕ Nova Viagem</span>
               </TabsTrigger>
               <TabsTrigger 
                 value="trips-list" 
-                className="data-[state=active]:bg-travel-accent data-[state=active]:text-white font-semibold"
+                className="data-[state=active]:bg-travel-accent data-[state=active]:text-white font-semibold p-2 md:p-3 text-center min-h-[2.5rem]"
               >
-                📋 Viagens
+                <span className="block md:hidden">📋</span>
+                <span className="hidden md:block">📋 Viagens</span>
               </TabsTrigger>
               <TabsTrigger 
                 value="sectors" 
-                className="data-[state=active]:bg-travel-primary data-[state=active]:text-white font-semibold"
+                className="data-[state=active]:bg-travel-primary data-[state=active]:text-white font-semibold p-2 md:p-3 text-center min-h-[2.5rem]"
               >
-                🏢 Setores
+                <span className="block md:hidden">🏢</span>
+                <span className="hidden md:block">🏢 Setores</span>
               </TabsTrigger>
               <TabsTrigger 
                 value="employees" 
-                className="data-[state=active]:bg-travel-secondary data-[state=active]:text-white font-semibold"
+                className="data-[state=active]:bg-travel-secondary data-[state=active]:text-white font-semibold p-2 md:p-3 text-center min-h-[2.5rem]"
               >
-                👥 Funcionários
+                <span className="block md:hidden">👥</span>
+                <span className="hidden md:block">👥 Funcionários</span>
               </TabsTrigger>
               <TabsTrigger 
                 value="vehicles" 
-                className="data-[state=active]:bg-travel-accent data-[state=active]:text-white font-semibold"
+                className="data-[state=active]:bg-travel-accent data-[state=active]:text-white font-semibold p-2 md:p-3 text-center min-h-[2.5rem]"
               >
-                🚗 Carros
+                <span className="block md:hidden">🚗</span>
+                <span className="hidden md:block">🚗 Carros</span>
               </TabsTrigger>
             </TabsList>
           </div>

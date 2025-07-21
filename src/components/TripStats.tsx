@@ -96,21 +96,21 @@ export function TripStats() {
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8 animate-fade-in">
+    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-6 mb-6 md:mb-8 animate-fade-in">
       {statsCards.map((stat, index) => (
         <Card key={stat.title} className="travel-card travel-card-dark overflow-hidden hover:scale-105 transition-transform duration-300" style={{ animationDelay: `${index * 100}ms` }}>
           <CardContent className="p-0">
-            <div className={`${stat.color} p-6 relative overflow-hidden`}>
+            <div className={`${stat.color} p-3 md:p-6 relative overflow-hidden`}>
               <div className="absolute top-0 right-0 -mr-4 -mt-4 w-20 h-20 bg-white/10 rounded-full"></div>
               <div className="absolute bottom-0 left-0 -ml-4 -mb-4 w-16 h-16 bg-white/5 rounded-full"></div>
               <div className="relative z-10">
-                <div className="flex items-center justify-between mb-3">
-                  <stat.icon className={`h-8 w-8 ${stat.textColor}`} />
-                  <div className={`text-3xl font-bold ${stat.textColor}`}>
+                <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-2 md:mb-3">
+                  <stat.icon className={`h-6 w-6 md:h-8 md:w-8 ${stat.textColor} mb-1 md:mb-0`} />
+                  <div className={`text-xl md:text-3xl font-bold ${stat.textColor}`}>
                     {stat.value}
                   </div>
                 </div>
-                <p className={`text-sm ${stat.textColor} opacity-90 font-medium`}>
+                <p className={`text-xs md:text-sm ${stat.textColor} opacity-90 font-medium leading-tight`}>
                   {stat.title}
                 </p>
               </div>
