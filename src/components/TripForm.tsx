@@ -108,10 +108,8 @@ export function TripForm({ onTripCreated }: TripFormProps) {
 
       if (employeesError) throw employeesError;
 
-      // Combinar viajantes manuais com funcionários selecionados
-      const employeeNames = employeesData?.map(emp => emp.name) || [];
-      const allTravelers = [...validTravelers, ...employeeNames].filter(name => name.trim() !== '');
-
+      // Apenas viajantes manuais vão para o campo travelers
+      // Funcionários ficam apenas no employee_ids
       const { error } = await supabase
         .from('trips')
         .insert({
@@ -121,8 +119,8 @@ export function TripForm({ onTripCreated }: TripFormProps) {
           departure_time: time,
           sector: sectorsData?.map(s => s.name).join(', '), // Nomes dos setores para compatibilidade
           sector_id: selectedSectors[0], // Primeira sector como referência principal
-          travelers: allTravelers, // Todos os viajantes (manuais + funcionários)
-          employee_ids: selectedEmployees,
+          travelers: validTravelers, // Apenas viajantes manuais
+          employee_ids: selectedEmployees, // Apenas IDs dos funcionários
           created_by: user.id,
           vehicle_id: selectedVehicle
         });
