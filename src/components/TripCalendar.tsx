@@ -168,7 +168,7 @@ export function TripCalendar() {
                       <div className="flex items-center gap-2 px-3 py-1.5 bg-travel-accent/10 text-travel-accent rounded-lg border border-travel-accent/20">
                         <Users className="h-3.5 w-3.5" />
                         <span className="font-medium">
-                          {(trip.travelers?.length || 0) + (trip.employee_ids?.length || 0)} viajante{((trip.travelers?.length || 0) + (trip.employee_ids?.length || 0)) !== 1 ? 's' : ''}
+                          {(trip.travelers?.filter(t => t.trim() !== '').length || 0) + (trip.employeeNames?.length || 0)} viajante{((trip.travelers?.filter(t => t.trim() !== '').length || 0) + (trip.employeeNames?.length || 0)) !== 1 ? 's' : ''}
                         </span>
                       </div>
                       {trip.departure_time && (
@@ -186,17 +186,17 @@ export function TripCalendar() {
                        </div>
                      )}
                    </div>
-                   {(trip.travelers?.length > 0 || trip.employee_ids?.length > 0) && (
+                   {((trip.travelers?.filter(t => t.trim() !== '').length || 0) > 0 || (trip.employeeNames?.length || 0) > 0) && (
                      <div className="mt-4 p-3 bg-muted/50 rounded-lg border">
                        <p className="text-sm font-semibold text-muted-foreground mb-2 flex items-center gap-2">
                          <Users className="h-3.5 w-3.5" />
-                         Viajantes ({(trip.travelers?.length || 0) + (trip.employee_ids?.length || 0)} total):
+                         Viajantes ({(trip.travelers?.filter(t => t.trim() !== '').length || 0) + (trip.employeeNames?.length || 0)} total):
                        </p>
                        <div className="flex flex-wrap gap-1.5">
-                          {trip.travelers?.map((traveler, idx) => (
-                            <Badge key={`manual-${idx}`} variant="outline" className="text-xs bg-background/80">
-                              {traveler}
-                            </Badge>
+                         {trip.travelers?.filter(t => t.trim() !== '').map((traveler, idx) => (
+                           <Badge key={`manual-${idx}`} variant="outline" className="text-xs bg-background/80">
+                             {traveler}
+                           </Badge>
                           ))}
                           {trip.employeeNames?.map((employeeName, idx) => (
                             <Badge key={`employee-${idx}`} variant="secondary" className="text-xs">

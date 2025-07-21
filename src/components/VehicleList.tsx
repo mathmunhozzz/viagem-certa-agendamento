@@ -176,24 +176,24 @@ export function VehicleList() {
                       </div>
                     </div>
 
-                    <div className="flex gap-2">
+                    <div className="flex gap-2 justify-end">
                       <Button
                         variant="outline"
                         size="sm"
                         onClick={() => setEditingVehicle(vehicle)}
-                        className="flex-1"
+                        className="flex items-center gap-1 px-3 py-1.5 h-8"
                       >
-                        <Edit className="h-4 w-4 mr-1" />
-                        Editar
+                        <Edit className="h-3.5 w-3.5" />
+                        <span className="text-xs">Editar</span>
                       </Button>
                       <Button
                         variant="destructive"
                         size="sm"
                         onClick={() => handleDelete(vehicle.id)}
-                        className="flex-1"
+                        className="flex items-center gap-1 px-3 py-1.5 h-8"
                       >
-                        <Trash2 className="h-4 w-4 mr-1" />
-                        Excluir
+                        <Trash2 className="h-3.5 w-3.5" />
+                        <span className="text-xs">Excluir</span>
                       </Button>
                     </div>
                   </CardContent>

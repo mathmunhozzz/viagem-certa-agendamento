@@ -110,7 +110,7 @@ export function TripForm({ onTripCreated }: TripFormProps) {
 
       // Combinar viajantes manuais com funcionários selecionados
       const employeeNames = employeesData?.map(emp => emp.name) || [];
-      const allTravelers = [...validTravelers, ...employeeNames];
+      const allTravelers = [...validTravelers, ...employeeNames].filter(name => name.trim() !== '');
 
       const { error } = await supabase
         .from('trips')
