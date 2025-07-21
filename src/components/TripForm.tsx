@@ -73,8 +73,9 @@ export function TripForm({ onTripCreated }: TripFormProps) {
         description: `A viagem "${title}" foi criada para ${format(date, 'dd/MM/yyyy', { locale: ptBR })}.`
       });
 
-      // Reset form
-      e.currentTarget.reset();
+      // Reset form - fix the error
+      const form = e.currentTarget;
+      form.reset();
       setDate(undefined);
       setTravelers(['']);
       onTripCreated();

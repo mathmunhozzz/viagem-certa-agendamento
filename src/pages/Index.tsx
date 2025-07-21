@@ -4,6 +4,8 @@ import { Navigate } from 'react-router-dom';
 import { Header } from '@/components/Header';
 import { TripCalendar } from '@/components/TripCalendar';
 import { TripForm } from '@/components/TripForm';
+import { TripStats } from '@/components/TripStats';
+import { TripList } from '@/components/TripList';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 const Index = () => {
@@ -36,17 +38,20 @@ const Index = () => {
         <div className="mb-8 animate-fade-in">
           <div className="text-center space-y-4">
             <h2 className="text-4xl font-bold tracking-tight bg-gradient-to-r from-travel-primary via-travel-secondary to-travel-accent bg-clip-text text-transparent">
-              Dashboard de Viagens
+              Dashboard de Viagens Corporativas
             </h2>
             <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-              Gerencie e acompanhe as viagens corporativas da sua empresa com eficiência e organização
+              Sistema completo para gestão e acompanhamento de viagens empresariais
             </p>
           </div>
         </div>
 
+        {/* Estatísticas */}
+        <TripStats />
+
         <Tabs defaultValue="calendar" className="space-y-8">
           <div className="flex justify-center">
-            <TabsList className="grid w-full max-w-md grid-cols-2 bg-muted/50 p-1 h-12">
+            <TabsList className="grid w-full max-w-lg grid-cols-3 bg-muted/50 p-1 h-12">
               <TabsTrigger 
                 value="calendar" 
                 className="data-[state=active]:bg-travel-primary data-[state=active]:text-white font-semibold"
@@ -59,6 +64,12 @@ const Index = () => {
               >
                 ➕ Nova Viagem
               </TabsTrigger>
+              <TabsTrigger 
+                value="trips-list" 
+                className="data-[state=active]:bg-travel-accent data-[state=active]:text-white font-semibold"
+              >
+                📋 Lista
+              </TabsTrigger>
             </TabsList>
           </div>
 
@@ -69,6 +80,12 @@ const Index = () => {
           <TabsContent value="new-trip" className="space-y-6">
             <div className="max-w-3xl mx-auto">
               <TripForm onTripCreated={handleTripCreated} />
+            </div>
+          </TabsContent>
+
+          <TabsContent value="trips-list" className="space-y-6">
+            <div className="max-w-4xl mx-auto">
+              <TripList onTripUpdated={handleTripCreated} />
             </div>
           </TabsContent>
         </Tabs>

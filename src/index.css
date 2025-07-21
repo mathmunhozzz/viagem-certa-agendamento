@@ -129,11 +129,11 @@ All colors MUST be HSL.
 
 @layer components {
   .travel-card {
-    @apply bg-gradient-to-br from-white to-slate-50 border border-slate-200 shadow-lg hover:shadow-xl transition-all duration-300 rounded-xl;
+    @apply bg-gradient-to-br from-white to-slate-50 border border-slate-200 shadow-lg hover:shadow-xl transition-all duration-300 rounded-xl backdrop-blur-sm;
   }
   
   .travel-card-dark {
-    @apply dark:from-slate-900 dark:to-slate-800 dark:border-slate-700;
+    @apply dark:from-slate-900 dark:to-slate-800 dark:border-slate-700 dark:shadow-slate-900/20;
   }
   
   .travel-gradient {
@@ -146,5 +146,15 @@ All colors MUST be HSL.
   
   .hero-gradient {
     background: var(--gradient-hero);
+  }
+
+  .bg-grid-slate-100 {
+    background-image: radial-gradient(circle, hsl(220 13% 91%) 1px, transparent 1px);
+    background-size: 20px 20px;
+  }
+
+  .bg-grid-slate-700\/25 {
+    background-image: radial-gradient(circle, hsl(215 28% 17% / 0.25) 1px, transparent 1px);
+    background-size: 20px 20px;
   }
 }
