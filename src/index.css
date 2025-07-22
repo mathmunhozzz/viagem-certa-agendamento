@@ -17,24 +17,24 @@ All colors MUST be HSL.
     --popover: 0 0% 100%;
     --popover-foreground: 222.2 84% 4.9%;
 
-    --primary: 35 100% 55%;           /* Use Opportunity orange as primary */
-    --primary-foreground: 0 0% 100%;      /* White text on orange */
+    --primary: 222 47% 11%;
+    --primary-foreground: 210 40% 98%;
 
-    --secondary: 45 100% 50%;         /* Use Opportunity yellow as secondary */
-    --secondary-foreground: 0 0% 10%;     /* Dark text on yellow */
+    --secondary: 210 40% 96%;
+    --secondary-foreground: 222.2 47% 11%;
 
-    --muted: 45 30% 96%;                  /* Warm muted with yellow tint */
-    --muted-foreground: 35 16% 47%;       /* Warm muted text */
+    --muted: 210 40% 96%;
+    --muted-foreground: 215 16% 47%;
 
-    --accent: 45 60% 85%;                 /* Light yellow accent */
-    --accent-foreground: 25 100% 25%;     /* Deep orange text on accent */
+    --accent: 210 40% 96%;
+    --accent-foreground: 222.2 47% 11%;
 
     --destructive: 0 84% 60%;
-    --destructive-foreground: 0 0% 100%;
+    --destructive-foreground: 210 40% 98%;
 
-    --border: 45 25% 88%;                 /* Warm border */
-    --input: 45 25% 88%;                  /* Warm input border */
-    --ring: 35 100% 55%;                  /* Orange focus ring */
+    --border: 214 32% 91%;
+    --input: 214 32% 91%;
+    --ring: 222.2 84% 4.9%;
 
     --radius: 0.5rem;
 
@@ -47,22 +47,22 @@ All colors MUST be HSL.
     --sidebar-border: 220 13% 91%;
     --sidebar-ring: 217 91% 60%;
 
-    /* Custom Opportunity Sistemas theme colors - matching logo */
-    --travel-primary: 35 100% 55%;        /* Vibrant orange from logo */
-    --travel-primary-light: 35 100% 65%;  /* Lighter orange */
-    --travel-secondary: 45 100% 50%;      /* Golden yellow from logo */
-    --travel-accent: 25 100% 45%;         /* Deeper orange-red */
-    --travel-success: 142 71% 45%;        /* Keep success green */
-    --travel-warning: 38 92% 50%;         /* Yellow warning */
+    /* Custom travel theme colors */
+    --travel-primary: 220 70% 50%;
+    --travel-primary-light: 220 70% 60%;
+    --travel-secondary: 280 40% 40%;
+    --travel-accent: 200 100% 40%;
+    --travel-success: 142 71% 45%;
+    --travel-warning: 38 92% 50%;
     
-    /* Opportunity gradients matching logo */
-    --gradient-primary: linear-gradient(135deg, hsl(45 100% 50%), hsl(35 100% 55%), hsl(25 100% 45%));
-    --gradient-card: linear-gradient(145deg, hsl(0 0% 100%), hsl(45 20% 98%));
-    --gradient-hero: linear-gradient(135deg, hsl(45 100% 50% / 0.1), hsl(35 100% 55% / 0.1));
+    /* Gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(220 70% 50%), hsl(280 40% 40%));
+    --gradient-card: linear-gradient(145deg, hsl(0 0% 100%), hsl(210 40% 98%));
+    --gradient-hero: linear-gradient(135deg, hsl(220 70% 50% / 0.1), hsl(280 40% 40% / 0.1));
     
-    /* Opportunity shadows with warm tones */
-    --shadow-card: 0 4px 6px -1px hsl(35 100% 55% / 0.15), 0 2px 4px -1px hsl(35 100% 55% / 0.08);
-    --shadow-travel: 0 10px 15px -3px hsl(35 100% 55% / 0.15), 0 4px 6px -2px hsl(35 100% 55% / 0.08);
+    /* Shadows */
+    --shadow-card: 0 4px 6px -1px hsl(220 70% 50% / 0.1), 0 2px 4px -1px hsl(220 70% 50% / 0.06);
+    --shadow-travel: 0 10px 15px -3px hsl(220 70% 50% / 0.1), 0 4px 6px -2px hsl(220 70% 50% / 0.05);
   }
 
   .dark {
@@ -75,11 +75,11 @@ All colors MUST be HSL.
     --popover: 222 84% 5%;
     --popover-foreground: 210 40% 98%;
 
-    --primary: 35 85% 60%;            /* Opportunity orange for dark mode */
-    --primary-foreground: 0 0% 100%;      /* White text on orange */
+    --primary: 220 70% 60%;
+    --primary-foreground: 222 47% 11%;
 
-    --secondary: 45 85% 55%;          /* Opportunity yellow for dark mode */
-    --secondary-foreground: 0 0% 10%;     /* Dark text on yellow */
+    --secondary: 217 33% 18%;
+    --secondary-foreground: 210 40% 98%;
 
     --muted: 217 33% 18%;
     --muted-foreground: 215 20% 65%;
@@ -103,16 +103,16 @@ All colors MUST be HSL.
     --sidebar-border: 240 4% 16%;
     --sidebar-ring: 217 91% 60%;
 
-    /* Dark theme Opportunity colors */
-    --travel-primary: 35 85% 60%;         /* Softer orange for dark mode */
-    --travel-primary-light: 35 85% 70%;   /* Lighter orange for dark mode */
-    --travel-secondary: 45 85% 55%;       /* Softer yellow for dark mode */
-    --travel-accent: 25 85% 50%;          /* Softer red-orange for dark mode */
+    /* Dark theme travel colors */
+    --travel-primary: 220 70% 60%;
+    --travel-primary-light: 220 70% 70%;
+    --travel-secondary: 280 40% 50%;
+    --travel-accent: 200 100% 50%;
     
-    /* Dark Opportunity gradients */
-    --gradient-primary: linear-gradient(135deg, hsl(45 85% 55%), hsl(35 85% 60%), hsl(25 85% 50%));
+    /* Dark gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(220 70% 60%), hsl(280 40% 50%));
     --gradient-card: linear-gradient(145deg, hsl(222 84% 5%), hsl(217 33% 18%));
-    --gradient-hero: linear-gradient(135deg, hsl(45 85% 55% / 0.1), hsl(35 85% 60% / 0.1));
+    --gradient-hero: linear-gradient(135deg, hsl(220 70% 60% / 0.1), hsl(280 40% 50% / 0.1));
   }
 }
 
@@ -129,12 +129,11 @@ All colors MUST be HSL.
 
 @layer components {
   .travel-card {
-    @apply bg-gradient-to-br from-white to-orange-50/30 border-orange-200/40 shadow-lg hover:shadow-xl transition-all duration-300 rounded-xl backdrop-blur-sm;
-    box-shadow: var(--shadow-card);
+    @apply bg-gradient-to-br from-white to-slate-50 border border-slate-200 shadow-lg hover:shadow-xl transition-all duration-300 rounded-xl backdrop-blur-sm;
   }
   
   .travel-card-dark {
-    @apply dark:from-slate-900 dark:to-orange-950/20 dark:border-orange-800/30 dark:shadow-orange-900/20;
+    @apply dark:from-slate-900 dark:to-slate-800 dark:border-slate-700 dark:shadow-slate-900/20;
   }
   
   .travel-gradient {
