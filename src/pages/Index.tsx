@@ -204,7 +204,14 @@ const Index = () => {
                     className="data-[state=active]:bg-red-600 data-[state=active]:text-white font-semibold p-2 md:p-3 text-center min-h-[2.5rem]"
                   >
                     <span className="block md:hidden">⚙️</span>
-                    <span className="hidden md:block">⚙️ Admin</span>
+                    <span className="hidden md:block">⚙️ Funções</span>
+                  </TabsTrigger>
+                  <TabsTrigger 
+                    value="users" 
+                    className="data-[state=active]:bg-orange-600 data-[state=active]:text-white font-semibold p-2 md:p-3 text-center min-h-[2.5rem]"
+                  >
+                    <span className="block md:hidden">👤</span>
+                    <span className="hidden md:block">👤 Usuários</span>
                   </TabsTrigger>
                 </>
               )}
@@ -299,6 +306,11 @@ const Index = () => {
               <TabsContent value="admin" className="space-y-6">
                 <div className="max-w-6xl mx-auto">
                   <UserRoleManager />
+                </div>
+              </TabsContent>
+              <TabsContent value="users" className="space-y-6">
+                <div className="max-w-6xl mx-auto">
+                  <UserManagement />
                 </div>
               </TabsContent>
             </>

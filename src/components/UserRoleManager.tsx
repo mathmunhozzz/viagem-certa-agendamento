@@ -57,10 +57,16 @@ export function UserRoleManager() {
 
   const updateUserRole = async (userId: string, newRole: UserRole) => {
     try {
-      // Update in user_roles table
+      // First delete existing roles for this user
+      await supabase
+        .from('user_roles')
+        .delete()
+        .eq('user_id', userId);
+
+      // Insert new role
       const { error: roleError } = await supabase
         .from('user_roles')
-        .upsert({ user_id: userId, role: newRole });
+        .insert({ user_id: userId, role: newRole });
 
       if (roleError) throw roleError;
 
