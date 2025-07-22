@@ -23,6 +23,10 @@ interface Trip {
   vehicle_id: string;
   sector_id: string;
   employee_ids: string[];
+  employees?: Array<{
+    id: string;
+    name: string;
+  }>;
   vehicle?: {
     id: string;
     brand: string;
@@ -59,7 +63,23 @@ export function TripList({ onTripUpdated }: TripListProps) {
         .limit(10);
 
       if (error) throw error;
-      setTrips(data || []);
+      
+      // Buscar dados dos funcionários separadamente
+      const tripsWithEmployees = await Promise.all(
+        (data || []).map(async (trip) => {
+          if (trip.employee_ids && trip.employee_ids.length > 0) {
+            const { data: employees } = await supabase
+              .from('employees')
+              .select('id, name')
+              .in('id', trip.employee_ids);
+            
+            return { ...trip, employees: employees || [] };
+          }
+          return { ...trip, employees: [] };
+        })
+      );
+      
+      setTrips(tripsWithEmployees);
     } catch (error) {
       console.error('Erro ao carregar viagens:', error);
     } finally {
@@ -222,7 +242,10 @@ export function TripList({ onTripUpdated }: TripListProps) {
                     <div className="flex items-center gap-2 px-3 py-1.5 bg-travel-accent/10 text-travel-accent rounded-lg border border-travel-accent/20">
                       <Users className="h-3.5 w-3.5" />
                       <span className="font-medium">
-                        {trip.travelers.length} pessoa{trip.travelers.length !== 1 ? 's' : ''}
+                        {(() => {
+                          const totalTravelers = trip.travelers.length + (trip.employees?.length || 0);
+                          return `${totalTravelers} pessoa${totalTravelers !== 1 ? 's' : ''}`;
+                        })()}
                       </span>
                     </div>
                     {trip.vehicle && (
@@ -235,18 +258,35 @@ export function TripList({ onTripUpdated }: TripListProps) {
                     )}
                   </div>
 
-                  {trip.travelers.length > 0 && (
+                  {(trip.travelers.length > 0 || (trip.employees && trip.employees.length > 0)) && (
                     <div className="mt-3 flex flex-wrap gap-1.5">
-                      {trip.travelers.slice(0, 3).map((traveler, idx) => (
-                        <Badge key={idx} variant="outline" className="text-xs bg-background/80">
+                      {/* Mostrar funcionários */}
+                      {trip.employees?.slice(0, 3).map((employee, idx) => (
+                        <Badge key={`emp-${idx}`} variant="outline" className="text-xs bg-blue-50 border-blue-200 text-blue-800">
+                          👤 {employee.name}
+                        </Badge>
+                      ))}
+                      
+                      {/* Mostrar viajantes manuais */}
+                      {trip.travelers.slice(0, 3 - (trip.employees?.length || 0)).map((traveler, idx) => (
+                        <Badge key={`trav-${idx}`} variant="outline" className="text-xs bg-background/80">
                           {traveler}
                         </Badge>
                       ))}
-                      {trip.travelers.length > 3 && (
-                        <Badge variant="outline" className="text-xs bg-muted">
-                          +{trip.travelers.length - 3} mais
-                        </Badge>
-                      )}
+                      
+                      {/* Mostrar +X mais se houver mais pessoas */}
+                      {(() => {
+                        const totalShown = Math.min(3, (trip.employees?.length || 0)) + Math.min(3 - (trip.employees?.length || 0), trip.travelers.length);
+                        const totalPeople = (trip.employees?.length || 0) + trip.travelers.length;
+                        if (totalPeople > totalShown) {
+                          return (
+                            <Badge variant="outline" className="text-xs bg-muted">
+                              +{totalPeople - totalShown} mais
+                            </Badge>
+                          );
+                        }
+                        return null;
+                      })()}
                     </div>
                   )}
                 </div>
