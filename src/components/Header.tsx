@@ -38,9 +38,9 @@ export function Header({ onShowUserManagement }: { onShowUserManagement?: () => 
     <header className="sticky top-0 z-50 w-full border-b bg-white/80 backdrop-blur-md supports-[backdrop-filter]:bg-white/60 dark:bg-slate-950/80 dark:supports-[backdrop-filter]:bg-slate-950/60 shadow-sm">
       <div className="container mx-auto px-4 flex h-14 md:h-16 items-center justify-between">
         <div className="flex items-center space-x-2 md:space-x-3 min-w-0 flex-1">
-          <div className="flex items-center justify-center w-24 h-24 md:w-30 md:h-30 bg-white rounded-xl flex-shrink-0 p-2">
+          <div className="flex items-center justify-center w-24 h-24 md:w-30 md:h-30 rounded-xl flex-shrink-0 p-2">
             <img 
-              src="/lovable-uploads/ed2382f8-26ed-4dc5-881c-e016bf21573a.png" 
+              src="/lovable-uploads/a031923e-3408-476a-8ad3-0b0de5cc4585.png" 
               alt="Opportunity Sistemas Logo" 
               className="w-full h-full object-contain"
             />
