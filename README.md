@@ -1,73 +1,225 @@
-# Welcome to your Lovable project
 
-## Project info
+# Viagens Opportunity
 
-**URL**: https://lovable.dev/projects/21d3c886-8e9d-49cb-940a-6d45439b4956
+Sistema completo de agendamento e gerenciamento de viagens corporativas desenvolvido em React com TypeScript.
 
-## How can I edit this code?
+## 🚀 Sobre o Projeto
 
-There are several ways of editing your application.
+O **Viagens Opportunity** é uma aplicação web moderna e intuitiva para gestão completa de viagens corporativas. O sistema permite controle total sobre agendamentos, funcionários, veículos, setores e relatórios de viagem.
 
-**Use Lovable**
+### ✨ Funcionalidades Principais
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/21d3c886-8e9d-49cb-940a-6d45439b4956) and start prompting.
+- **Gestão de Viagens**: Agendamento, edição e controle completo de viagens
+- **Calendário Interativo**: Visualização clara de todas as viagens agendadas
+- **Controle de Funcionários**: Cadastro e gerenciamento de colaboradores
+- **Gestão de Veículos**: Controle de frota e disponibilidade
+- **Setores Organizacionais**: Organização por departamentos
+- **Relatórios Avançados**: Estatísticas e relatórios detalhados
+- **Sistema de Aprovação**: Workflow de aprovação para viagens
+- **Controle de Usuários**: Gestão de perfis e permissões (Admin, Manager, User)
+- **Interface Responsiva**: Funciona perfeitamente em desktop e mobile
 
-Changes made via Lovable will be committed automatically to this repo.
+### 🏗️ Arquitetura do Sistema
 
-**Use your preferred IDE**
+**Frontend:**
+- React 18 com TypeScript
+- Vite para build ultra-rápido
+- Tailwind CSS para estilização
+- shadcn/ui para componentes
+- React Hook Form para formulários
+- React Query para gerenciamento de estado
+- React Router para navegação
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+**Backend:**
+- Supabase (PostgreSQL)
+- Autenticação integrada
+- Row Level Security (RLS)
+- API REST automática
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+**Recursos Avançados:**
+- Temas claro/escuro
+- Componentes reutilizáveis
+- Validação de formulários
+- Notificações toast
+- Estados de loading
+- Tratamento de erros
 
-Follow these steps:
+## 🚀 Instalação e Configuração
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+### Pré-requisitos
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+- Node.js 18+ instalado
+- npm ou yarn
+- Conta no Supabase (para banco de dados)
 
-# Step 3: Install the necessary dependencies.
-npm i
+### Passo a Passo
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
+1. **Clone o repositório:**
+```bash
+git clone <URL_DO_SEU_REPOSITORIO>
+cd viagens-opportunity
+```
+
+2. **Instale as dependências:**
+```bash
+npm install
+```
+
+3. **Configure as variáveis de ambiente:**
+Crie um arquivo `.env.local` na raiz do projeto:
+```env
+VITE_SUPABASE_URL=sua_url_do_supabase
+VITE_SUPABASE_ANON_KEY=sua_chave_anonima_do_supabase
+```
+
+4. **Execute as migrações do banco:**
+Configure seu projeto Supabase e execute as migrações SQL disponíveis na pasta `supabase/migrations/`
+
+5. **Inicie o servidor de desenvolvimento:**
+```bash
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+6. **Acesse a aplicação:**
+Abra [http://localhost:8080](http://localhost:8080) no seu navegador
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+## 📱 Como Usar
 
-**Use GitHub Codespaces**
+### Primeiro Acesso
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+1. **Cadastre-se** na tela de login
+2. Sua conta ficará **pendente de aprovação**
+3. Um administrador deve aprovar sua conta
+4. Após aprovação, você pode fazer login normalmente
 
-## What technologies are used for this project?
+### Perfis de Usuário
 
-This project is built with:
+- **User**: Pode visualizar viagens e criar solicitações
+- **Manager**: Pode gerenciar viagens do seu setor
+- **Admin**: Acesso completo ao sistema
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+### Funcionalidades por Seção
 
-## How can I deploy this project?
+**Dashboard:**
+- Visão geral das viagens
+- Estatísticas importantes
+- Viagens pendentes
 
-Simply open [Lovable](https://lovable.dev/projects/21d3c886-8e9d-49cb-940a-6d45439b4956) and click on Share -> Publish.
+**Viagens:**
+- Lista todas as viagens
+- Filtros avançados
+- Criação e edição
 
-## Can I connect a custom domain to my Lovable project?
+**Calendário:**
+- Visualização mensal
+- Navegação intuitiva
+- Detalhes rápidos
 
-Yes, you can!
+**Relatórios:**
+- Gráficos interativos
+- Exportação de dados
+- Análises estatísticas
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+## 🛠️ Desenvolvimento
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+### Estrutura do Projeto
+
+```
+src/
+├── components/          # Componentes React
+│   ├── ui/             # Componentes base (shadcn/ui)
+│   └── ...             # Componentes específicos
+├── hooks/              # Custom hooks
+├── integrations/       # Integrações (Supabase)
+├── lib/               # Utilitários
+├── pages/             # Páginas principais
+└── ...
+```
+
+### Scripts Disponíveis
+
+```bash
+npm run dev          # Servidor de desenvolvimento
+npm run build        # Build para produção
+npm run preview      # Preview do build
+npm run lint         # Verificação de código
+```
+
+### Tecnologias Utilizadas
+
+- **React 18**: Biblioteca principal
+- **TypeScript**: Tipagem estática
+- **Vite**: Build tool moderno
+- **Tailwind CSS**: Framework CSS
+- **shadcn/ui**: Componentes UI
+- **Supabase**: Backend as a Service
+- **React Query**: Gerenciamento de estado servidor
+- **React Hook Form**: Gerenciamento de formulários
+- **Zod**: Validação de esquemas
+- **Lucide React**: Ícones
+- **Recharts**: Gráficos e relatórios
+
+## 🎨 Design System
+
+O projeto utiliza um design system consistente baseado em:
+- **Cores**: Paleta harmoniosa com suporte a tema claro/escuro
+- **Tipografia**: Sistema de fontes escalável
+- **Componentes**: Biblioteca reutilizável e consistente
+- **Espaçamento**: Grid system baseado em Tailwind
+- **Animações**: Transições suaves e naturais
+
+## 🔧 Configuração Avançada
+
+### Banco de Dados
+
+O sistema utiliza PostgreSQL via Supabase com:
+- **Row Level Security (RLS)** para segurança
+- **Triggers** para automações
+- **Views** para consultas otimizadas
+- **Índices** para performance
+
+### Autenticação
+
+- Sistema completo de auth via Supabase
+- Controle de perfis e permissões
+- Recuperação de senha
+- Validação de email
+
+## 📈 Performance
+
+- **Lazy Loading** de componentes
+- **Code Splitting** automático
+- **Otimização de imagens**
+- **Caching inteligente**
+- **Bundle size otimizado**
+
+## 🔒 Segurança
+
+- **Row Level Security** no banco
+- **Validação client e server-side**
+- **Sanitização de dados**
+- **Headers de segurança**
+- **HTTPS obrigatório**
+
+## 🤝 Contribuição
+
+1. Fork o projeto
+2. Crie uma branch para sua feature (`git checkout -b feature/AmazingFeature`)
+3. Commit suas mudanças (`git commit -m 'Add some AmazingFeature'`)
+4. Push para a branch (`git push origin feature/AmazingFeature`)
+5. Abra um Pull Request
+
+## 📄 Licença
+
+Este projeto está sob a licença MIT. Veja o arquivo `LICENSE` para mais detalhes.
+
+## 📞 Suporte
+
+Para suporte ou dúvidas:
+- Abra uma issue no repositório
+- Entre em contato via email
+- Consulte a documentação
+
+---
+
+**Desenvolvido com ❤️ para gestão eficiente de viagens corporativas**

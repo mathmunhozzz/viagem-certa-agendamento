@@ -1,0 +1,7 @@
+
+# Assets Directory
+
+Move the favicon from /public/lovable-uploads/f0b4fb21-1a41-4f07-96a0-1196a241e727.png 
+to /public/assets/favicon.png
+
+This directory contains static assets for the application.
