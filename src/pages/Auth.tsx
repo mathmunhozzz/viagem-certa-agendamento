@@ -87,8 +87,12 @@ export default function Auth() {
       <div className="absolute inset-0 bg-grid-slate-100 [mask-image:linear-gradient(0deg,white,rgba(255,255,255,0.6))] dark:bg-grid-slate-700/25 dark:[mask-image:linear-gradient(0deg,rgba(255,255,255,0.1),rgba(255,255,255,0.5))]"></div>
       <Card className="w-full max-w-md travel-card travel-card-dark travel-shadow animate-scale-in relative z-10">
         <CardHeader className="text-center space-y-4">
-          <div className="mx-auto w-16 h-16 bg-gradient-to-br from-travel-primary to-travel-secondary rounded-2xl flex items-center justify-center mb-2">
-            <Plane className="h-8 w-8 text-white" />
+          <div className="mx-auto w-20 h-16 flex items-center justify-center mb-2">
+            <img 
+              src="/lovable-uploads/ed2382f8-26ed-4dc5-881c-e016bf21573a.png" 
+              alt="Opportunity Sistemas Logo" 
+              className="h-full w-auto object-contain"
+            />
           </div>
           <CardTitle className="text-3xl font-bold bg-gradient-to-r from-travel-primary to-travel-secondary bg-clip-text text-transparent">
             Sistema de Viagens
