@@ -69,6 +69,15 @@ export function EmployeeTripView() {
         fim: endWeek.toISOString().split('T')[0]
       });
       
+      // Primeiro, vamos buscar TODAS as viagens que contêm o funcionário para debug
+      console.log("🔍 Buscando TODAS as viagens do funcionário (sem filtro de data)...");
+      const { data: allTrips } = await supabase
+        .from("trips")
+        .select("id, title, trip_date, employee_ids")
+        .contains("employee_ids", [employee.id]);
+      
+      console.log("📋 Todas as viagens do funcionário:", allTrips);
+      
       const { data, error } = await supabase
         .from("trips")
         .select(`
