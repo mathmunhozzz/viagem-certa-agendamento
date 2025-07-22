@@ -2,10 +2,10 @@ import { useAuth } from '@/hooks/useAuth';
 import { useUserRole } from '@/hooks/useUserRole';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { LogOut, Plane, Shield } from 'lucide-react';
+import { LogOut, Plane, Shield, Users } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
-export function Header() {
+export function Header({ onShowUserManagement }: { onShowUserManagement?: () => void }) {
   const { user, signOut } = useAuth();
   const { role, loading: roleLoading } = useUserRole();
   const { toast } = useToast();
@@ -51,6 +51,17 @@ export function Header() {
         
         {user && (
           <div className="flex items-center space-x-2 md:space-x-4 flex-shrink-0">
+            {role === 'admin' && onShowUserManagement && (
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={onShowUserManagement}
+                className="border-travel-primary/20 hover:bg-travel-primary hover:text-white transition-colors h-8 md:h-9 px-2 md:px-3"
+              >
+                <Users className="h-3.5 w-3.5 md:h-4 md:w-4 md:mr-2" />
+                <span className="hidden md:inline">Usuários</span>
+              </Button>
+            )}
             <div className="text-right hidden sm:block">
               <div className="flex items-center justify-end space-x-2 mb-1">
                 <span className="text-sm font-medium text-foreground">

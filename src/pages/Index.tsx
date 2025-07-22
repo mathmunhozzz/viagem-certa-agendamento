@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useUserRole } from '@/hooks/useUserRole';
+import { useAccountStatus } from '@/hooks/useAccountStatus';
 import { Navigate } from 'react-router-dom';
 import { Header } from '@/components/Header';
 import { TripCalendar } from '@/components/TripCalendar';
@@ -16,18 +17,22 @@ import { SectorList } from '@/components/SectorList';
 import { EmployeeForm } from '@/components/EmployeeForm';
 import { EmployeeList } from '@/components/EmployeeList';
 import { UserRoleManager } from '@/components/UserRoleManager';
+import { UserManagement } from '@/components/UserManagement';
+import { PendingApprovalScreen } from '@/components/PendingApprovalScreen';
 import { RoleGuard } from '@/components/RoleGuard';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 const Index = () => {
   const { user, loading } = useAuth();
   const { hasRole, isManager } = useUserRole();
+  const { accountStatus, loading: statusLoading, isApproved } = useAccountStatus();
   const [refreshKey, setRefreshKey] = useState(0);
   const [vehicleRefreshKey, setVehicleRefreshKey] = useState(0);
   const [sectorRefreshKey, setSectorRefreshKey] = useState(0);
   const [employeeRefreshKey, setEmployeeRefreshKey] = useState(0);
+  const [showUserManagement, setShowUserManagement] = useState(false);
 
-  if (loading) {
+  if (loading || statusLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="text-center">
@@ -40,6 +45,24 @@ const Index = () => {
 
   if (!user) {
     return <Navigate to="/auth" replace />;
+  }
+
+  // Verificar se a conta está aprovada (exceto para admins)
+  if (!isApproved && !hasRole('admin')) {
+    return <PendingApprovalScreen 
+      status={accountStatus || 'pending'} 
+      userName={user.user_metadata?.name || user.email?.split('@')[0]} 
+    />;
+  }
+
+  // Mostrar gerenciamento de usuários se solicitado
+  if (showUserManagement && hasRole('admin')) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
+        <Header onShowUserManagement={() => setShowUserManagement(false)} />
+        <UserManagement />
+      </div>
+    );
   }
 
   const handleTripCreated = () => {
@@ -60,7 +83,7 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
-      <Header />
+      <Header onShowUserManagement={hasRole('admin') ? () => setShowUserManagement(true) : undefined} />
       <main className="container mx-auto py-4 md:py-8 px-4">
         <div className="mb-6 md:mb-8 animate-fade-in">
           <div className="text-center space-y-2 md:space-y-4">

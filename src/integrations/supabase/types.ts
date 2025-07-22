@@ -79,6 +79,7 @@ export type Database = {
       }
       profiles: {
         Row: {
+          account_status: string | null
           created_at: string
           id: string
           name: string
@@ -87,6 +88,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          account_status?: string | null
           created_at?: string
           id?: string
           name: string
@@ -95,6 +97,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          account_status?: string | null
           created_at?: string
           id?: string
           name?: string
