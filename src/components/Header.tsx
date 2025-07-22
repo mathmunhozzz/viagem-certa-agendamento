@@ -4,11 +4,13 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { LogOut, Plane, Shield, Users } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { useNavigate } from 'react-router-dom';
 
 export function Header({ onShowUserManagement }: { onShowUserManagement?: () => void }) {
   const { user, signOut } = useAuth();
   const { role, loading: roleLoading } = useUserRole();
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   const getRoleLabel = () => {
     switch (role) {
@@ -32,6 +34,7 @@ export function Header({ onShowUserManagement }: { onShowUserManagement?: () => 
       title: "Logout realizado",
       description: "Você foi desconectado do sistema."
     });
+    navigate('/auth');
   };
 
   return (
