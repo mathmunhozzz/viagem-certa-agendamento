@@ -14,6 +14,33 @@ export type Database = {
   }
   public: {
     Tables: {
+      clients: {
+        Row: {
+          contact: string | null
+          created_at: string
+          id: string
+          municipality: string | null
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          contact?: string | null
+          created_at?: string
+          id?: string
+          municipality?: string | null
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          contact?: string | null
+          created_at?: string
+          id?: string
+          municipality?: string | null
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       employee_sectors: {
         Row: {
           created_at: string
@@ -52,6 +79,7 @@ export type Database = {
       }
       employees: {
         Row: {
+          auth_user_id: string | null
           created_at: string
           email: string | null
           id: string
@@ -60,6 +88,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          auth_user_id?: string | null
           created_at?: string
           email?: string | null
           id?: string
@@ -68,6 +97,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          auth_user_id?: string | null
           created_at?: string
           email?: string | null
           id?: string
@@ -133,6 +163,7 @@ export type Database = {
       }
       trips: {
         Row: {
+          client_id: string | null
           created_at: string
           created_by: string
           departure_time: string | null
@@ -149,6 +180,7 @@ export type Database = {
           vehicle_id: string | null
         }
         Insert: {
+          client_id?: string | null
           created_at?: string
           created_by: string
           departure_time?: string | null
@@ -165,6 +197,7 @@ export type Database = {
           vehicle_id?: string | null
         }
         Update: {
+          client_id?: string | null
           created_at?: string
           created_by?: string
           departure_time?: string | null
@@ -181,6 +214,13 @@ export type Database = {
           vehicle_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "trips_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "trips_sector_id_fkey"
             columns: ["sector_id"]

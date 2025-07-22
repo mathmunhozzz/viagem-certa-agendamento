@@ -20,6 +20,10 @@ import { UserRoleManager } from '@/components/UserRoleManager';
 import { UserManagement } from '@/components/UserManagement';
 import { PendingApprovalScreen } from '@/components/PendingApprovalScreen';
 import { RoleGuard } from '@/components/RoleGuard';
+import { ClientForm } from '@/components/ClientForm';
+import { ClientList } from '@/components/ClientList';
+import { EmployeeUserLink } from '@/components/EmployeeUserLink';
+import { EmployeeTripView } from '@/components/EmployeeTripView';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 const Index = () => {
@@ -30,6 +34,7 @@ const Index = () => {
   const [vehicleRefreshKey, setVehicleRefreshKey] = useState(0);
   const [sectorRefreshKey, setSectorRefreshKey] = useState(0);
   const [employeeRefreshKey, setEmployeeRefreshKey] = useState(0);
+  const [clientRefreshKey, setClientRefreshKey] = useState(0);
   const [showUserManagement, setShowUserManagement] = useState(false);
 
   if (loading || statusLoading) {
@@ -81,6 +86,10 @@ const Index = () => {
     setEmployeeRefreshKey(prev => prev + 1);
   };
 
+  const handleClientCreated = () => {
+    setClientRefreshKey(prev => prev + 1);
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
       <Header onShowUserManagement={hasRole('admin') ? () => setShowUserManagement(true) : undefined} />
@@ -99,145 +108,200 @@ const Index = () => {
         {/* Estatísticas */}
         <TripStats />
 
-        <Tabs defaultValue="calendar" className="space-y-6">
+        <Tabs defaultValue={hasRole('user') && !hasRole('admin') && !hasRole('manager') ? "employee-trips" : "calendar"} className="space-y-6">
           <div className="flex justify-center px-2">
-            <TabsList className={`grid w-full max-w-7xl ${hasRole('admin') ? 'grid-cols-4 md:grid-cols-8' : 'grid-cols-3 md:grid-cols-7'} bg-muted/50 p-1 h-auto md:h-12 text-xs md:text-sm gap-1`}>
+            <TabsList className={`grid w-full max-w-7xl ${hasRole('admin') ? 'grid-cols-5 md:grid-cols-10' : hasRole('manager') ? 'grid-cols-4 md:grid-cols-9' : 'grid-cols-2 md:grid-cols-3'} bg-muted/50 p-1 h-auto md:h-12 text-xs md:text-sm gap-1`}>
+              {(hasRole('admin') || hasRole('manager')) && (
+                <TabsTrigger 
+                  value="calendar" 
+                  className="data-[state=active]:bg-travel-primary data-[state=active]:text-white font-semibold p-2 md:p-3 text-center min-h-[2.5rem]"
+                >
+                  <span className="block md:hidden">📅</span>
+                  <span className="hidden md:block">📅 Calendário</span>
+                </TabsTrigger>
+              )}
+              {!hasRole('admin') && !hasRole('manager') && (
+                <TabsTrigger 
+                  value="employee-trips" 
+                  className="data-[state=active]:bg-travel-primary data-[state=active]:text-white font-semibold p-2 md:p-3 text-center min-h-[2.5rem]"
+                >
+                  <span className="block md:hidden">🧳</span>
+                  <span className="hidden md:block">🧳 Minhas Viagens</span>
+                </TabsTrigger>
+              )}
+              {(hasRole('admin') || hasRole('manager')) && (
+                <TabsTrigger 
+                  value="new-trip" 
+                  className="data-[state=active]:bg-travel-secondary data-[state=active]:text-white font-semibold p-2 md:p-3 text-center min-h-[2.5rem]"
+                >
+                  <span className="block md:hidden">➕</span>
+                  <span className="hidden md:block">➕ Nova Viagem</span>
+                </TabsTrigger>
+              )}
+              {(hasRole('admin') || hasRole('manager')) && (
+                <TabsTrigger 
+                  value="trips-list" 
+                  className="data-[state=active]:bg-travel-accent data-[state=active]:text-white font-semibold p-2 md:p-3 text-center min-h-[2.5rem]"
+                >
+                  <span className="block md:hidden">📋</span>
+                  <span className="hidden md:block">📋 Viagens</span>
+                </TabsTrigger>
+              )}
+              {(hasRole('admin') || hasRole('manager')) && (
+                <TabsTrigger 
+                  value="reports" 
+                  className="data-[state=active]:bg-travel-primary data-[state=active]:text-white font-semibold p-2 md:p-3 text-center min-h-[2.5rem]"
+                >
+                  <span className="block md:hidden">📊</span>
+                  <span className="hidden md:block">📊 Relatórios</span>
+                </TabsTrigger>
+              )}
               <TabsTrigger 
-                value="calendar" 
-                className="data-[state=active]:bg-travel-primary data-[state=active]:text-white font-semibold p-2 md:p-3 text-center min-h-[2.5rem]"
-              >
-                <span className="block md:hidden">📅</span>
-                <span className="hidden md:block">📅 Calendário</span>
-              </TabsTrigger>
-              <TabsTrigger 
-                value="new-trip" 
+                value="clients" 
                 className="data-[state=active]:bg-travel-secondary data-[state=active]:text-white font-semibold p-2 md:p-3 text-center min-h-[2.5rem]"
-              >
-                <span className="block md:hidden">➕</span>
-                <span className="hidden md:block">➕ Nova Viagem</span>
-              </TabsTrigger>
-              <TabsTrigger 
-                value="trips-list" 
-                className="data-[state=active]:bg-travel-accent data-[state=active]:text-white font-semibold p-2 md:p-3 text-center min-h-[2.5rem]"
-              >
-                <span className="block md:hidden">📋</span>
-                <span className="hidden md:block">📋 Viagens</span>
-              </TabsTrigger>
-              <TabsTrigger 
-                value="reports" 
-                className="data-[state=active]:bg-travel-primary data-[state=active]:text-white font-semibold p-2 md:p-3 text-center min-h-[2.5rem]"
-              >
-                <span className="block md:hidden">📊</span>
-                <span className="hidden md:block">📊 Relatórios</span>
-              </TabsTrigger>
-              <TabsTrigger 
-                value="sectors" 
-                className="data-[state=active]:bg-travel-secondary data-[state=active]:text-white font-semibold p-2 md:p-3 text-center min-h-[2.5rem]"
-              >
-                <span className="block md:hidden">🏢</span>
-                <span className="hidden md:block">🏢 Setores</span>
-              </TabsTrigger>
-              <TabsTrigger 
-                value="employees" 
-                className="data-[state=active]:bg-travel-accent data-[state=active]:text-white font-semibold p-2 md:p-3 text-center min-h-[2.5rem]"
               >
                 <span className="block md:hidden">👥</span>
-                <span className="hidden md:block">👥 Funcionários</span>
+                <span className="hidden md:block">👥 Clientes</span>
               </TabsTrigger>
-              <TabsTrigger 
-                value="vehicles" 
-                className="data-[state=active]:bg-travel-primary data-[state=active]:text-white font-semibold p-2 md:p-3 text-center min-h-[2.5rem]"
-              >
-                <span className="block md:hidden">🚗</span>
-                <span className="hidden md:block">🚗 Carros</span>
-              </TabsTrigger>
-              {hasRole('admin') && (
+              {(hasRole('admin') || hasRole('manager')) && (
                 <TabsTrigger 
-                  value="admin" 
-                  className="data-[state=active]:bg-red-600 data-[state=active]:text-white font-semibold p-2 md:p-3 text-center min-h-[2.5rem]"
+                  value="sectors" 
+                  className="data-[state=active]:bg-travel-secondary data-[state=active]:text-white font-semibold p-2 md:p-3 text-center min-h-[2.5rem]"
                 >
-                  <span className="block md:hidden">⚙️</span>
-                  <span className="hidden md:block">⚙️ Admin</span>
+                  <span className="block md:hidden">🏢</span>
+                  <span className="hidden md:block">🏢 Setores</span>
                 </TabsTrigger>
+              )}
+              {(hasRole('admin') || hasRole('manager')) && (
+                <TabsTrigger 
+                  value="employees" 
+                  className="data-[state=active]:bg-travel-accent data-[state=active]:text-white font-semibold p-2 md:p-3 text-center min-h-[2.5rem]"
+                >
+                  <span className="block md:hidden">🧑‍💼</span>
+                  <span className="hidden md:block">🧑‍💼 Funcionários</span>
+                </TabsTrigger>
+              )}
+              {(hasRole('admin') || hasRole('manager')) && (
+                <TabsTrigger 
+                  value="vehicles" 
+                  className="data-[state=active]:bg-travel-primary data-[state=active]:text-white font-semibold p-2 md:p-3 text-center min-h-[2.5rem]"
+                >
+                  <span className="block md:hidden">🚗</span>
+                  <span className="hidden md:block">🚗 Carros</span>
+                </TabsTrigger>
+              )}
+              {hasRole('admin') && (
+                <>
+                  <TabsTrigger 
+                    value="employee-link" 
+                    className="data-[state=active]:bg-purple-600 data-[state=active]:text-white font-semibold p-2 md:p-3 text-center min-h-[2.5rem]"
+                  >
+                    <span className="block md:hidden">🔗</span>
+                    <span className="hidden md:block">🔗 Vincular</span>
+                  </TabsTrigger>
+                  <TabsTrigger 
+                    value="admin" 
+                    className="data-[state=active]:bg-red-600 data-[state=active]:text-white font-semibold p-2 md:p-3 text-center min-h-[2.5rem]"
+                  >
+                    <span className="block md:hidden">⚙️</span>
+                    <span className="hidden md:block">⚙️ Admin</span>
+                  </TabsTrigger>
+                </>
               )}
             </TabsList>
           </div>
 
-          <TabsContent value="calendar" key={refreshKey} className="space-y-6">
-            <TripCalendar />
-          </TabsContent>
+          {(hasRole('admin') || hasRole('manager')) && (
+            <TabsContent value="calendar" key={refreshKey} className="space-y-6">
+              <TripCalendar />
+            </TabsContent>
+          )}
 
-          <TabsContent value="new-trip" className="space-y-6">
-            <RoleGuard requiredRole="manager" fallback={
-              <div className="max-w-3xl mx-auto">
-                <div className="text-center p-8 border-2 border-dashed border-muted-foreground/25 rounded-lg">
-                  <p className="text-muted-foreground">Apenas gerentes e administradores podem criar novas viagens.</p>
-                </div>
+          {!hasRole('admin') && !hasRole('manager') && (
+            <TabsContent value="employee-trips" className="space-y-6">
+              <div className="max-w-6xl mx-auto">
+                <EmployeeTripView />
               </div>
-            }>
+            </TabsContent>
+          )}
+
+          {(hasRole('admin') || hasRole('manager')) && (
+            <TabsContent value="new-trip" className="space-y-6">
               <div className="max-w-3xl mx-auto">
                 <TripForm onTripCreated={handleTripCreated} />
+              </div>
+            </TabsContent>
+          )}
+
+          {(hasRole('admin') || hasRole('manager')) && (
+            <TabsContent value="trips-list" className="space-y-6">
+              <div className="max-w-4xl mx-auto">
+                <TripList onTripUpdated={handleTripCreated} />
+              </div>
+            </TabsContent>
+          )}
+
+          {(hasRole('admin') || hasRole('manager')) && (
+            <TabsContent value="reports" className="space-y-6">
+              <div className="max-w-7xl mx-auto">
+                <TripReports />
+              </div>
+            </TabsContent>
+          )}
+
+          <TabsContent value="clients" className="space-y-6">
+            <RoleGuard requiredRole="manager" fallback={
+              <div className="max-w-6xl mx-auto">
+                <ClientList />
+              </div>
+            }>
+              <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <ClientForm />
+                <ClientList />
               </div>
             </RoleGuard>
           </TabsContent>
 
-          <TabsContent value="trips-list" className="space-y-6">
-            <div className="max-w-4xl mx-auto">
-              <TripList onTripUpdated={handleTripCreated} />
-            </div>
-          </TabsContent>
-
-          <TabsContent value="reports" className="space-y-6">
-            <div className="max-w-7xl mx-auto">
-              <TripReports />
-            </div>
-          </TabsContent>
-
-          <TabsContent value="sectors" className="space-y-6">
-            <RoleGuard requiredRole="manager" fallback={
-              <div className="max-w-4xl mx-auto">
-                <SectorList refreshKey={sectorRefreshKey} />
-              </div>
-            }>
+          {(hasRole('admin') || hasRole('manager')) && (
+            <TabsContent value="sectors" className="space-y-6">
               <div className="max-w-4xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <SectorForm onSectorCreated={handleSectorCreated} />
                 <SectorList refreshKey={sectorRefreshKey} />
               </div>
-            </RoleGuard>
-          </TabsContent>
+            </TabsContent>
+          )}
 
-          <TabsContent value="employees" className="space-y-6">
-            <RoleGuard requiredRole="manager" fallback={
-              <div className="max-w-6xl mx-auto">
-                <EmployeeList refreshKey={employeeRefreshKey} />
-              </div>
-            }>
+          {(hasRole('admin') || hasRole('manager')) && (
+            <TabsContent value="employees" className="space-y-6">
               <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <EmployeeForm onEmployeeCreated={handleEmployeeCreated} />
                 <EmployeeList refreshKey={employeeRefreshKey} />
               </div>
-            </RoleGuard>
-          </TabsContent>
+            </TabsContent>
+          )}
 
-          <TabsContent value="vehicles" className="space-y-6">
-            <RoleGuard requiredRole="manager" fallback={
-              <div className="max-w-6xl mx-auto">
-                <VehicleList key={vehicleRefreshKey} />
-              </div>
-            }>
+          {(hasRole('admin') || hasRole('manager')) && (
+            <TabsContent value="vehicles" className="space-y-6">
               <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <VehicleForm onVehicleCreated={handleVehicleCreated} />
                 <VehicleList key={vehicleRefreshKey} />
               </div>
-            </RoleGuard>
-          </TabsContent>
+            </TabsContent>
+          )}
 
           {hasRole('admin') && (
-            <TabsContent value="admin" className="space-y-6">
-              <div className="max-w-6xl mx-auto">
-                <UserRoleManager />
-              </div>
-            </TabsContent>
+            <>
+              <TabsContent value="employee-link" className="space-y-6">
+                <div className="max-w-6xl mx-auto">
+                  <EmployeeUserLink />
+                </div>
+              </TabsContent>
+              <TabsContent value="admin" className="space-y-6">
+                <div className="max-w-6xl mx-auto">
+                  <UserRoleManager />
+                </div>
+              </TabsContent>
+            </>
           )}
         </Tabs>
       </main>

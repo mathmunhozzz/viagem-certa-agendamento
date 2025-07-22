@@ -16,6 +16,7 @@ import { useToast } from '@/hooks/use-toast';
 import { VehicleSelect } from './VehicleSelect';
 import { SectorMultiSelect } from './SectorMultiSelect';
 import { EmployeeMultiSelect } from './EmployeeMultiSelect';
+import { ClientSelect } from './ClientSelect';
 import { Clock } from 'lucide-react';
 
 interface TripFormProps {
@@ -32,6 +33,7 @@ export function TripForm({ onTripCreated }: TripFormProps) {
   const [selectedVehicle, setSelectedVehicle] = useState<string>('');
   const [selectedSectors, setSelectedSectors] = useState<string[]>([]);
   const [selectedEmployees, setSelectedEmployees] = useState<string[]>([]);
+  const [selectedClient, setSelectedClient] = useState<string>('');
 
   const addTraveler = () => {
     setTravelers([...travelers, '']);
@@ -72,7 +74,14 @@ export function TripForm({ onTripCreated }: TripFormProps) {
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!user || !date || !selectedVehicle || selectedSectors.length === 0) return;
+    if (!user || !date || !selectedVehicle || selectedSectors.length === 0 || !selectedClient) {
+      toast({
+        title: "Erro",
+        description: "Preencha todos os campos obrigatórios (incluindo o cliente).",
+        variant: "destructive"
+      });
+      return;
+    }
 
     // Verificar se pelo menos um funcionário foi selecionado ou se há viajantes manuais
     const validTravelers = travelers.filter(t => t.trim() !== '');
@@ -121,6 +130,7 @@ export function TripForm({ onTripCreated }: TripFormProps) {
           sector_id: selectedSectors[0], // Primeira sector como referência principal
           travelers: validTravelers, // Apenas viajantes manuais
           employee_ids: selectedEmployees, // Apenas IDs dos funcionários
+          client_id: selectedClient, // Cliente obrigatório
           created_by: user.id,
           vehicle_id: selectedVehicle
         });
@@ -140,6 +150,7 @@ export function TripForm({ onTripCreated }: TripFormProps) {
       setSelectedVehicle('');
       setSelectedSectors([]);
       setSelectedEmployees([]);
+      setSelectedClient('');
       onTripCreated();
 
     } catch (error) {
@@ -242,6 +253,19 @@ export function TripForm({ onTripCreated }: TripFormProps) {
             </Popover>
           </div>
 
+          {/* Seleção de Cliente */}
+          <div className="space-y-2">
+            <Label className="text-sm font-semibold flex items-center gap-2">
+              <Users className="h-4 w-4 text-travel-primary" />
+              Cliente *
+            </Label>
+            <ClientSelect
+              value={selectedClient}
+              onValueChange={setSelectedClient}
+              required
+            />
+          </div>
+
           {/* Seleção de Setores */}
           <SectorMultiSelect
             selectedSectors={selectedSectors}
@@ -317,7 +341,7 @@ export function TripForm({ onTripCreated }: TripFormProps) {
           <Button 
             type="submit" 
             className="w-full h-12 bg-gradient-to-r from-travel-primary to-travel-secondary hover:from-travel-primary-light hover:to-travel-secondary/90 text-white shadow-lg font-semibold text-base" 
-            disabled={loading || !date || !selectedVehicle || selectedSectors.length === 0}
+            disabled={loading || !date || !selectedVehicle || selectedSectors.length === 0 || !selectedClient}
           >
             {loading ? (
               <div className="flex items-center gap-2">
