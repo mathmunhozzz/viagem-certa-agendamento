@@ -112,21 +112,27 @@ export function EmployeeTripView() {
     return <Badge variant={statusInfo.variant}>{statusInfo.label}</Badge>;
   };
 
-  // Filtrar viagens da semana atual
+  // Filtrar viagens da semana atual - usando UTC para evitar problemas de timezone
   const now = new Date();
-  const today = new Date(now.toDateString());
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   
-  const todayTrips = trips.filter(trip => 
-    new Date(trip.trip_date).toDateString() === today.toDateString()
-  );
+  const todayTrips = trips.filter(trip => {
+    const tripDate = new Date(trip.trip_date + 'T00:00:00.000Z');
+    const tripLocalDate = new Date(tripDate.getFullYear(), tripDate.getMonth(), tripDate.getDate());
+    return tripLocalDate.getTime() === today.getTime();
+  });
 
-  const upcomingThisWeek = trips.filter(trip => 
-    new Date(trip.trip_date) > today
-  );
+  const upcomingThisWeek = trips.filter(trip => {
+    const tripDate = new Date(trip.trip_date + 'T00:00:00.000Z');
+    const tripLocalDate = new Date(tripDate.getFullYear(), tripDate.getMonth(), tripDate.getDate());
+    return tripLocalDate.getTime() > today.getTime();
+  });
 
-  const pastThisWeek = trips.filter(trip => 
-    new Date(trip.trip_date) < today
-  );
+  const pastThisWeek = trips.filter(trip => {
+    const tripDate = new Date(trip.trip_date + 'T00:00:00.000Z');
+    const tripLocalDate = new Date(tripDate.getFullYear(), tripDate.getMonth(), tripDate.getDate());
+    return tripLocalDate.getTime() < today.getTime();
+  });
 
   return (
     <div className="space-y-6">

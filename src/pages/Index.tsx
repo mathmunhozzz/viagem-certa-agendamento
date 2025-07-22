@@ -24,6 +24,7 @@ import { ClientForm } from '@/components/ClientForm';
 import { ClientList } from '@/components/ClientList';
 import { EmployeeUserLink } from '@/components/EmployeeUserLink';
 import { EmployeeTripView } from '@/components/EmployeeTripView';
+import { EmployeeWeekCalendar } from '@/components/EmployeeWeekCalendar';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 const Index = () => {
@@ -108,9 +109,9 @@ const Index = () => {
         {/* Estatísticas */}
         <TripStats />
 
-        <Tabs defaultValue={hasRole('user') && !hasRole('admin') && !hasRole('manager') ? "employee-trips" : "calendar"} className="space-y-6">
+        <Tabs defaultValue={hasRole('user') && !hasRole('admin') && !hasRole('manager') ? "employee-calendar" : "calendar"} className="space-y-6">
           <div className="flex justify-center px-2">
-            <TabsList className={`grid w-full max-w-7xl ${hasRole('admin') ? 'grid-cols-5 md:grid-cols-10' : hasRole('manager') ? 'grid-cols-4 md:grid-cols-9' : 'grid-cols-2 md:grid-cols-3'} bg-muted/50 p-1 h-auto md:h-12 text-xs md:text-sm gap-1`}>
+            <TabsList className={`grid w-full max-w-7xl ${hasRole('admin') ? 'grid-cols-5 md:grid-cols-10' : hasRole('manager') ? 'grid-cols-4 md:grid-cols-9' : 'grid-cols-1'} bg-muted/50 p-1 h-auto md:h-12 text-xs md:text-sm gap-1`}>
               {(hasRole('admin') || hasRole('manager')) && (
                 <TabsTrigger 
                   value="calendar" 
@@ -122,11 +123,11 @@ const Index = () => {
               )}
               {!hasRole('admin') && !hasRole('manager') && (
                 <TabsTrigger 
-                  value="employee-trips" 
+                  value="employee-calendar" 
                   className="data-[state=active]:bg-travel-primary data-[state=active]:text-white font-semibold p-2 md:p-3 text-center min-h-[2.5rem]"
                 >
-                  <span className="block md:hidden">🧳</span>
-                  <span className="hidden md:block">🧳 Minhas Viagens</span>
+                  <span className="block md:hidden">📅</span>
+                  <span className="hidden md:block">📅 Calendário Semanal</span>
                 </TabsTrigger>
               )}
               {(hasRole('admin') || hasRole('manager')) && (
@@ -156,13 +157,15 @@ const Index = () => {
                   <span className="hidden md:block">📊 Relatórios</span>
                 </TabsTrigger>
               )}
-              <TabsTrigger 
-                value="clients" 
-                className="data-[state=active]:bg-travel-secondary data-[state=active]:text-white font-semibold p-2 md:p-3 text-center min-h-[2.5rem]"
-              >
-                <span className="block md:hidden">👥</span>
-                <span className="hidden md:block">👥 Clientes</span>
-              </TabsTrigger>
+              {(hasRole('admin') || hasRole('manager')) && (
+                <TabsTrigger 
+                  value="clients" 
+                  className="data-[state=active]:bg-travel-secondary data-[state=active]:text-white font-semibold p-2 md:p-3 text-center min-h-[2.5rem]"
+                >
+                  <span className="block md:hidden">👥</span>
+                  <span className="hidden md:block">👥 Clientes</span>
+                </TabsTrigger>
+              )}
               {(hasRole('admin') || hasRole('manager')) && (
                 <TabsTrigger 
                   value="sectors" 
@@ -218,9 +221,9 @@ const Index = () => {
           )}
 
           {!hasRole('admin') && !hasRole('manager') && (
-            <TabsContent value="employee-trips" className="space-y-6">
+            <TabsContent value="employee-calendar" className="space-y-6">
               <div className="max-w-6xl mx-auto">
-                <EmployeeTripView />
+                <EmployeeWeekCalendar />
               </div>
             </TabsContent>
           )}
@@ -249,18 +252,20 @@ const Index = () => {
             </TabsContent>
           )}
 
-          <TabsContent value="clients" className="space-y-6">
-            <RoleGuard requiredRole="manager" fallback={
-              <div className="max-w-6xl mx-auto">
-                <ClientList />
-              </div>
-            }>
-              <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <ClientForm />
-                <ClientList />
-              </div>
-            </RoleGuard>
-          </TabsContent>
+          {(hasRole('admin') || hasRole('manager')) && (
+            <TabsContent value="clients" className="space-y-6">
+              <RoleGuard requiredRole="manager" fallback={
+                <div className="max-w-6xl mx-auto">
+                  <ClientList />
+                </div>
+              }>
+                <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  <ClientForm />
+                  <ClientList />
+                </div>
+              </RoleGuard>
+            </TabsContent>
+          )}
 
           {(hasRole('admin') || hasRole('manager')) && (
             <TabsContent value="sectors" className="space-y-6">
