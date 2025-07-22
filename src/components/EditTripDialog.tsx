@@ -21,6 +21,7 @@ interface Trip {
   id: string;
   title: string;
   description: string;
+  observations?: string;
   trip_date: string;
   departure_time: string;
   sector: string;
@@ -43,6 +44,7 @@ export function EditTripDialog({ trip, open, onClose, onTripUpdated }: EditTripD
   const [formData, setFormData] = useState({
     title: '',
     description: '',
+    observations: '',
     trip_date: '',
     departure_time: '08:00',
     travelers: [''],
@@ -58,6 +60,7 @@ export function EditTripDialog({ trip, open, onClose, onTripUpdated }: EditTripD
       setFormData({
         title: trip.title || '',
         description: trip.description || '',
+        observations: trip.observations || '',
         trip_date: trip.trip_date,
         departure_time: trip.departure_time || '08:00',
         travelers: trip.travelers.length > 0 ? trip.travelers : [''],
@@ -126,13 +129,14 @@ export function EditTripDialog({ trip, open, onClose, onTripUpdated }: EditTripD
         .update({
           title: formData.title,
           description: formData.description,
+          observations: formData.observations,
           trip_date: formData.trip_date,
           departure_time: formData.departure_time,
           sector: sectorsData?.map(s => s.name).join(', ') || '',
-          sector_id: formData.sector_id,
+          sector_id: formData.sector_id || null,
           travelers: validTravelers,
           employee_ids: formData.employee_ids,
-          vehicle_id: formData.vehicle_id
+          vehicle_id: formData.vehicle_id || null
         })
         .eq('id', trip.id);
 
@@ -199,6 +203,16 @@ export function EditTripDialog({ trip, open, onClose, onTripUpdated }: EditTripD
               id="description"
               value={formData.description}
               onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+              rows={3}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="observations">Observações</Label>
+            <Textarea
+              id="observations"
+              value={formData.observations}
+              onChange={(e) => setFormData(prev => ({ ...prev, observations: e.target.value }))}
               rows={3}
             />
           </div>
