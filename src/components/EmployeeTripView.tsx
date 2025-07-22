@@ -32,11 +32,16 @@ export function EmployeeTripView() {
     queryFn: async () => {
       if (!user?.id) return null;
       
+      console.log("🔍 Buscando funcionário para user ID:", user.id);
+      
       const { data, error } = await supabase
         .from("employees")
         .select("*")
         .eq("auth_user_id", user.id)
         .single();
+      
+      console.log("👤 Funcionário encontrado:", data);
+      console.log("❌ Erro na busca do funcionário:", error);
       
       if (error) return null;
       return data;
@@ -47,12 +52,22 @@ export function EmployeeTripView() {
   const { data: trips = [], isLoading } = useQuery({
     queryKey: ["employee-trips", employee?.id],
     queryFn: async () => {
-      if (!employee?.id) return [];
+      if (!employee?.id) {
+        console.log("⚠️ Nenhum funcionário encontrado para buscar viagens");
+        return [];
+      }
+      
+      console.log("🚗 Buscando viagens para funcionário ID:", employee.id);
       
       // Pegar início e fim da semana atual
       const now = new Date();
       const startWeek = startOfWeek(now, { weekStartsOn: 1 }); // Segunda-feira
       const endWeek = endOfWeek(now, { weekStartsOn: 1 }); // Domingo
+      
+      console.log("📅 Período da semana:", {
+        inicio: startWeek.toISOString().split('T')[0],
+        fim: endWeek.toISOString().split('T')[0]
+      });
       
       const { data, error } = await supabase
         .from("trips")
@@ -67,6 +82,9 @@ export function EmployeeTripView() {
         .gte("trip_date", startWeek.toISOString().split('T')[0])
         .lte("trip_date", endWeek.toISOString().split('T')[0])
         .order("trip_date", { ascending: true });
+      
+      console.log("🎯 Viagens encontradas:", data);
+      console.log("❌ Erro na busca das viagens:", error);
       
       if (error) throw error;
       return data as Trip[];
