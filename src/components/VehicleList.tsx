@@ -155,10 +155,10 @@ export function VehicleList() {
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
               {filteredVehicles.map((vehicle) => (
                 <Card key={vehicle.id} className="hover:shadow-lg transition-shadow">
-                  <CardContent className="p-5">
-                    <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start mb-4 gap-3">
-                      <div className="flex-1 min-w-0">
-                        <h3 className="font-semibold text-base md:text-lg truncate">
+                  <CardContent className="p-4">
+                    <div className="flex justify-between items-start mb-3">
+                      <div className="flex-1 min-w-0 pr-3">
+                        <h3 className="font-semibold text-base md:text-lg text-foreground mb-1 break-words">
                           {vehicle.brand} {vehicle.model}
                         </h3>
                         <p className="text-muted-foreground text-sm">{vehicle.plate}</p>
@@ -168,7 +168,7 @@ export function VehicleList() {
                       </div>
                     </div>
                     
-                    <div className="space-y-2 text-sm text-muted-foreground mb-5">
+                    <div className="space-y-2 text-sm text-muted-foreground mb-4">
                       <div className="flex justify-between">
                         <span>Ano:</span>
                         <span className="font-medium">{vehicle.year}</span>
@@ -179,24 +179,24 @@ export function VehicleList() {
                       </div>
                     </div>
 
-                    <div className="flex gap-2">
+                    <div className="flex gap-2 mt-4">
                       <Button
                         variant="outline"
                         size="sm"
                         onClick={() => setEditingVehicle(vehicle)}
-                        className="flex items-center justify-center gap-2 h-9 min-w-0 px-3"
+                        className="flex-1 flex items-center justify-center gap-1.5 h-9 max-w-[120px]"
                       >
                         <Edit className="h-4 w-4" />
-                        <span className="text-sm hidden xs:inline">Editar</span>
+                        <span className="text-sm">Editar</span>
                       </Button>
                       <Button
                         variant="destructive"
                         size="sm"
                         onClick={() => handleDelete(vehicle.id)}
-                        className="flex items-center justify-center gap-2 h-9 min-w-0 px-3"
+                        className="flex-1 flex items-center justify-center gap-1.5 h-9 max-w-[120px]"
                       >
                         <Trash2 className="h-4 w-4" />
-                        <span className="text-sm hidden xs:inline">Excluir</span>
+                        <span className="text-sm">Excluir</span>
                       </Button>
                     </div>
                   </CardContent>
