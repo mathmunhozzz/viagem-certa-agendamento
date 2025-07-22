@@ -99,6 +99,7 @@ export function TripForm({ onTripCreated }: TripFormProps) {
     const formData = new FormData(e.currentTarget);
     const title = formData.get('title') as string;
     const description = formData.get('description') as string;
+    const observations = formData.get('observations') as string;
 
     try {
       // Buscar os nomes dos setores selecionados
@@ -124,6 +125,7 @@ export function TripForm({ onTripCreated }: TripFormProps) {
         .insert({
           title,
           description,
+          observations,
           trip_date: format(date, 'yyyy-MM-dd'),
           departure_time: time,
           sector: sectorsData?.map(s => s.name).join(', '), // Nomes dos setores para compatibilidade
@@ -221,6 +223,17 @@ export function TripForm({ onTripCreated }: TripFormProps) {
               placeholder="Detalhes sobre a viagem, objetivo, local de destino..."
               rows={3}
               className="border-muted focus:border-travel-secondary focus:ring-travel-secondary/20 resize-none"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="observations" className="text-sm font-semibold">Observações</Label>
+            <Textarea
+              id="observations"
+              name="observations"
+              placeholder="Observações ou instruções específicas para os funcionários..."
+              rows={3}
+              className="border-muted focus:border-travel-accent focus:ring-travel-accent/20 resize-none"
             />
           </div>
 

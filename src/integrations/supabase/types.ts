@@ -170,6 +170,7 @@ export type Database = {
           description: string | null
           employee_ids: string[] | null
           id: string
+          observations: string | null
           sector: string
           sector_id: string | null
           status: string | null
@@ -187,6 +188,7 @@ export type Database = {
           description?: string | null
           employee_ids?: string[] | null
           id?: string
+          observations?: string | null
           sector: string
           sector_id?: string | null
           status?: string | null
@@ -204,6 +206,7 @@ export type Database = {
           description?: string | null
           employee_ids?: string[] | null
           id?: string
+          observations?: string | null
           sector?: string
           sector_id?: string | null
           status?: string | null

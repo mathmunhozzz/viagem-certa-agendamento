@@ -1,16 +1,19 @@
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, MapPin, Users, Clock } from "lucide-react";
+import { Calendar, MapPin, Users, Clock, ChevronDown, ChevronUp, FileText } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { format, startOfWeek, endOfWeek, addDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { Button } from "@/components/ui/button";
 
 interface Trip {
   id: string;
   title: string;
   description?: string;
+  observations?: string;
   trip_date: string;
   departure_time?: string;
   sector: string;
@@ -23,6 +26,7 @@ interface Trip {
 
 export function EmployeeWeekCalendar() {
   const { user } = useAuth();
+  const [expandedTrip, setExpandedTrip] = useState<string | null>(null);
 
   const { data: employee } = useQuery({
     queryKey: ["employee-by-user", user?.id],
@@ -158,25 +162,57 @@ export function EmployeeWeekCalendar() {
                 {dayTrips.length > 0 ? (
                   <div className="space-y-2">
                     {dayTrips.map((trip) => (
-                      <div 
-                        key={trip.id} 
-                        className={`p-2 rounded-lg border text-xs ${getStatusColor(trip.status)}`}
-                      >
-                        <div className="font-medium truncate">{trip.title}</div>
-                        {trip.departure_time && (
-                          <div className="flex items-center gap-1 mt-1">
-                            <Clock className="h-3 w-3" />
-                            <span>{trip.departure_time}</span>
+                      <div key={trip.id}>
+                        <div 
+                          className={`p-2 rounded-lg border text-xs cursor-pointer transition-all hover:shadow-sm ${getStatusColor(trip.status)}`}
+                          onClick={() => setExpandedTrip(expandedTrip === trip.id ? null : trip.id)}
+                        >
+                          <div className="flex items-center justify-between">
+                            <div className="font-medium truncate flex-1">{trip.title}</div>
+                            {(trip.description || trip.observations) && (
+                              <div className="ml-1">
+                                {expandedTrip === trip.id ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
+                              </div>
+                            )}
                           </div>
-                        )}
-                        <div className="flex items-center gap-1 mt-1">
-                          <MapPin className="h-3 w-3" />
-                          <span className="truncate">{trip.sector}</span>
-                        </div>
-                        {trip.clients && (
+                          {trip.departure_time && (
+                            <div className="flex items-center gap-1 mt-1">
+                              <Clock className="h-3 w-3" />
+                              <span>{trip.departure_time}</span>
+                            </div>
+                          )}
                           <div className="flex items-center gap-1 mt-1">
-                            <Users className="h-3 w-3" />
-                            <span className="truncate">{trip.clients.name}</span>
+                            <MapPin className="h-3 w-3" />
+                            <span className="truncate">{trip.sector}</span>
+                          </div>
+                          {trip.clients && (
+                            <div className="flex items-center gap-1 mt-1">
+                              <Users className="h-3 w-3" />
+                              <span className="truncate">{trip.clients.name}</span>
+                            </div>
+                          )}
+                        </div>
+                        
+                        {expandedTrip === trip.id && (trip.description || trip.observations) && (
+                          <div className="mt-2 p-3 bg-gray-50 border rounded-lg text-xs space-y-2">
+                            {trip.description && (
+                              <div>
+                                <div className="flex items-center gap-1 font-medium text-gray-700 mb-1">
+                                  <FileText className="h-3 w-3" />
+                                  Descrição:
+                                </div>
+                                <p className="text-gray-600">{trip.description}</p>
+                              </div>
+                            )}
+                            {trip.observations && (
+                              <div>
+                                <div className="flex items-center gap-1 font-medium text-blue-700 mb-1">
+                                  <FileText className="h-3 w-3" />
+                                  Observações:
+                                </div>
+                                <p className="text-blue-600 bg-blue-50 p-2 rounded border border-blue-200">{trip.observations}</p>
+                              </div>
+                            )}
                           </div>
                         )}
                       </div>
