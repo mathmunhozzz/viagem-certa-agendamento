@@ -45,12 +45,6 @@ export function Header({ onShowUserManagement }: { onShowUserManagement?: () => 
               className="w-full h-full object-contain"
             />
           </div>
-          <div className="min-w-0 flex-1">
-            <h1 className="text-sm md:text-xl font-bold bg-gradient-to-r from-travel-primary to-travel-secondary bg-clip-text text-transparent truncate">
-              Sistema de Viagens
-            </h1>
-            <p className="text-xs text-muted-foreground hidden sm:block">Opportunity</p>
-          </div>
         </div>
         
         {user && (
