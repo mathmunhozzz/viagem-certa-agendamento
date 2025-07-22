@@ -22,24 +22,25 @@ export function UserRoleManager() {
 
   const fetchUsers = async () => {
     try {
+      // Fetch all profiles
       const { data: profiles, error: profilesError } = await supabase
         .from('profiles')
-        .select(`
-          user_id,
-          name,
-          role,
-          user_roles!inner(role)
-        `);
+        .select('user_id, name, role, account_status');
 
       if (profilesError) throw profilesError;
 
-      // Get user emails from auth (this requires admin access)
-      const userList: UserWithRole[] = profiles?.map(profile => ({
+      if (!profiles || profiles.length === 0) {
+        setUsers([]);
+        return;
+      }
+
+      // Create user list with available data
+      const userList: UserWithRole[] = profiles.map(profile => ({
         id: profile.user_id,
-        name: profile.name,
-        email: 'Email não disponível', // We can't fetch emails directly from auth.users
+        name: profile.name || 'Nome não informado',
+        email: 'Email não disponível', // We can't fetch emails directly from auth.users via client
         role: (profile.role || 'user') as UserRole
-      })) || [];
+      }));
 
       setUsers(userList);
     } catch (error) {
