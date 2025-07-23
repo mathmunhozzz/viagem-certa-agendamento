@@ -107,6 +107,71 @@ export type Database = {
         }
         Relationships: []
       }
+      notification_logs: {
+        Row: {
+          error_message: string | null
+          id: string
+          notification_type: string
+          recipient_email: string
+          sent_at: string
+          status: string | null
+          trip_id: string
+        }
+        Insert: {
+          error_message?: string | null
+          id?: string
+          notification_type: string
+          recipient_email: string
+          sent_at?: string
+          status?: string | null
+          trip_id: string
+        }
+        Update: {
+          error_message?: string | null
+          id?: string
+          notification_type?: string
+          recipient_email?: string
+          sent_at?: string
+          status?: string | null
+          trip_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notification_logs_trip_id_fkey"
+            columns: ["trip_id"]
+            isOneToOne: false
+            referencedRelation: "trips"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      notification_settings: {
+        Row: {
+          created_at: string
+          email_reminders: boolean | null
+          id: string
+          reminder_hours: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          email_reminders?: boolean | null
+          id?: string
+          reminder_hours?: number | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          email_reminders?: boolean | null
+          id?: string
+          reminder_hours?: number | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           account_status: string | null
@@ -302,7 +367,36 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      sector_statistics: {
+        Row: {
+          avg_travelers: number | null
+          employee_count: number | null
+          sector_name: string | null
+          trip_count: number | null
+        }
+        Relationships: []
+      }
+      trip_statistics: {
+        Row: {
+          cancelled_trips: number | null
+          completed_trips: number | null
+          month: string | null
+          sectors: string[] | null
+          total_trips: number | null
+          vehicles_used: string[] | null
+        }
+        Relationships: []
+      }
+      vehicle_statistics: {
+        Row: {
+          capacity: number | null
+          plate: string | null
+          trip_count: number | null
+          usage_percentage: number | null
+          vehicle_name: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       get_user_role: {
