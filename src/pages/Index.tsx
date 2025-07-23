@@ -8,6 +8,7 @@ import { Header } from '@/components/Header';
 import { TripCalendar } from '@/components/TripCalendar';
 import { TripForm } from '@/components/TripForm';
 import { TripStats } from '@/components/TripStats';
+import { TripDashboard } from '@/components/TripDashboard';
 import { TripList } from '@/components/TripList';
 import { TripReports } from '@/components/TripReports';
 import { VehicleForm } from '@/components/VehicleForm';
@@ -111,7 +112,7 @@ const Index = () => {
 
         <Tabs defaultValue={hasRole('user') && !hasRole('admin') && !hasRole('manager') ? "employee-calendar" : "calendar"} className="space-y-6">
           <div className="flex justify-center px-2">
-            <TabsList className={`grid w-full max-w-7xl ${hasRole('admin') ? 'grid-cols-5 md:grid-cols-10' : hasRole('manager') ? 'grid-cols-4 md:grid-cols-9' : 'grid-cols-1'} bg-muted/50 p-1 h-auto md:h-12 text-xs md:text-sm gap-1`}>
+            <TabsList className={`grid w-full max-w-7xl ${hasRole('admin') ? 'grid-cols-6 md:grid-cols-11' : hasRole('manager') ? 'grid-cols-5 md:grid-cols-10' : 'grid-cols-1'} bg-muted/50 p-1 h-auto md:h-12 text-xs md:text-sm gap-1`}>
               {(hasRole('admin') || hasRole('manager')) && (
                 <TabsTrigger 
                   value="calendar" 
@@ -119,6 +120,15 @@ const Index = () => {
                 >
                   <span className="block md:hidden">📅</span>
                   <span className="hidden md:block">📅 Calendário</span>
+                </TabsTrigger>
+              )}
+              {(hasRole('admin') || hasRole('manager')) && (
+                <TabsTrigger 
+                  value="dashboard" 
+                  className="data-[state=active]:bg-blue-600 data-[state=active]:text-white font-semibold p-2 md:p-3 text-center min-h-[2.5rem]"
+                >
+                  <span className="block md:hidden">📊</span>
+                  <span className="hidden md:block">📊 Dashboard</span>
                 </TabsTrigger>
               )}
               {!hasRole('admin') && !hasRole('manager') && (
@@ -217,6 +227,14 @@ const Index = () => {
           {(hasRole('admin') || hasRole('manager')) && (
             <TabsContent value="calendar" key={refreshKey} className="space-y-6">
               <TripCalendar />
+            </TabsContent>
+          )}
+
+          {(hasRole('admin') || hasRole('manager')) && (
+            <TabsContent value="dashboard" className="space-y-6">
+              <div className="max-w-7xl mx-auto">
+                <TripDashboard />
+              </div>
             </TabsContent>
           )}
 
