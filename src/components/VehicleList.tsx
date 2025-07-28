@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -152,56 +153,60 @@ export function VehicleList() {
               }
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-              {filteredVehicles.map((vehicle) => (
-                <Card key={vehicle.id} className="hover:shadow-lg transition-shadow">
-                  <CardContent className="p-6">
-                    <div className="flex justify-between items-start mb-4">
-                      <div className="flex-1 mr-3">
-                        <h3 className="font-semibold text-lg leading-tight mb-1 text-foreground">
-                          {vehicle.brand} {vehicle.model}
-                        </h3>
-                        <p className="text-muted-foreground text-sm font-medium">{vehicle.plate}</p>
-                      </div>
-                      <div>
+            <div className="border rounded-lg">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Veículo</TableHead>
+                    <TableHead>Placa</TableHead>
+                    <TableHead>Ano</TableHead>
+                    <TableHead>Capacidade</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead className="text-right">Ações</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredVehicles.map((vehicle) => (
+                    <TableRow key={vehicle.id} className="hover:bg-muted/50">
+                      <TableCell className="font-medium">
+                        {vehicle.brand} {vehicle.model}
+                      </TableCell>
+                      <TableCell className="font-mono text-sm">
+                        {vehicle.plate}
+                      </TableCell>
+                      <TableCell>
+                        {vehicle.year}
+                      </TableCell>
+                      <TableCell>
+                        {vehicle.capacity} passageiros
+                      </TableCell>
+                      <TableCell>
                         {getStatusBadge(vehicle.status)}
-                      </div>
-                    </div>
-                    
-                    <div className="grid grid-cols-2 gap-3 mb-6 text-sm">
-                      <div className="space-y-1">
-                        <span className="text-muted-foreground block">Ano</span>
-                        <span className="font-semibold text-foreground">{vehicle.year}</span>
-                      </div>
-                      <div className="space-y-1">
-                        <span className="text-muted-foreground block">Capacidade</span>
-                        <span className="font-semibold text-foreground">{vehicle.capacity} passageiros</span>
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-3">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setEditingVehicle(vehicle)}
-                        className="w-full flex items-center justify-center gap-2 h-10"
-                      >
-                        <Edit className="h-4 w-4" />
-                        <span>Editar</span>
-                      </Button>
-                      <Button
-                        variant="destructive"
-                        size="sm"
-                        onClick={() => handleDelete(vehicle.id)}
-                        className="w-full flex items-center justify-center gap-2 h-10"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                        <span>Excluir</span>
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex justify-end gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setEditingVehicle(vehicle)}
+                            className="h-8 px-3"
+                          >
+                            <Edit className="h-3 w-3" />
+                          </Button>
+                          <Button
+                            variant="destructive"
+                            size="sm"
+                            onClick={() => handleDelete(vehicle.id)}
+                            className="h-8 px-3"
+                          >
+                            <Trash2 className="h-3 w-3" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
             </div>
           )}
         </CardContent>

@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent } from "@/components/ui/card";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -95,56 +95,72 @@ export function ClientList() {
           {searchTerm ? "Nenhum cliente encontrado." : "Nenhum cliente cadastrado."}
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-          {filteredClients.map((client) => (
-            <Card key={client.id} className="hover:shadow-lg transition-shadow">
-              <CardContent className="p-6">
-                <div className="flex justify-between items-start mb-4">
-                  <div className="flex-1 mr-3">
-                    <h3 className="font-semibold text-lg leading-tight mb-1 text-foreground">
-                      {client.name}
-                    </h3>
-                    {client.municipality && (
-                      <div className="flex items-center gap-1 text-muted-foreground text-sm mb-1">
+        <div className="border rounded-lg">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Nome</TableHead>
+                <TableHead>Município</TableHead>
+                <TableHead>Contato</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead className="text-right">Ações</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filteredClients.map((client) => (
+                <TableRow key={client.id} className="hover:bg-muted/50">
+                  <TableCell className="font-medium">
+                    {client.name}
+                  </TableCell>
+                  <TableCell>
+                    {client.municipality ? (
+                      <div className="flex items-center gap-1 text-muted-foreground">
                         <MapPin className="h-3 w-3" />
                         <span>{client.municipality}</span>
                       </div>
+                    ) : (
+                      <span className="text-muted-foreground">-</span>
                     )}
-                    {client.contact && (
-                      <div className="flex items-center gap-1 text-muted-foreground text-sm">
+                  </TableCell>
+                  <TableCell>
+                    {client.contact ? (
+                      <div className="flex items-center gap-1 text-muted-foreground">
                         <Phone className="h-3 w-3" />
-                        <span className="break-words">{client.contact}</span>
+                        <span className="break-all">{client.contact}</span>
                       </div>
+                    ) : (
+                      <span className="text-muted-foreground">-</span>
                     )}
-                  </div>
-                  <Badge variant="outline" className="text-xs">
-                    Cliente
-                  </Badge>
-                </div>
-
-                <div className="grid grid-cols-2 gap-3">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setEditingClient(client)}
-                    className="w-full flex items-center justify-center gap-2 h-10"
-                  >
-                    <Edit className="h-4 w-4" />
-                    <span>Editar</span>
-                  </Button>
-                  <Button
-                    variant="destructive"
-                    size="sm"
-                    onClick={() => handleDelete(client.id)}
-                    className="w-full flex items-center justify-center gap-2 h-10"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                    <span>Excluir</span>
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant="outline" className="text-xs">
+                      Cliente
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <div className="flex justify-end gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setEditingClient(client)}
+                        className="h-8 px-3"
+                      >
+                        <Edit className="h-3 w-3" />
+                      </Button>
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        onClick={() => handleDelete(client.id)}
+                        className="h-8 px-3"
+                      >
+                        <Trash2 className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
         </div>
       )}
 
