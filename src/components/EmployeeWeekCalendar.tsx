@@ -135,7 +135,7 @@ export function EmployeeWeekCalendar() {
         <p className="text-muted-foreground">Calendário Semanal - {format(startWeek, "dd", { locale: ptBR })} a {format(weekDays[6], "dd 'de' MMMM", { locale: ptBR })}</p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-7 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-7 gap-4">
         {weekDays.map((day, index) => {
           const dateKey = format(day, 'yyyy-MM-dd');
           const dayTrips = tripsByDate[dateKey] || [];
@@ -143,74 +143,78 @@ export function EmployeeWeekCalendar() {
           return (
             <Card 
               key={index} 
-              className={`${isToday(day) ? 'border-green-500 border-2 bg-green-50' : 'border-gray-200'} min-h-[200px]`}
+              className={`${isToday(day) ? 'border-primary border-2 bg-primary/5' : 'border-border'} min-h-[200px] w-full`}
             >
-              <CardHeader className="pb-2">
+              <CardHeader className="pb-2 px-3 pt-3">
                 <CardTitle className="text-sm text-center">
-                  <div className={`font-bold ${isToday(day) ? 'text-green-700' : ''}`}>
-                    {format(day, "EEEE", { locale: ptBR })}
+                  <div className={`font-bold text-xs ${isToday(day) ? 'text-primary' : 'text-foreground'}`}>
+                    {format(day, "EEE", { locale: ptBR })}
                   </div>
-                  <div className={`text-lg ${isToday(day) ? 'text-green-600' : 'text-muted-foreground'}`}>
+                  <div className={`text-lg font-semibold ${isToday(day) ? 'text-primary' : 'text-muted-foreground'}`}>
                     {format(day, "dd", { locale: ptBR })}
                   </div>
                   {isToday(day) && (
-                    <Badge className="bg-green-600 text-white text-xs mt-1">HOJE</Badge>
+                    <Badge variant="default" className="text-xs mt-1">HOJE</Badge>
                   )}
                 </CardTitle>
               </CardHeader>
-              <CardContent className="pt-0">
+              <CardContent className="pt-0 px-3 pb-3">
                 {dayTrips.length > 0 ? (
                   <div className="space-y-2">
                     {dayTrips.map((trip) => (
-                      <div key={trip.id}>
+                      <div key={trip.id} className="w-full">
                         <div 
-                          className={`p-2 rounded-lg border text-xs cursor-pointer transition-all hover:shadow-sm ${getStatusColor(trip.status)}`}
+                          className={`p-2 rounded-lg border text-xs cursor-pointer transition-all hover:shadow-sm w-full ${getStatusColor(trip.status)}`}
                           onClick={() => setExpandedTrip(expandedTrip === trip.id ? null : trip.id)}
                         >
-                          <div className="flex items-center justify-between">
-                            <div className="font-medium truncate flex-1">{trip.title}</div>
+                          <div className="flex items-center justify-between w-full">
+                            <div className="font-medium text-break flex-1 min-w-0 pr-1">{trip.title}</div>
                             {(trip.description || trip.observations) && (
-                              <div className="ml-1">
+                              <div className="ml-1 flex-shrink-0">
                                 {expandedTrip === trip.id ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
                               </div>
                             )}
                           </div>
                           {trip.departure_time && (
                             <div className="flex items-center gap-1 mt-1">
-                              <Clock className="h-3 w-3" />
-                              <span>{trip.departure_time}</span>
+                              <Clock className="h-3 w-3 flex-shrink-0" />
+                              <span className="text-break">{trip.departure_time}</span>
                             </div>
                           )}
                           <div className="flex items-center gap-1 mt-1">
-                            <MapPin className="h-3 w-3" />
-                            <span className="truncate">{trip.sector}</span>
+                            <MapPin className="h-3 w-3 flex-shrink-0" />
+                            <span className="text-break min-w-0">{trip.sector}</span>
                           </div>
                           {trip.clients && (
                             <div className="flex items-center gap-1 mt-1">
-                              <Users className="h-3 w-3" />
-                              <span className="truncate">{trip.clients.name}</span>
+                              <Users className="h-3 w-3 flex-shrink-0" />
+                              <span className="text-break min-w-0">{trip.clients.name}</span>
                             </div>
                           )}
                         </div>
                         
                         {expandedTrip === trip.id && (trip.description || trip.observations) && (
-                          <div className="mt-2 p-3 bg-gray-50 border rounded-lg text-xs space-y-2">
+                          <div className="mt-2 p-2 bg-card border rounded-lg text-xs space-y-2 w-full max-w-full">
                             {trip.description && (
-                              <div>
-                                <div className="flex items-center gap-1 font-medium text-gray-700 mb-1">
-                                  <FileText className="h-3 w-3" />
-                                  Descrição:
+                              <div className="space-y-1">
+                                <div className="flex items-center gap-1 font-medium text-muted-foreground">
+                                  <FileText className="h-3 w-3 flex-shrink-0" />
+                                  <span className="text-xs">Descrição:</span>
                                 </div>
-                                <p className="text-gray-600">{trip.description}</p>
+                                <div className="pl-4 w-full">
+                                  <p className="text-xs text-foreground text-break whitespace-pre-wrap">{trip.description}</p>
+                                </div>
                               </div>
                             )}
                             {trip.observations && (
-                              <div>
-                                <div className="flex items-center gap-1 font-medium text-blue-700 mb-1">
-                                  <FileText className="h-3 w-3" />
-                                  Observações:
+                              <div className="space-y-1">
+                                <div className="flex items-center gap-1 font-medium text-primary">
+                                  <FileText className="h-3 w-3 flex-shrink-0" />
+                                  <span className="text-xs">Observações:</span>
                                 </div>
-                                <p className="text-blue-600 bg-blue-50 p-2 rounded border border-blue-200">{trip.observations}</p>
+                                <div className="bg-primary/5 border border-primary/20 rounded p-2 w-full">
+                                  <p className="text-xs text-primary text-break whitespace-pre-wrap">{trip.observations}</p>
+                                </div>
                               </div>
                             )}
                           </div>

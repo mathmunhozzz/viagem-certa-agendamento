@@ -35,6 +35,20 @@
   .button-stack {
     @apply flex flex-col sm:flex-row gap-2 sm:gap-4;
   }
+  
+  /* Text wrapping utilities for proper layout */
+  .text-break {
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    word-break: break-word;
+    hyphens: auto;
+  }
+  
+  .overflow-wrap-anywhere {
+    overflow-wrap: anywhere;
+    word-break: break-word;
+    hyphens: auto;
+  }
 }
 
 /* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
