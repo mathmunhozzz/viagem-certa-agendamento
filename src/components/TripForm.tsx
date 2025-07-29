@@ -118,9 +118,18 @@ export function TripForm({ onTripCreated }: TripFormProps) {
 
       if (employeesError) throw employeesError;
 
+      // Buscar nome do cliente
+      const { data: clientData, error: clientError } = await supabase
+        .from('clients')
+        .select('name')
+        .eq('id', selectedClient)
+        .single();
+
+      if (clientError) throw clientError;
+
       // Apenas viajantes manuais vão para o campo travelers
       // Funcionários ficam apenas no employee_ids
-      const { error } = await supabase
+      const { data: result, error } = await supabase
         .from('trips')
         .insert({
           title,
@@ -135,14 +144,57 @@ export function TripForm({ onTripCreated }: TripFormProps) {
           client_id: selectedClient, // Cliente obrigatório
           created_by: user.id,
           vehicle_id: selectedVehicle
-        });
+        })
+        .select();
 
       if (error) throw error;
 
-      toast({
-        title: "Viagem agendada com sucesso!",
-        description: `A viagem "${title}" foi criada para ${format(date, 'dd/MM/yyyy', { locale: ptBR })}.`
-      });
+      // Enviar notificações por email se houver funcionários selecionados
+      if (selectedEmployees.length > 0) {
+        try {
+          const notificationData = {
+            tripId: result[0].id,
+            title: title.trim(),
+            description: description.trim() || undefined,
+            tripDate: date?.toISOString().split('T')[0],
+            departureTime: time || undefined,
+            client: clientData.name,
+            sector: sectorsData?.map(s => s.name).join(', '),
+            employeeIds: selectedEmployees
+          };
+
+          const { error: notificationError } = await supabase.functions.invoke(
+            'send-trip-created-notification',
+            { body: notificationData }
+          );
+
+          if (notificationError) {
+            console.error('Failed to send notifications:', notificationError);
+            toast({
+              title: "Viagem criada com avisos",
+              description: "A viagem foi criada, mas houve problemas ao enviar notificações por email.",
+              variant: "destructive",
+            });
+          } else {
+            toast({
+              title: "Viagem agendada com sucesso!",
+              description: `A viagem "${title}" foi criada e os funcionários foram notificados por email.`,
+            });
+          }
+        } catch (notificationError) {
+          console.error('Error sending notifications:', notificationError);
+          toast({
+            title: "Viagem criada com avisos",
+            description: "A viagem foi criada, mas houve problemas ao enviar notificações por email.",
+            variant: "destructive",
+          });
+        }
+      } else {
+        toast({
+          title: "Viagem agendada com sucesso!",
+          description: `A viagem "${title}" foi criada para ${format(date, 'dd/MM/yyyy', { locale: ptBR })}.`
+        });
+      }
 
       // Reset form
       (e.target as HTMLFormElement).reset();
