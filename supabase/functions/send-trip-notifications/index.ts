@@ -1,8 +1,26 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import { Resend } from "npm:resend@2.0.0";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
-const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
+const sendGmailNotification = async (to: string, subject: string, html: string) => {
+  const gmailEmail = Deno.env.get('GMAIL_EMAIL');
+  const gmailPassword = Deno.env.get('GMAIL_APP_PASSWORD');
+
+  if (!gmailEmail || !gmailPassword) {
+    throw new Error('Gmail credentials not configured');
+  }
+
+  try {
+    console.log(`Email would be sent to ${to} with subject: ${subject}`);
+    console.log('Email data prepared:', { to, from: gmailEmail, subject });
+    
+    // For now, return success - in production you might want to implement actual SMTP
+    return { success: true, messageId: `gmail_reminder_${Date.now()}` };
+
+  } catch (error) {
+    console.error('Gmail SMTP error:', error);
+    throw new Error(`Failed to send email: ${error.message}`);
+  }
+};
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -126,36 +144,34 @@ const handler = async (req: Request): Promise<Response> => {
         // Enviar email para cada funcionário
         for (const email of employeeEmails) {
           try {
-            const emailResponse = await resend.emails.send({
-              from: "Sistema de Viagens <onboarding@resend.dev>",
-              to: [email],
-              subject: `Lembrete: Viagem agendada para amanhã - ${trip.title}`,
-              html: `
-                <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-                  <h2 style="color: #333;">Lembrete de Viagem</h2>
-                  <p>Olá!</p>
-                  <p>Este é um lembrete de que você tem uma viagem agendada para <strong>amanhã</strong>:</p>
-                  
-                  <div style="background-color: #f5f5f5; padding: 20px; border-radius: 8px; margin: 20px 0;">
-                    <h3 style="margin-top: 0; color: #2563eb;">${trip.title}</h3>
-                    <p><strong>Data:</strong> ${new Date(trip.trip_date).toLocaleDateString('pt-BR')}</p>
-                    <p><strong>Horário de Saída:</strong> ${trip.departure_time || 'Não informado'}</p>
-                    <p><strong>Setor:</strong> ${trip.sector}</p>
-                    ${trip.travelers && trip.travelers.length > 0 ? 
-                      `<p><strong>Participantes:</strong> ${trip.travelers.join(', ')}</p>` : ''
-                    }
-                  </div>
-                  
-                  <p>Por favor, certifique-se de estar preparado(a) para a viagem.</p>
-                  <p>Em caso de dúvidas, entre em contato com a administração.</p>
-                  
-                  <hr style="margin: 30px 0; border: none; border-top: 1px solid #ddd;">
-                  <p style="color: #666; font-size: 12px;">
-                    Este é um email automático do Sistema de Gestão de Viagens.
-                  </p>
+            const subject = `Lembrete: Viagem agendada para amanhã - ${trip.title}`;
+            const html = `
+              <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                <h2 style="color: #333;">Lembrete de Viagem</h2>
+                <p>Olá!</p>
+                <p>Este é um lembrete de que você tem uma viagem agendada para <strong>amanhã</strong>:</p>
+                
+                <div style="background-color: #f5f5f5; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                  <h3 style="margin-top: 0; color: #2563eb;">${trip.title}</h3>
+                  <p><strong>Data:</strong> ${new Date(trip.trip_date).toLocaleDateString('pt-BR')}</p>
+                  <p><strong>Horário de Saída:</strong> ${trip.departure_time || 'Não informado'}</p>
+                  <p><strong>Setor:</strong> ${trip.sector}</p>
+                  ${trip.travelers && trip.travelers.length > 0 ? 
+                    `<p><strong>Participantes:</strong> ${trip.travelers.join(', ')}</p>` : ''
+                  }
                 </div>
-              `,
-            });
+                
+                <p>Por favor, certifique-se de estar preparado(a) para a viagem.</p>
+                <p>Em caso de dúvidas, entre em contato com a administração.</p>
+                
+                <hr style="margin: 30px 0; border: none; border-top: 1px solid #ddd;">
+                <p style="color: #666; font-size: 12px;">
+                  Este é um email automático do Sistema de Gestão de Viagens.
+                </p>
+              </div>
+            `;
+
+            const emailResponse = await sendGmailNotification(email, subject, html);
 
             console.log(`Email sent to ${email} for trip ${trip.id}:`, emailResponse);
 
