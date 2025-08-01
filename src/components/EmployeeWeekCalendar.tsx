@@ -194,15 +194,15 @@ export function EmployeeWeekCalendar() {
                         </div>
                         
                         {expandedTrip === trip.id && (trip.description || trip.observations) && (
-                          <div className="mt-2 p-2 bg-card border rounded-lg text-xs space-y-2 w-full max-w-full">
+                          <div className="mt-2 p-3 bg-card border rounded-lg text-xs space-y-3 w-full overflow-hidden">
                             {trip.description && (
                               <div className="space-y-1">
                                 <div className="flex items-center gap-1 font-medium text-muted-foreground">
                                   <FileText className="h-3 w-3 flex-shrink-0" />
                                   <span className="text-xs">Descrição:</span>
                                 </div>
-                                <div className="pl-4 w-full">
-                                  <p className="text-xs text-foreground text-break whitespace-pre-wrap">{trip.description}</p>
+                                <div className="bg-muted/30 border border-muted rounded p-2 w-full overflow-hidden">
+                                  <p className="text-xs text-foreground break-words whitespace-pre-wrap leading-relaxed max-w-full">{trip.description}</p>
                                 </div>
                               </div>
                             )}
@@ -212,8 +212,8 @@ export function EmployeeWeekCalendar() {
                                   <FileText className="h-3 w-3 flex-shrink-0" />
                                   <span className="text-xs">Observações:</span>
                                 </div>
-                                <div className="bg-primary/5 border border-primary/20 rounded p-2 w-full">
-                                  <p className="text-xs text-primary text-break whitespace-pre-wrap">{trip.observations}</p>
+                                <div className="bg-primary/5 border border-primary/20 rounded p-2 w-full overflow-hidden">
+                                  <p className="text-xs text-primary break-words whitespace-pre-wrap leading-relaxed max-w-full">{trip.observations}</p>
                                 </div>
                               </div>
                             )}

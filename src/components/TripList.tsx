@@ -89,6 +89,13 @@ export function TripList({ onTripUpdated }: TripListProps) {
 
   const deleteTrip = async (tripId: string, tripTitle: string) => {
     try {
+      // Primeiro excluir notification_logs relacionados
+      await supabase
+        .from('notification_logs')
+        .delete()
+        .eq('trip_id', tripId);
+
+      // Depois excluir a viagem
       const { error } = await supabase
         .from('trips')
         .delete()
