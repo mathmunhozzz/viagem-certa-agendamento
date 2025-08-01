@@ -88,12 +88,20 @@ export function TripList({ onTripUpdated }: TripListProps) {
   };
 
   const deleteTrip = async (tripId: string, tripTitle: string) => {
+    if (!confirm(`Tem certeza que deseja excluir a viagem "${tripTitle}"?`)) {
+      return;
+    }
+
     try {
-      // Primeiro excluir notification_logs relacionados
-      await supabase
+      // Primeiro excluir notification_logs relacionados (sem gerar erro se não existir)
+      const { error: logsError } = await supabase
         .from('notification_logs')
         .delete()
         .eq('trip_id', tripId);
+
+      if (logsError) {
+        console.warn('Aviso ao excluir logs:', logsError);
+      }
 
       // Depois excluir a viagem
       const { error } = await supabase
@@ -101,7 +109,10 @@ export function TripList({ onTripUpdated }: TripListProps) {
         .delete()
         .eq('id', tripId);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Erro detalhado:', error);
+        throw error;
+      }
 
       toast({
         title: "Viagem excluída",
@@ -114,7 +125,7 @@ export function TripList({ onTripUpdated }: TripListProps) {
       console.error('Erro ao excluir viagem:', error);
       toast({
         title: "Erro ao excluir",
-        description: "Não foi possível excluir a viagem. Tente novamente.",
+        description: `Erro: ${error?.message || 'Não foi possível excluir a viagem'}`,
         variant: "destructive"
       });
     }
