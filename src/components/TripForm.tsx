@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { CalendarIcon, Plus, X, MapPin, Users, FileText } from 'lucide-react';
-import { format } from 'date-fns';
+import { format, addDays, eachDayOfInterval } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
@@ -28,6 +28,7 @@ export function TripForm({ onTripCreated }: TripFormProps) {
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [date, setDate] = useState<Date>();
+  const [endDate, setEndDate] = useState<Date>();
   const [time, setTime] = useState<string>('08:00');
   const [travelers, setTravelers] = useState<string[]>(['']);
   const [selectedVehicle, setSelectedVehicle] = useState<string>('');
@@ -127,78 +128,93 @@ export function TripForm({ onTripCreated }: TripFormProps) {
 
       if (clientError) throw clientError;
 
-      // Apenas viajantes manuais vão para o campo travelers
-      // Funcionários ficam apenas no employee_ids
-      const { data: result, error } = await supabase
-        .from('trips')
-        .insert({
-          title,
-          description,
-          observations,
-          trip_date: format(date, 'yyyy-MM-dd'),
-          departure_time: time,
-          sector: sectorsData?.map(s => s.name).join(', '), // Nomes dos setores para compatibilidade
-          sector_id: selectedSectors[0], // Primeira sector como referência principal
-          travelers: validTravelers, // Apenas viajantes manuais
-          employee_ids: selectedEmployees, // Apenas IDs dos funcionários
-          client_id: selectedClient, // Cliente obrigatório
-          created_by: user.id,
-          vehicle_id: selectedVehicle
-        })
-        .select();
+      // Determinar as datas para criar as viagens
+      const datesToCreate = endDate && endDate > date 
+        ? eachDayOfInterval({ start: date, end: endDate })
+        : [date];
 
-      if (error) throw error;
+      // Criar viagem para cada data no intervalo
+      const tripResults = [];
+      for (const tripDate of datesToCreate) {
+        const { data: result, error } = await supabase
+          .from('trips')
+          .insert({
+            title,
+            description,
+            observations,
+            trip_date: format(tripDate, 'yyyy-MM-dd'),
+            departure_time: time,
+            sector: sectorsData?.map(s => s.name).join(', '), // Nomes dos setores para compatibilidade
+            sector_id: selectedSectors[0], // Primeira sector como referência principal
+            travelers: validTravelers, // Apenas viajantes manuais
+            employee_ids: selectedEmployees, // Apenas IDs dos funcionários
+            client_id: selectedClient, // Cliente obrigatório
+            created_by: user.id,
+            vehicle_id: selectedVehicle
+          })
+          .select();
+
+        if (error) throw error;
+        tripResults.push(...result);
+      }
 
       // Enviar notificações por email se houver funcionários selecionados
       if (selectedEmployees.length > 0) {
         try {
-          const notificationData = {
-            tripId: result[0].id,
-            title: title.trim(),
-            description: description.trim() || undefined,
-            tripDate: date?.toISOString().split('T')[0],
-            departureTime: time || undefined,
-            client: clientData.name,
-            sector: sectorsData?.map(s => s.name).join(', '),
-            employeeIds: selectedEmployees
-          };
+          // Enviar notificação para cada viagem criada
+          for (const trip of tripResults) {
+            const notificationData = {
+              tripId: trip.id,
+              title: title.trim(),
+              description: description.trim() || undefined,
+              tripDate: trip.trip_date,
+              departureTime: time || undefined,
+              client: clientData.name,
+              sector: sectorsData?.map(s => s.name).join(', '),
+              employeeIds: selectedEmployees
+            };
 
-          const { error: notificationError } = await supabase.functions.invoke(
-            'send-trip-created-notification',
-            { body: notificationData }
-          );
+            const { error: notificationError } = await supabase.functions.invoke(
+              'send-trip-created-notification',
+              { body: notificationData }
+            );
 
-          if (notificationError) {
-            console.error('Failed to send notifications:', notificationError);
-            toast({
-              title: "Viagem criada com avisos",
-              description: "A viagem foi criada, mas houve problemas ao enviar notificações por email.",
-              variant: "destructive",
-            });
-          } else {
-            toast({
-              title: "Viagem agendada com sucesso!",
-              description: `A viagem "${title}" foi criada e os funcionários foram notificados por email.`,
-            });
+            if (notificationError) {
+              console.error('Failed to send notifications for trip:', trip.id, notificationError);
+            }
           }
+
+          const dateRange = endDate && endDate > date 
+            ? `${format(date, 'dd/MM/yyyy', { locale: ptBR })} a ${format(endDate, 'dd/MM/yyyy', { locale: ptBR })}`
+            : format(date, 'dd/MM/yyyy', { locale: ptBR });
+
+          toast({
+            title: "Viagem(ns) agendada(s) com sucesso!",
+            description: `${tripResults.length} viagem(ns) criada(s) para "${title}" no período ${dateRange}.`,
+          });
         } catch (notificationError) {
           console.error('Error sending notifications:', notificationError);
           toast({
             title: "Viagem criada com avisos",
-            description: "A viagem foi criada, mas houve problemas ao enviar notificações por email.",
+            description: "As viagens foram criadas, mas houve problemas ao enviar notificações por email.",
             variant: "destructive",
           });
         }
       } else {
+        const dateRange = endDate && endDate > date 
+          ? `${format(date, 'dd/MM/yyyy', { locale: ptBR })} a ${format(endDate, 'dd/MM/yyyy', { locale: ptBR })}`
+          : format(date, 'dd/MM/yyyy', { locale: ptBR });
+
         toast({
-          title: "Viagem agendada com sucesso!",
-          description: `A viagem "${title}" foi criada para ${format(date, 'dd/MM/yyyy', { locale: ptBR })}.`
+          title: "Viagem(ns) agendada(s) com sucesso!",
+          description: `${tripResults.length} viagem(ns) criada(s) para "${title}" no período ${dateRange}.`,
         });
       }
 
       // Reset form
       (e.target as HTMLFormElement).reset();
       setDate(undefined);
+      setEndDate(undefined);
       setTime('08:00');
       setTravelers(['']);
       setSelectedVehicle('');
@@ -289,33 +305,76 @@ export function TripForm({ onTripCreated }: TripFormProps) {
             />
           </div>
 
-          <div className="space-y-3">
-            <Label className="text-sm font-semibold">Data da Viagem *</Label>
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  className={cn(
-                    "w-full justify-start text-left font-normal h-11 border-travel-primary/20 hover:border-travel-primary hover:bg-travel-primary/5",
-                    !date && "text-muted-foreground"
-                  )}
-                >
-                  <CalendarIcon className="mr-3 h-4 w-4 text-travel-primary" />
-                  {date ? format(date, "EEEE, dd 'de' MMMM 'de' yyyy", { locale: ptBR }) : "Selecione a data da viagem"}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="start">
-                <Calendar
-                  mode="single"
-                  selected={date}
-                  onSelect={setDate}
-                  initialFocus
-                  locale={ptBR}
-                  disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
-                  className="bg-background border-0"
-                />
-              </PopoverContent>
-            </Popover>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-3">
+              <Label className="text-sm font-semibold">Data de Início *</Label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      "w-full justify-start text-left font-normal h-11 border-travel-primary/20 hover:border-travel-primary hover:bg-travel-primary/5",
+                      !date && "text-muted-foreground"
+                    )}
+                  >
+                    <CalendarIcon className="mr-3 h-4 w-4 text-travel-primary" />
+                    {date ? format(date, "dd/MM/yyyy", { locale: ptBR }) : "Data de início"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={date}
+                    onSelect={(newDate) => {
+                      setDate(newDate);
+                      // Se a data final for anterior à nova data inicial, ajustar
+                      if (endDate && newDate && endDate < newDate) {
+                        setEndDate(undefined);
+                      }
+                    }}
+                    initialFocus
+                    locale={ptBR}
+                    disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
+                    className="bg-background border-0 pointer-events-auto"
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
+
+            <div className="space-y-3">
+              <Label className="text-sm font-semibold">Data de Fim (Opcional)</Label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      "w-full justify-start text-left font-normal h-11 border-travel-secondary/20 hover:border-travel-secondary hover:bg-travel-secondary/5",
+                      !endDate && "text-muted-foreground"
+                    )}
+                    disabled={!date}
+                  >
+                    <CalendarIcon className="mr-3 h-4 w-4 text-travel-secondary" />
+                    {endDate ? format(endDate, "dd/MM/yyyy", { locale: ptBR }) : "Data de fim (opcional)"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={endDate}
+                    onSelect={setEndDate}
+                    initialFocus
+                    locale={ptBR}
+                    disabled={(dateToCheck) => !date || dateToCheck < new Date(new Date().setHours(0, 0, 0, 0)) || dateToCheck < date}
+                    className="bg-background border-0 pointer-events-auto"
+                  />
+                </PopoverContent>
+              </Popover>
+              {endDate && date && (
+                <p className="text-sm text-travel-secondary">
+                  Período: {eachDayOfInterval({ start: date, end: endDate }).length} dias
+                </p>
+              )}
+            </div>
           </div>
 
           {/* Seleção de Cliente */}
