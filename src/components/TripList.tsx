@@ -247,9 +247,11 @@ export function TripList({ onTripUpdated }: TripListProps) {
                   </div>
 
                   {trip.description && (
-                    <p className="text-sm text-muted-foreground mb-3 leading-relaxed">
-                      {trip.description}
-                    </p>
+                    <div className="mb-3 p-3 bg-muted/30 border border-muted rounded-lg">
+                      <p className="text-xs text-foreground break-words hyphens-auto leading-relaxed whitespace-pre-wrap word-break overflow-wrap-anywhere">
+                        {trip.description}
+                      </p>
+                    </div>
                   )}
 
                   <div className="flex flex-wrap gap-3 text-sm">
