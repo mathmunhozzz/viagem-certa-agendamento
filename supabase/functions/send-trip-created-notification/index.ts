@@ -204,8 +204,101 @@ const handler = async (req: Request): Promise<Response> => {
       throw new Error('Method not allowed');
     }
 
-    const tripData: TripNotificationData = await req.json();
-    console.log('Processing trip notification for:', tripData);
+    const requestData = await req.json();
+    console.log('Processing trip notification for:', requestData);
+
+    // Verificar se é modo de teste
+    if (requestData.testMode && requestData.testEmail) {
+      console.log('🧪 TEST MODE: Sending test email to', requestData.testEmail);
+      
+      const subject = 'Teste - Nova viagem agendada: Viagem de Teste Gmail SMTP';
+      const html = `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <h2 style="color: #2563eb;">🧪 TESTE - Nova Viagem Agendada</h2>
+          
+          <div style="background-color: #fef3c7; padding: 15px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #f59e0b;">
+            <p style="margin: 0; color: #92400e; font-weight: bold;">
+              ⚠️ Este é um email de TESTE para verificar se o sistema de notificações está funcionando.
+            </p>
+          </div>
+          
+          <div style="background-color: #f8fafc; padding: 20px; border-radius: 8px; margin: 20px 0;">
+            <h3 style="margin-top: 0; color: #1e40af;">Viagem de Teste - Gmail SMTP</h3>
+            <p><strong>Descrição:</strong> Esta é uma viagem de teste para verificar se o sistema de notificações por email está funcionando corretamente.</p>
+            
+            <div style="margin: 15px 0;">
+              <p><strong>📅 Data:</strong> ${new Date().toLocaleDateString('pt-BR')}</p>
+              <p><strong>🕐 Horário:</strong> 09:00</p>
+              <p><strong>👤 Cliente:</strong> Cliente de Teste</p>
+              <p><strong>🏢 Setor:</strong> Setor de Teste</p>
+            </div>
+          </div>
+
+          <p>Olá,</p>
+          <p>Se você recebeu este email, significa que o sistema de notificações por Gmail SMTP está funcionando corretamente! ✅</p>
+          
+          <div style="background-color: #dcfce7; padding: 15px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #16a34a;">
+            <p style="margin: 0; color: #15803d;">
+              ✅ <strong>Teste bem-sucedido!</strong> O sistema pode enviar emails via Gmail SMTP.
+            </p>
+          </div>
+          
+          <hr style="margin: 30px 0; border: none; border-top: 1px solid #e2e8f0;">
+          <p style="color: #64748b; font-size: 14px;">
+            Este é um email de teste automático do sistema de gestão de viagens.
+            <br>Timestamp: ${new Date().toISOString()}
+          </p>
+        </div>
+      `;
+
+      try {
+        // Se skipActualSend for true, apenas simular o envio
+        if (requestData.skipActualSend) {
+          console.log('🔧 SIMULATION MODE: Skipping actual email send');
+          const result = { 
+            success: true, 
+            messageId: 'simulated_test_' + Date.now(),
+            simulation: true 
+          };
+          
+          return new Response(JSON.stringify({
+            success: true,
+            testMode: true,
+            simulation: true,
+            message: 'Teste de conectividade bem-sucedido (simulação)!',
+            result
+          }), {
+            status: 200,
+            headers: { 'Content-Type': 'application/json', ...corsHeaders }
+          });
+        }
+        
+        const result = await sendGmailNotification(requestData.testEmail, subject, html);
+        
+        return new Response(JSON.stringify({
+          success: true,
+          testMode: true,
+          message: 'Email de teste enviado com sucesso!',
+          result
+        }), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json', ...corsHeaders }
+        });
+      } catch (error) {
+        console.error('Erro no envio de teste:', error);
+        return new Response(JSON.stringify({
+          success: false,
+          testMode: true,
+          error: error.message
+        }), {
+          status: 500,
+          headers: { 'Content-Type': 'application/json', ...corsHeaders }
+        });
+      }
+    }
+
+    const tripData: TripNotificationData = requestData;
+    console.log('Processing actual trip notification for:', tripData);
 
     // Get employee emails
     const { data: employees, error: employeesError } = await supabase

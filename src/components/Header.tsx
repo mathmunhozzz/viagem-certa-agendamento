@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { LogOut, Plane, Shield, Users } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
+import { EmailTestButton } from './EmailTestButton';
 
 export function Header({ onShowUserManagement }: { onShowUserManagement?: () => void }) {
   const { user, signOut } = useAuth();
@@ -52,6 +53,9 @@ export function Header({ onShowUserManagement }: { onShowUserManagement?: () => 
         
         {user && (
           <div className="flex items-center space-x-2 md:space-x-4 flex-shrink-0">
+            {(role === 'admin' || role === 'manager') && (
+              <EmailTestButton />
+            )}
             {role === 'admin' && onShowUserManagement && (
               <Button 
                 variant="outline" 
