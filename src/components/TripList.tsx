@@ -207,15 +207,15 @@ export function TripList({ onTripUpdated }: TripListProps) {
               {trips.map((trip, index) => (
                 <div
                   key={trip.id}
-                  className="border rounded-xl p-5 bg-gradient-to-r from-background to-muted/20 hover:shadow-lg transition-all duration-300 animate-slide-up"
+                  className="border rounded-xl p-5 bg-gradient-to-r from-background to-muted/20 hover:shadow-lg transition-all duration-300 animate-slide-up overflow-hidden"
                   style={{ animationDelay: `${index * 100}ms` }}
                 >
                   <div className="flex items-start justify-between mb-3">
-                    <div className="space-y-1">
-                      <h4 className="font-bold text-lg text-foreground">{trip.title}</h4>
+                    <div className="space-y-1 flex-1 min-w-0">
+                      <h4 className="font-bold text-lg text-foreground break-words hyphens-auto overflow-wrap-anywhere">{trip.title}</h4>
                       <p className="text-sm text-muted-foreground flex items-center gap-2">
-                        <Calendar className="h-3.5 w-3.5" />
-                        {format(parseISO(trip.trip_date), "EEEE, dd 'de' MMMM", { locale: ptBR })}
+                        <Calendar className="h-3.5 w-3.5 flex-shrink-0" />
+                        <span className="break-words">{format(parseISO(trip.trip_date), "EEEE, dd 'de' MMMM", { locale: ptBR })}</span>
                       </p>
                     </div>
                     <div className="flex items-center gap-2">
@@ -255,9 +255,9 @@ export function TripList({ onTripUpdated }: TripListProps) {
                   )}
 
                   <div className="flex flex-wrap gap-3 text-sm">
-                    <div className="flex items-center gap-2 px-3 py-1.5 bg-travel-primary/10 text-travel-primary rounded-lg border border-travel-primary/20">
-                      <MapPin className="h-3.5 w-3.5" />
-                      <span className="font-medium">{trip.sector}</span>
+                    <div className="flex items-center gap-2 px-3 py-1.5 bg-travel-primary/10 text-travel-primary rounded-lg border border-travel-primary/20 min-w-0">
+                      <MapPin className="h-3.5 w-3.5 flex-shrink-0" />
+                      <span className="font-medium break-words overflow-wrap-anywhere">{trip.sector}</span>
                     </div>
                     <div className="flex items-center gap-2 px-3 py-1.5 bg-travel-accent/10 text-travel-accent rounded-lg border border-travel-accent/20">
                       <Users className="h-3.5 w-3.5" />
@@ -282,15 +282,15 @@ export function TripList({ onTripUpdated }: TripListProps) {
                     <div className="mt-3 flex flex-wrap gap-1.5">
                       {/* Mostrar funcionários */}
                       {trip.employees?.slice(0, 3).map((employee, idx) => (
-                        <Badge key={`emp-${idx}`} variant="outline" className="text-xs bg-blue-50 border-blue-200 text-blue-800">
-                          👤 {employee.name}
+                        <Badge key={`emp-${idx}`} variant="outline" className="text-xs bg-blue-50 border-blue-200 text-blue-800 break-words max-w-full">
+                          <span className="break-words overflow-wrap-anywhere">👤 {employee.name}</span>
                         </Badge>
                       ))}
                       
                       {/* Mostrar viajantes manuais */}
                       {trip.travelers.slice(0, 3 - (trip.employees?.length || 0)).map((traveler, idx) => (
-                        <Badge key={`trav-${idx}`} variant="outline" className="text-xs bg-background/80">
-                          {traveler}
+                        <Badge key={`trav-${idx}`} variant="outline" className="text-xs bg-background/80 break-words max-w-full">
+                          <span className="break-words overflow-wrap-anywhere">{traveler}</span>
                         </Badge>
                       ))}
                       
