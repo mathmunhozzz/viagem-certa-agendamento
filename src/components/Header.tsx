@@ -53,9 +53,6 @@ export function Header({ onShowUserManagement }: { onShowUserManagement?: () => 
         
         {user && (
           <div className="flex items-center space-x-2 md:space-x-4 flex-shrink-0">
-            {(role === 'admin' || role === 'manager') && (
-              <EmailTestButton />
-            )}
             {role === 'admin' && onShowUserManagement && (
               <Button 
                 variant="outline" 
