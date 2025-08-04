@@ -1,7 +1,7 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
-// Improved Gmail SMTP sending function with better error handling and retries
+// Simplified Gmail SMTP sending function using a robust external library
 const sendGmailNotification = async (to: string, subject: string, html: string, retries = 3) => {
   const gmailEmail = Deno.env.get('GMAIL_EMAIL');
   const gmailPassword = Deno.env.get('GMAIL_APP_PASSWORD');
@@ -18,157 +18,39 @@ const sendGmailNotification = async (to: string, subject: string, html: string, 
     try {
       console.log(`🔄 Attempt ${attempt}/${retries}`);
       
-      // Connect to Gmail SMTP server with timeout
-      console.log('🔌 Connecting to smtp.gmail.com:587...');
-      const conn = await Deno.connect({
+      // Use a more robust approach with the SMTP library
+      // This avoids complex TLS handshake issues by using a proven library
+      const { default: SMTPClient } = await import("https://deno.land/x/smtp@v0.7.0/mod.ts");
+      
+      console.log('📧 Initializing SMTP client...');
+      const client = new SMTPClient();
+
+      await client.connectTLS({
         hostname: "smtp.gmail.com",
-        port: 587,
+        port: 465, // Use port 465 for SSL/TLS instead of 587 with STARTTLS
+        username: gmailEmail,
+        password: gmailPassword,
       });
 
-      const encoder = new TextEncoder();
-      const decoder = new TextDecoder();
+      console.log('✅ SMTP connection established');
 
-      // Helper function to send command and read response with timeout
-      async function sendCommand(command: string, timeoutMs = 10000): Promise<string> {
-        const maskedCommand = command.includes(gmailPassword) ? command.replace(gmailPassword, '***') : command;
-        console.log(`➡️ SMTP: ${maskedCommand}`);
-        
-        await conn.write(encoder.encode(command + "\r\n"));
-        
-        // Read response with timeout
-        const timeoutPromise = new Promise<never>((_, reject) =>
-          setTimeout(() => reject(new Error('SMTP response timeout')), timeoutMs)
-        );
-        
-        const readPromise = async () => {
-          const buffer = new Uint8Array(2048); // Increased buffer size
-          const bytesRead = await conn.read(buffer);
-          return decoder.decode(buffer.subarray(0, bytesRead || 0));
-        };
-        
-        const response = await Promise.race([readPromise(), timeoutPromise]);
-        console.log(`⬅️ Response: ${response.trim()}`);
-        
-        if (response.startsWith("5")) {
-          throw new Error(`SMTP Error: ${response.trim()}`);
-        }
-        
-        return response;
-      }
+      await client.send({
+        from: gmailEmail,
+        to: to,
+        subject: subject,
+        content: html,
+        html: html,
+      });
 
-      try {
-        // Initial greeting
-        await sendCommand("EHLO localhost");
-        
-        // Start TLS
-        console.log('🔐 Starting TLS...');
-        await sendCommand("STARTTLS");
-        
-        // Upgrade connection to TLS
-        console.log('🔒 Upgrading to TLS connection...');
-        const tlsConn = await Deno.startTls(conn, { 
-          hostname: "smtp.gmail.com",
-          alpnProtocols: ["http/1.1"]
-        });
-        
-        // Helper function for TLS connection with better error handling
-        async function sendTlsCommand(command: string, timeoutMs = 10000): Promise<string> {
-          const maskedCommand = command.includes(gmailPassword) ? command.replace(gmailPassword, '***') : command;
-          console.log(`➡️ TLS SMTP: ${maskedCommand}`);
-          
-          await tlsConn.write(encoder.encode(command + "\r\n"));
-          
-          const timeoutPromise = new Promise<never>((_, reject) =>
-            setTimeout(() => reject(new Error('TLS SMTP response timeout')), timeoutMs)
-          );
-          
-          const readPromise = async () => {
-            const buffer = new Uint8Array(2048);
-            const bytesRead = await tlsConn.read(buffer);
-            return decoder.decode(buffer.subarray(0, bytesRead || 0));
-          };
-          
-          const response = await Promise.race([readPromise(), timeoutPromise]);
-          console.log(`⬅️ TLS Response: ${response.trim()}`);
-          
-          if (response.startsWith("5")) {
-            throw new Error(`SMTP TLS Error: ${response.trim()}`);
-          }
-          
-          return response;
-        }
-
-        // Re-introduce ourselves after TLS
-        console.log('🤝 Re-handshake after TLS...');
-        await sendTlsCommand("EHLO localhost");
-        
-        // Authenticate
-        console.log('🔑 Starting authentication...');
-        await sendTlsCommand("AUTH LOGIN");
-        
-        // Send username (base64 encoded)
-        const usernameB64 = btoa(gmailEmail);
-        await sendTlsCommand(usernameB64);
-        
-        // Send password (base64 encoded)
-        const passwordB64 = btoa(gmailPassword);
-        await sendTlsCommand(passwordB64);
-        
-        console.log('✅ SMTP Authentication successful!');
-
-        // Send email
-        console.log('📮 Sending email...');
-        await sendTlsCommand(`MAIL FROM:<${gmailEmail}>`);
-        await sendTlsCommand(`RCPT TO:<${to}>`);
-        await sendTlsCommand("DATA");
-
-        // Construct email message with simpler format
-        const emailMessage = [
-          `From: ${gmailEmail}`,
-          `To: ${to}`,
-          `Subject: ${subject}`,
-          `MIME-Version: 1.0`,
-          `Content-Type: text/html; charset=UTF-8`,
-          `Date: ${new Date().toUTCString()}`,
-          ``,
-          html,
-          `.`
-        ].join("\r\n");
-
-        console.log('📝 Sending email content...');
-        await tlsConn.write(encoder.encode(emailMessage));
-        
-        // Read final response
-        const buffer = new Uint8Array(1024);
-        const bytesRead = await tlsConn.read(buffer);
-        const response = decoder.decode(buffer.subarray(0, bytesRead || 0));
-        console.log(`📧 Final response: ${response.trim()}`);
-        
-        if (!response.startsWith("250")) {
-          throw new Error(`Email send failed: ${response}`);
-        }
-
-        // Close connection gracefully
-        console.log('👋 Closing SMTP connection...');
-        try {
-          await sendTlsCommand("QUIT");
-        } catch (quitError) {
-          console.warn('Warning during QUIT:', quitError.message);
-        }
-        
-        tlsConn.close();
-        console.log(`✅ Email sent successfully to ${to}!`);
-        
-        return { 
-          success: true, 
-          messageId: `gmail_reminder_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-          attempt
-        };
-
-      } catch (connectionError) {
-        conn.close();
-        throw connectionError;
-      }
+      console.log(`✅ Email sent successfully to ${to}!`);
+      
+      await client.close();
+      
+      return { 
+        success: true, 
+        messageId: `gmail_reminder_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        attempt
+      };
       
     } catch (error) {
       console.error(`❌ Attempt ${attempt} failed:`, error.message);
