@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { LogOut, Plane, Shield, Users } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
-import { EmailTestButton } from './EmailTestButton';
+
 
 export function Header({ onShowUserManagement }: { onShowUserManagement?: () => void }) {
   const { user, signOut } = useAuth();
