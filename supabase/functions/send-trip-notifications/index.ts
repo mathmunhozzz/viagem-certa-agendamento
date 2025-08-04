@@ -1,8 +1,8 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
-// Gmail SMTP sending function using native SMTP connection
-const sendGmailNotification = async (to: string, subject: string, html: string) => {
+// Improved Gmail SMTP sending function with better error handling and retries
+const sendGmailNotification = async (to: string, subject: string, html: string, retries = 3) => {
   const gmailEmail = Deno.env.get('GMAIL_EMAIL');
   const gmailPassword = Deno.env.get('GMAIL_APP_PASSWORD');
 
@@ -10,166 +10,178 @@ const sendGmailNotification = async (to: string, subject: string, html: string) 
     throw new Error('Gmail credentials not configured. Please set GMAIL_EMAIL and GMAIL_APP_PASSWORD secrets.');
   }
 
-  console.log(`📧 Connecting to Gmail SMTP for ${to}...`);
+  console.log(`📧 [Reminder] Sending email to ${to}...`);
   console.log(`📤 From: ${gmailEmail}`);
   console.log(`📋 Subject: ${subject}`);
 
-  try {
-    // Connect to Gmail SMTP server
-    console.log('🔌 Connecting to smtp.gmail.com:587...');
-    const conn = await Deno.connect({
-      hostname: "smtp.gmail.com",
-      port: 587,
-    });
+  for (let attempt = 1; attempt <= retries; attempt++) {
+    try {
+      console.log(`🔄 Attempt ${attempt}/${retries}`);
+      
+      // Connect to Gmail SMTP server with timeout
+      console.log('🔌 Connecting to smtp.gmail.com:587...');
+      const conn = await Deno.connect({
+        hostname: "smtp.gmail.com",
+        port: 587,
+      });
 
-    const encoder = new TextEncoder();
-    const decoder = new TextDecoder();
+      const encoder = new TextEncoder();
+      const decoder = new TextDecoder();
 
-    // Helper function to send command and read response
-    async function sendCommand(command: string): Promise<string> {
-      const maskedCommand = command.includes(gmailPassword) ? command.replace(gmailPassword, '***') : command;
-      console.log(`➡️ SMTP: ${maskedCommand}`);
-      
-      await conn.write(encoder.encode(command + "\r\n"));
-      
-      const buffer = new Uint8Array(1024);
-      const bytesRead = await conn.read(buffer);
-      const response = decoder.decode(buffer.subarray(0, bytesRead || 0));
-      console.log(`⬅️ Response: ${response.trim()}`);
-      
-      if (response.startsWith("5")) {
-        throw new Error(`SMTP Error: ${response.trim()}`);
+      // Helper function to send command and read response with timeout
+      async function sendCommand(command: string, timeoutMs = 10000): Promise<string> {
+        const maskedCommand = command.includes(gmailPassword) ? command.replace(gmailPassword, '***') : command;
+        console.log(`➡️ SMTP: ${maskedCommand}`);
+        
+        await conn.write(encoder.encode(command + "\r\n"));
+        
+        // Read response with timeout
+        const timeoutPromise = new Promise<never>((_, reject) =>
+          setTimeout(() => reject(new Error('SMTP response timeout')), timeoutMs)
+        );
+        
+        const readPromise = async () => {
+          const buffer = new Uint8Array(2048); // Increased buffer size
+          const bytesRead = await conn.read(buffer);
+          return decoder.decode(buffer.subarray(0, bytesRead || 0));
+        };
+        
+        const response = await Promise.race([readPromise(), timeoutPromise]);
+        console.log(`⬅️ Response: ${response.trim()}`);
+        
+        if (response.startsWith("5")) {
+          throw new Error(`SMTP Error: ${response.trim()}`);
+        }
+        
+        return response;
+      }
+
+      try {
+        // Initial greeting
+        await sendCommand("EHLO localhost");
+        
+        // Start TLS
+        console.log('🔐 Starting TLS...');
+        await sendCommand("STARTTLS");
+        
+        // Upgrade connection to TLS
+        console.log('🔒 Upgrading to TLS connection...');
+        const tlsConn = await Deno.startTls(conn, { 
+          hostname: "smtp.gmail.com",
+          alpnProtocols: ["http/1.1"]
+        });
+        
+        // Helper function for TLS connection with better error handling
+        async function sendTlsCommand(command: string, timeoutMs = 10000): Promise<string> {
+          const maskedCommand = command.includes(gmailPassword) ? command.replace(gmailPassword, '***') : command;
+          console.log(`➡️ TLS SMTP: ${maskedCommand}`);
+          
+          await tlsConn.write(encoder.encode(command + "\r\n"));
+          
+          const timeoutPromise = new Promise<never>((_, reject) =>
+            setTimeout(() => reject(new Error('TLS SMTP response timeout')), timeoutMs)
+          );
+          
+          const readPromise = async () => {
+            const buffer = new Uint8Array(2048);
+            const bytesRead = await tlsConn.read(buffer);
+            return decoder.decode(buffer.subarray(0, bytesRead || 0));
+          };
+          
+          const response = await Promise.race([readPromise(), timeoutPromise]);
+          console.log(`⬅️ TLS Response: ${response.trim()}`);
+          
+          if (response.startsWith("5")) {
+            throw new Error(`SMTP TLS Error: ${response.trim()}`);
+          }
+          
+          return response;
+        }
+
+        // Re-introduce ourselves after TLS
+        console.log('🤝 Re-handshake after TLS...');
+        await sendTlsCommand("EHLO localhost");
+        
+        // Authenticate
+        console.log('🔑 Starting authentication...');
+        await sendTlsCommand("AUTH LOGIN");
+        
+        // Send username (base64 encoded)
+        const usernameB64 = btoa(gmailEmail);
+        await sendTlsCommand(usernameB64);
+        
+        // Send password (base64 encoded)
+        const passwordB64 = btoa(gmailPassword);
+        await sendTlsCommand(passwordB64);
+        
+        console.log('✅ SMTP Authentication successful!');
+
+        // Send email
+        console.log('📮 Sending email...');
+        await sendTlsCommand(`MAIL FROM:<${gmailEmail}>`);
+        await sendTlsCommand(`RCPT TO:<${to}>`);
+        await sendTlsCommand("DATA");
+
+        // Construct email message with simpler format
+        const emailMessage = [
+          `From: ${gmailEmail}`,
+          `To: ${to}`,
+          `Subject: ${subject}`,
+          `MIME-Version: 1.0`,
+          `Content-Type: text/html; charset=UTF-8`,
+          `Date: ${new Date().toUTCString()}`,
+          ``,
+          html,
+          `.`
+        ].join("\r\n");
+
+        console.log('📝 Sending email content...');
+        await tlsConn.write(encoder.encode(emailMessage));
+        
+        // Read final response
+        const buffer = new Uint8Array(1024);
+        const bytesRead = await tlsConn.read(buffer);
+        const response = decoder.decode(buffer.subarray(0, bytesRead || 0));
+        console.log(`📧 Final response: ${response.trim()}`);
+        
+        if (!response.startsWith("250")) {
+          throw new Error(`Email send failed: ${response}`);
+        }
+
+        // Close connection gracefully
+        console.log('👋 Closing SMTP connection...');
+        try {
+          await sendTlsCommand("QUIT");
+        } catch (quitError) {
+          console.warn('Warning during QUIT:', quitError.message);
+        }
+        
+        tlsConn.close();
+        console.log(`✅ Email sent successfully to ${to}!`);
+        
+        return { 
+          success: true, 
+          messageId: `gmail_reminder_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+          attempt
+        };
+
+      } catch (connectionError) {
+        conn.close();
+        throw connectionError;
       }
       
-      return response;
-    }
-
-    // SMTP conversation
-    console.log('🤝 Starting SMTP handshake...');
-    let response = await sendCommand("EHLO localhost");
-    if (!response.startsWith("250")) {
-      throw new Error(`EHLO failed: ${response}`);
-    }
-
-    console.log('🔐 Starting TLS...');
-    response = await sendCommand("STARTTLS");
-    if (!response.startsWith("220")) {
-      throw new Error(`STARTTLS failed: ${response}`);
-    }
-
-    // Upgrade connection to TLS
-    console.log('🔒 Upgrading to TLS connection...');
-    const tlsConn = await Deno.startTls(conn, { hostname: "smtp.gmail.com" });
-    
-    // Helper function for TLS connection
-    async function sendTlsCommand(command: string): Promise<string> {
-      const maskedCommand = command.includes(gmailPassword) ? command.replace(gmailPassword, '***') : command;
-      console.log(`➡️ TLS SMTP: ${maskedCommand}`);
+    } catch (error) {
+      console.error(`❌ Attempt ${attempt} failed:`, error.message);
       
-      await tlsConn.write(encoder.encode(command + "\r\n"));
-      
-      const buffer = new Uint8Array(1024);
-      const bytesRead = await tlsConn.read(buffer);
-      const response = decoder.decode(buffer.subarray(0, bytesRead || 0));
-      console.log(`⬅️ TLS Response: ${response.trim()}`);
-      
-      if (response.startsWith("5")) {
-        throw new Error(`SMTP TLS Error: ${response.trim()}`);
+      if (attempt === retries) {
+        throw new Error(`Gmail SMTP failed after ${retries} attempts: ${error.message}`);
       }
       
-      return response;
+      // Wait before retry (exponential backoff)
+      const waitTime = Math.pow(2, attempt) * 1000;
+      console.log(`⏳ Waiting ${waitTime}ms before retry...`);
+      await new Promise(resolve => setTimeout(resolve, waitTime));
     }
-
-    // Re-introduce ourselves after TLS
-    console.log('🤝 Re-handshake after TLS...');
-    response = await sendTlsCommand("EHLO localhost");
-    if (!response.startsWith("250")) {
-      throw new Error(`TLS EHLO failed: ${response}`);
-    }
-
-    // Authenticate
-    console.log('🔑 Starting authentication...');
-    response = await sendTlsCommand("AUTH LOGIN");
-    if (!response.startsWith("334")) {
-      throw new Error(`AUTH LOGIN failed: ${response}`);
-    }
-
-    // Send username (base64 encoded)
-    const usernameB64 = btoa(gmailEmail);
-    response = await sendTlsCommand(usernameB64);
-    if (!response.startsWith("334")) {
-      throw new Error(`Username authentication failed: ${response}`);
-    }
-
-    // Send password (base64 encoded)
-    const passwordB64 = btoa(gmailPassword);
-    response = await sendTlsCommand(passwordB64);
-    if (!response.startsWith("235")) {
-      throw new Error(`Password authentication failed: ${response}`);
-    }
-
-    console.log('✅ SMTP Authentication successful!');
-
-    // Send email
-    console.log('📮 Sending email...');
-    response = await sendTlsCommand(`MAIL FROM:<${gmailEmail}>`);
-    if (!response.startsWith("250")) {
-      throw new Error(`MAIL FROM failed: ${response}`);
-    }
-
-    response = await sendTlsCommand(`RCPT TO:<${to}>`);
-    if (!response.startsWith("250")) {
-      throw new Error(`RCPT TO failed: ${response}`);
-    }
-
-    response = await sendTlsCommand("DATA");
-    if (!response.startsWith("354")) {
-      throw new Error(`DATA command failed: ${response}`);
-    }
-
-    // Construct email message with proper headers
-    const emailMessage = [
-      `From: ${gmailEmail}`,
-      `To: ${to}`,
-      `Subject: =?UTF-8?B?${btoa(unescape(encodeURIComponent(subject)))}?=`,
-      `MIME-Version: 1.0`,
-      `Content-Type: text/html; charset=UTF-8`,
-      `Content-Transfer-Encoding: quoted-printable`,
-      `Date: ${new Date().toUTCString()}`,
-      `Message-ID: <${Date.now()}.${Math.random().toString(36)}@gmail.com>`,
-      ``,
-      html.replace(/\./g, '=2E'), // Escape dots for quoted-printable
-      `.`
-    ].join("\r\n");
-
-    console.log('📝 Sending email content...');
-    await tlsConn.write(encoder.encode(emailMessage));
-    
-    const buffer = new Uint8Array(1024);
-    const bytesRead = await tlsConn.read(buffer);
-    response = decoder.decode(buffer.subarray(0, bytesRead || 0));
-    console.log(`📧 Final response: ${response.trim()}`);
-    
-    if (!response.startsWith("250")) {
-      throw new Error(`Email send failed: ${response}`);
-    }
-
-    // Close connection
-    console.log('👋 Closing SMTP connection...');
-    await sendTlsCommand("QUIT");
-    tlsConn.close();
-
-    console.log(`✅ Email sent successfully to ${to}!`);
-    
-    return { 
-      success: true, 
-      messageId: `gmail_reminder_${Date.now()}_${Math.random().toString(36).substr(2, 9)}` 
-    };
-    
-  } catch (error) {
-    console.error(`❌ Gmail SMTP Error: ${error.message}`);
-    console.error('Error stack:', error.stack);
-    throw new Error(`Gmail SMTP failed: ${error.message}`);
   }
 };
 
@@ -199,14 +211,16 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
-    console.log("Starting trip notification check...");
+    console.log("🔔 Starting daily trip reminder check...");
 
-    // Buscar viagens para o próximo dia
+    // Calculate tomorrow's date
     const tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 1);
     const tomorrowStr = tomorrow.toISOString().split('T')[0];
 
-    // Buscar viagens agendadas para amanhã
+    console.log(`📅 Looking for trips scheduled for: ${tomorrowStr}`);
+
+    // Fetch trips scheduled for tomorrow
     const { data: trips, error: tripsError } = await supabase
       .from('trips')
       .select(`
@@ -216,117 +230,135 @@ const handler = async (req: Request): Promise<Response> => {
         departure_time,
         sector,
         travelers,
-        employee_ids
+        employee_ids,
+        description
       `)
       .eq('trip_date', tomorrowStr)
       .eq('status', 'scheduled');
 
     if (tripsError) {
-      console.error('Error fetching trips:', tripsError);
+      console.error('❌ Error fetching trips:', tripsError);
       throw tripsError;
     }
 
-    console.log(`Found ${trips?.length || 0} trips for tomorrow`);
+    console.log(`📊 Found ${trips?.length || 0} trips for tomorrow`);
 
     if (!trips || trips.length === 0) {
       return new Response(
-        JSON.stringify({ message: "No trips found for tomorrow" }),
+        JSON.stringify({ 
+          message: "No trips found for tomorrow",
+          date: tomorrowStr,
+          processed: 0
+        }),
         { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
       );
     }
 
-    // Processar cada viagem
+    let totalProcessed = 0;
+    let totalEmailsSent = 0;
+    let totalErrors = 0;
+
+    // Process each trip
     for (const trip of trips) {
       try {
-        // Verificar se já foi enviada notificação para esta viagem
+        console.log(`🚗 Processing trip: ${trip.title} (ID: ${trip.id})`);
+
+        // Check if reminder notification was already sent for this trip
         const { data: existingLog } = await supabase
           .from('notification_logs')
           .select('id')
           .eq('trip_id', trip.id)
           .eq('notification_type', 'trip_reminder')
-          .single();
+          .maybeSingle();
 
         if (existingLog) {
-          console.log(`Notification already sent for trip ${trip.id}`);
+          console.log(`⏭️ Notification already sent for trip ${trip.id}`);
           continue;
         }
 
-        // Buscar emails dos funcionários
+        // Get employee emails
         let employeeEmails: string[] = [];
         if (trip.employee_ids && trip.employee_ids.length > 0) {
           const { data: employees } = await supabase
             .from('employees')
-            .select('email')
+            .select('email, name')
             .in('id', trip.employee_ids)
             .not('email', 'is', null);
 
-          employeeEmails = employees?.map(emp => emp.email).filter(Boolean) || [];
+          employeeEmails = employees?.filter(emp => emp.email).map(emp => emp.email) || [];
+          console.log(`👥 Found ${employeeEmails.length} employees with email addresses`);
         }
 
-        // Buscar emails de usuários com auth_user_id correspondente
-        if (trip.employee_ids && trip.employee_ids.length > 0) {
-          const { data: employeesWithAuth } = await supabase
-            .from('employees')
-            .select('auth_user_id')
-            .in('id', trip.employee_ids)
-            .not('auth_user_id', 'is', null);
-
-          if (employeesWithAuth && employeesWithAuth.length > 0) {
-            const authUserIds = employeesWithAuth.map(emp => emp.auth_user_id);
-            
-            const { data: profiles } = await supabase
-              .from('profiles')
-              .select('user_id')
-              .in('user_id', authUserIds);
-
-            if (profiles && profiles.length > 0) {
-              // Buscar emails dos usuários autenticados via auth.users
-              // Como não podemos acessar auth.users diretamente, vamos usar os emails dos funcionários
-            }
-          }
-        }
-
-        // Se não há emails para enviar, pular
+        // If no emails found, skip this trip
         if (employeeEmails.length === 0) {
-          console.log(`No emails found for trip ${trip.id}`);
+          console.log(`⚠️ No emails found for trip ${trip.id}`);
           continue;
         }
 
-        // Enviar email para cada funcionário
+        // Send reminder email to each employee
         for (const email of employeeEmails) {
           try {
-            const subject = `Lembrete: Viagem agendada para amanhã - ${trip.title}`;
+            const subject = `🔔 Lembrete: Viagem amanhã - ${trip.title}`;
             const html = `
-              <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-                <h2 style="color: #333;">Lembrete de Viagem</h2>
-                <p>Olá!</p>
-                <p>Este é um lembrete de que você tem uma viagem agendada para <strong>amanhã</strong>:</p>
+              <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+                <h2 style="color: #f59e0b; text-align: center;">🔔 Lembrete de Viagem</h2>
                 
-                <div style="background-color: #f5f5f5; padding: 20px; border-radius: 8px; margin: 20px 0;">
-                  <h3 style="margin-top: 0; color: #2563eb;">${trip.title}</h3>
-                  <p><strong>Data:</strong> ${new Date(trip.trip_date).toLocaleDateString('pt-BR')}</p>
-                  <p><strong>Horário de Saída:</strong> ${trip.departure_time || 'Não informado'}</p>
-                  <p><strong>Setor:</strong> ${trip.sector}</p>
-                  ${trip.travelers && trip.travelers.length > 0 ? 
-                    `<p><strong>Participantes:</strong> ${trip.travelers.join(', ')}</p>` : ''
-                  }
+                <div style="background-color: #fef3c7; padding: 15px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #f59e0b;">
+                  <p style="margin: 0; color: #92400e; font-weight: bold;">
+                    ⏰ Você tem uma viagem agendada para <strong>AMANHÃ</strong>!
+                  </p>
                 </div>
                 
-                <p>Por favor, certifique-se de estar preparado(a) para a viagem.</p>
-                <p>Em caso de dúvidas, entre em contato com a administração.</p>
+                <div style="background-color: #f8fafc; padding: 20px; border-radius: 8px; margin: 20px 0; border: 1px solid #e2e8f0;">
+                  <h3 style="margin-top: 0; color: #1e40af;">${trip.title}</h3>
+                  ${trip.description ? `<p style="color: #64748b;"><strong>Descrição:</strong> ${trip.description}</p>` : ''}
+                  
+                  <div style="margin: 15px 0;">
+                    <p><strong>📅 Data:</strong> ${new Date(trip.trip_date).toLocaleDateString('pt-BR', { 
+                      weekday: 'long', 
+                      year: 'numeric', 
+                      month: 'long', 
+                      day: 'numeric' 
+                    })}</p>
+                    ${trip.departure_time ? `<p><strong>🕐 Horário de Saída:</strong> ${trip.departure_time}</p>` : ''}
+                    <p><strong>🏢 Setor:</strong> ${trip.sector}</p>
+                    ${trip.travelers && trip.travelers.length > 0 ? 
+                      `<p><strong>👥 Participantes:</strong> ${trip.travelers.join(', ')}</p>` : ''
+                    }
+                  </div>
+                </div>
+
+                <div style="background-color: #dbeafe; padding: 15px; border-radius: 8px; margin: 20px 0;">
+                  <p style="margin: 0;"><strong>Olá!</strong></p>
+                  <p style="margin: 10px 0 0 0;">Este é um lembrete automático de que você tem uma viagem agendada para amanhã. Por favor, certifique-se de estar preparado(a).</p>
+                </div>
                 
-                <hr style="margin: 30px 0; border: none; border-top: 1px solid #ddd;">
-                <p style="color: #666; font-size: 12px;">
-                  Este é um email automático do Sistema de Gestão de Viagens.
+                <div style="background-color: #fef2f2; padding: 15px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #ef4444;">
+                  <p style="margin: 0; color: #b91c1c;">
+                    <strong>📋 Lembrete:</strong>
+                  </p>
+                  <ul style="margin: 5px 0 0 0; color: #b91c1c;">
+                    <li>Confirme o local e horário de encontro</li>
+                    <li>Prepare a documentação necessária</li>
+                    <li>Entre em contato em caso de impedimento</li>
+                  </ul>
+                </div>
+                
+                <hr style="margin: 30px 0; border: none; border-top: 1px solid #e2e8f0;">
+                <p style="color: #64748b; font-size: 14px; text-align: center;">
+                  Este é um lembrete automático do Sistema de Gestão de Viagens.
+                  <br>Enviado em: ${new Date().toLocaleString('pt-BR')}
+                  <br>ID da Viagem: ${trip.id}
                 </p>
               </div>
             `;
 
             const emailResponse = await sendGmailNotification(email, subject, html);
+            
+            console.log(`✅ Reminder email sent to ${email} for trip ${trip.id}`);
+            totalEmailsSent++;
 
-            console.log(`Email sent to ${email} for trip ${trip.id}:`, emailResponse);
-
-            // Registrar log da notificação
+            // Log the successful notification
             await supabase
               .from('notification_logs')
               .insert({
@@ -337,9 +369,10 @@ const handler = async (req: Request): Promise<Response> => {
               });
 
           } catch (emailError) {
-            console.error(`Error sending email to ${email}:`, emailError);
+            console.error(`❌ Error sending reminder email to ${email}:`, emailError);
+            totalErrors++;
             
-            // Registrar log do erro
+            // Log the error
             await supabase
               .from('notification_logs')
               .insert({
@@ -352,15 +385,30 @@ const handler = async (req: Request): Promise<Response> => {
           }
         }
 
+        totalProcessed++;
+
       } catch (tripError) {
-        console.error(`Error processing trip ${trip.id}:`, tripError);
+        console.error(`❌ Error processing trip ${trip.id}:`, tripError);
+        totalErrors++;
       }
     }
 
+    const summary = {
+      date: tomorrowStr,
+      trips_found: trips.length,
+      trips_processed: totalProcessed,
+      emails_sent: totalEmailsSent,
+      errors: totalErrors,
+      timestamp: new Date().toISOString()
+    };
+
+    console.log("📊 Trip reminder processing complete:", summary);
+
     return new Response(
       JSON.stringify({ 
-        message: "Trip notifications processed successfully",
-        processed_trips: trips.length
+        success: true,
+        message: "Trip reminder notifications processed successfully",
+        summary
       }),
       { 
         status: 200, 
@@ -369,9 +417,13 @@ const handler = async (req: Request): Promise<Response> => {
     );
 
   } catch (error: any) {
-    console.error("Error in send-trip-notifications function:", error);
+    console.error("❌ Error in send-trip-notifications function:", error);
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ 
+        error: error.message,
+        timestamp: new Date().toISOString(),
+        function: 'send-trip-notifications'
+      }),
       {
         status: 500,
         headers: { "Content-Type": "application/json", ...corsHeaders },
