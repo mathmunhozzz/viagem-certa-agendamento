@@ -1,6 +1,5 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { SmtpClient } from "https://deno.land/x/smtp@v0.7.0/mod.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -23,8 +22,8 @@ interface TripNotificationData {
   employeeIds: string[];
 }
 
-// Simplified Gmail SMTP sending function using a robust external library
-const sendGmailNotification = async (to: string, subject: string, html: string, retries = 3) => {
+// Native SMTP implementation without external libraries
+const sendGmailNotification = async (to: string, subject: string, html: string) => {
   const gmailEmail = Deno.env.get('GMAIL_EMAIL');
   const gmailPassword = Deno.env.get('GMAIL_APP_PASSWORD');
 
@@ -32,57 +31,85 @@ const sendGmailNotification = async (to: string, subject: string, html: string, 
     throw new Error('Gmail credentials not configured. Please set GMAIL_EMAIL and GMAIL_APP_PASSWORD secrets.');
   }
 
-  console.log(`📧 [Attempt] Sending email to ${to}...`);
+  console.log(`📧 Sending email to ${to}...`);
   console.log(`📤 From: ${gmailEmail}`);
   console.log(`📋 Subject: ${subject}`);
 
-  for (let attempt = 1; attempt <= retries; attempt++) {
-    try {
-      console.log(`🔄 Attempt ${attempt}/${retries}`);
-      
-      console.log('📧 Initializing SMTP client...');
-      const client = new SmtpClient();
+  try {
+    // Connect to Gmail SMTP server
+    console.log('🔗 Connecting to Gmail SMTP...');
+    const conn = await Deno.connectTls({
+      hostname: "smtp.gmail.com",
+      port: 465,
+    });
 
-      await client.connect({
-        hostname: "smtp.gmail.com",
-        port: 587,
-        username: gmailEmail,
-        password: gmailPassword,
-        tls: true,
-      });
+    const encoder = new TextEncoder();
+    const decoder = new TextDecoder();
 
-      console.log('✅ SMTP connection established');
+    // Helper function to read response
+    const readResponse = async () => {
+      const buffer = new Uint8Array(1024);
+      const n = await conn.read(buffer);
+      if (n === null) throw new Error('Connection closed');
+      return decoder.decode(buffer.subarray(0, n));
+    };
 
-      await client.send({
-        from: gmailEmail,
-        to: to,
-        subject: subject,
-        content: html,
-        html: html,
-      });
+    // Helper function to send command
+    const sendCommand = async (command: string) => {
+      console.log(`>> ${command.trim()}`);
+      await conn.write(encoder.encode(command));
+      const response = await readResponse();
+      console.log(`<< ${response.trim()}`);
+      return response;
+    };
 
-      console.log(`✅ Email sent successfully to ${to}!`);
-      
-      await client.close();
-      
-      return { 
-        success: true, 
-        messageId: `gmail_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-        attempt
-      };
-      
-    } catch (error) {
-      console.error(`❌ Attempt ${attempt} failed:`, error.message);
-      
-      if (attempt === retries) {
-        throw new Error(`Gmail SMTP failed after ${retries} attempts: ${error.message}`);
-      }
-      
-      // Wait before retry (exponential backoff)
-      const waitTime = Math.pow(2, attempt) * 1000;
-      console.log(`⏳ Waiting ${waitTime}ms before retry...`);
-      await new Promise(resolve => setTimeout(resolve, waitTime));
-    }
+    // SMTP handshake
+    let response = await readResponse();
+    console.log(`<< ${response.trim()}`);
+
+    await sendCommand(`HELO localhost\r\n`);
+    await sendCommand(`AUTH LOGIN\r\n`);
+    
+    // Send credentials (base64 encoded)
+    const emailB64 = btoa(gmailEmail);
+    const passwordB64 = btoa(gmailPassword);
+    
+    await sendCommand(`${emailB64}\r\n`);
+    await sendCommand(`${passwordB64}\r\n`);
+
+    // Send email
+    await sendCommand(`MAIL FROM:<${gmailEmail}>\r\n`);
+    await sendCommand(`RCPT TO:<${to}>\r\n`);
+    await sendCommand(`DATA\r\n`);
+
+    // Email headers and body
+    const emailContent = [
+      `From: ${gmailEmail}`,
+      `To: ${to}`,
+      `Subject: ${subject}`,
+      `MIME-Version: 1.0`,
+      `Content-Type: text/html; charset=UTF-8`,
+      ``,
+      html,
+      ``,
+      `.`
+    ].join('\r\n');
+
+    await sendCommand(`${emailContent}\r\n`);
+    await sendCommand(`QUIT\r\n`);
+
+    conn.close();
+
+    console.log(`✅ Email sent successfully to ${to}!`);
+    
+    return { 
+      success: true, 
+      messageId: `native_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+    };
+
+  } catch (error) {
+    console.error(`❌ Failed to send email:`, error.message);
+    throw new Error(`Native SMTP failed: ${error.message}`);
   }
 };
 
