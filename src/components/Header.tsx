@@ -2,9 +2,10 @@ import { useAuth } from '@/hooks/useAuth';
 import { useUserRole } from '@/hooks/useUserRole';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { LogOut, Plane, Shield, Users } from 'lucide-react';
+import { LogOut, Plane, Shield, Users, Mail } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
+import { EmailTestCenter } from './EmailTestCenter';
 
 
 export function Header({ onShowUserManagement }: { onShowUserManagement?: () => void }) {
@@ -53,6 +54,23 @@ export function Header({ onShowUserManagement }: { onShowUserManagement?: () => 
         
         {user && (
           <div className="flex items-center space-x-2 md:space-x-4 flex-shrink-0">
+            {(role === 'admin' || role === 'manager') && (
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => {
+                  // Toggle email test center visibility
+                  const emailTestCenter = document.querySelector('[data-email-test-center]');
+                  if (emailTestCenter) {
+                    emailTestCenter.classList.toggle('hidden');
+                  }
+                }}
+                className="border-travel-primary/20 hover:bg-travel-primary hover:text-white transition-colors h-8 md:h-9 px-2 md:px-3"
+              >
+                <Mail className="h-3.5 w-3.5 md:h-4 md:w-4 md:mr-2" />
+                <span className="hidden md:inline">Email</span>
+              </Button>
+            )}
             {role === 'admin' && onShowUserManagement && (
               <Button 
                 variant="outline" 

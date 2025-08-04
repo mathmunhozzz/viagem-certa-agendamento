@@ -5,6 +5,7 @@ import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, Cart
 import { CalendarDays, Car, Users, TrendingUp, MapPin } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
+import { EmailTestCenter } from './EmailTestCenter';
 
 interface TripStatistics {
   month: string;
@@ -108,6 +109,11 @@ export function TripDashboard() {
 
   return (
     <div className="space-y-6">
+      {/* Email Test Center - Hidden by default */}
+      <div data-email-test-center className="hidden">
+        <EmailTestCenter />
+      </div>
+      
       {/* KPIs */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card>
