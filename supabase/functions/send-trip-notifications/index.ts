@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { SmtpClient } from "https://deno.land/x/smtp@v0.7.0/mod.ts";
 
 // Simplified Gmail SMTP sending function using a robust external library
 const sendGmailNotification = async (to: string, subject: string, html: string, retries = 3) => {
@@ -18,18 +19,15 @@ const sendGmailNotification = async (to: string, subject: string, html: string, 
     try {
       console.log(`🔄 Attempt ${attempt}/${retries}`);
       
-      // Use a more robust approach with the SMTP library
-      // This avoids complex TLS handshake issues by using a proven library
-      const { default: SMTPClient } = await import("https://deno.land/x/smtp@v0.7.0/mod.ts");
-      
       console.log('📧 Initializing SMTP client...');
-      const client = new SMTPClient();
+      const client = new SmtpClient();
 
-      await client.connectTLS({
+      await client.connect({
         hostname: "smtp.gmail.com",
-        port: 465, // Use port 465 for SSL/TLS instead of 587 with STARTTLS
+        port: 587,
         username: gmailEmail,
         password: gmailPassword,
+        tls: true,
       });
 
       console.log('✅ SMTP connection established');
