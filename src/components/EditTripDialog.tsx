@@ -174,128 +174,149 @@ export function EditTripDialog({ trip, open, onClose, onTripUpdated }: EditTripD
         </DialogHeader>
         
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="title">Título da Viagem *</Label>
-              <Input
-                id="title"
-                value={formData.title}
-                onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
-                required
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="time">Horário de Saída *</Label>
-              <Input
-                id="time"
-                type="time"
-                value={formData.departure_time}
-                onChange={(e) => setFormData(prev => ({ ...prev, departure_time: e.target.value }))}
-                required
-              />
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="description">Descrição</Label>
-            <Textarea
-              id="description"
-              value={formData.description}
-              onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-              rows={3}
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="observations">Observações</Label>
-            <Textarea
-              id="observations"
-              value={formData.observations}
-              onChange={(e) => setFormData(prev => ({ ...prev, observations: e.target.value }))}
-              rows={3}
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label>Data da Viagem *</Label>
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  className={cn(
-                    "w-full justify-start text-left font-normal",
-                    !formData.trip_date && "text-muted-foreground"
-                  )}
-                >
-                  <CalendarIcon className="mr-2 h-4 w-4" />
-                  {formData.trip_date ? 
-                    format(parseISO(formData.trip_date), "dd/MM/yyyy", { locale: ptBR }) : 
-                    "Selecione a data"
-                  }
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="start">
-                <Calendar
-                  mode="single"
-                  selected={formData.trip_date ? parseISO(formData.trip_date) : undefined}
-                  onSelect={(date) => setFormData(prev => ({ 
-                    ...prev, 
-                    trip_date: date ? format(date, 'yyyy-MM-dd') : '' 
-                  }))}
-                  initialFocus
-                  locale={ptBR}
-                />
-              </PopoverContent>
-            </Popover>
-          </div>
-
-          <SectorMultiSelect
-            selectedSectors={selectedSectors}
-            onSectorToggle={handleSectorToggle}
-          />
-
-          <EmployeeMultiSelect
-            selectedSectors={selectedSectors}
-            selectedEmployees={selectedEmployees}
-            onEmployeeToggle={handleEmployeeToggle}
-          />
-
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <Label>Viajantes Adicionais</Label>
-              <Button type="button" variant="outline" size="sm" onClick={addTraveler}>
-                Adicionar
-              </Button>
-            </div>
-            <div className="space-y-2">
-              {formData.travelers.map((traveler, index) => (
-                <div key={index} className="flex gap-2 items-center">
-                  <Input
-                    placeholder={`Viajante ${index + 1}`}
-                    value={traveler}
-                    onChange={(e) => updateTraveler(index, e.target.value)}
-                  />
-                  {formData.travelers.length > 1 && (
+          {/* Data e Horário */}
+          <div className="p-3 bg-travel-primary/5 rounded-lg border border-travel-primary/20">
+            <h4 className="text-sm font-semibold text-travel-primary mb-3">Data e Horário</h4>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Data da Viagem *</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
                     <Button
-                      type="button"
                       variant="outline"
-                      size="sm"
-                      onClick={() => removeTraveler(index)}
+                      className={cn(
+                        "w-full justify-start text-left font-normal",
+                        !formData.trip_date && "text-muted-foreground"
+                      )}
                     >
-                      <X className="h-4 w-4" />
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {formData.trip_date ? 
+                        format(parseISO(formData.trip_date), "dd/MM/yyyy", { locale: ptBR }) : 
+                        "Selecione a data"
+                      }
                     </Button>
-                  )}
-                </div>
-              ))}
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={formData.trip_date ? parseISO(formData.trip_date) : undefined}
+                      onSelect={(date) => setFormData(prev => ({ 
+                        ...prev, 
+                        trip_date: date ? format(date, 'yyyy-MM-dd') : '' 
+                      }))}
+                      initialFocus
+                      locale={ptBR}
+                      className="pointer-events-auto"
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="time">Horário de Saída *</Label>
+                <Input
+                  id="time"
+                  type="time"
+                  value={formData.departure_time}
+                  onChange={(e) => setFormData(prev => ({ ...prev, departure_time: e.target.value }))}
+                  required
+                />
+              </div>
             </div>
           </div>
 
-          <VehicleSelect
-            value={formData.vehicle_id}
-            onValueChange={(value) => setFormData(prev => ({ ...prev, vehicle_id: value }))}
-            tripDate={formData.trip_date}
-          />
+          {/* Detalhes da Viagem */}
+          <div className="p-3 bg-muted/30 rounded-lg border border-muted">
+            <h4 className="text-sm font-semibold mb-3">Detalhes da Viagem</h4>
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="title">Título da Viagem *</Label>
+                <Input
+                  id="title"
+                  value={formData.title}
+                  onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
+                  required
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="description">Descrição</Label>
+                <Textarea
+                  id="description"
+                  value={formData.description}
+                  onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+                  rows={3}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="observations">Observações</Label>
+                <Textarea
+                  id="observations"
+                  value={formData.observations}
+                  onChange={(e) => setFormData(prev => ({ ...prev, observations: e.target.value }))}
+                  rows={3}
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Participantes */}
+          <div className="p-3 bg-travel-accent/5 rounded-lg border border-travel-accent/20">
+            <h4 className="text-sm font-semibold text-travel-accent mb-3">Participantes</h4>
+            <div className="space-y-4">
+              <SectorMultiSelect
+                selectedSectors={selectedSectors}
+                onSectorToggle={handleSectorToggle}
+              />
+
+              <EmployeeMultiSelect
+                selectedSectors={selectedSectors}
+                selectedEmployees={selectedEmployees}
+                onEmployeeToggle={handleEmployeeToggle}
+              />
+
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label>Viajantes Adicionais</Label>
+                  <Button type="button" variant="outline" size="sm" onClick={addTraveler}>
+                    Adicionar
+                  </Button>
+                </div>
+                <div className="space-y-2">
+                  {formData.travelers.map((traveler, index) => (
+                    <div key={index} className="flex gap-2 items-center">
+                      <Input
+                        placeholder={`Viajante ${index + 1}`}
+                        value={traveler}
+                        onChange={(e) => updateTraveler(index, e.target.value)}
+                      />
+                      {formData.travelers.length > 1 && (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => removeTraveler(index)}
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Veículo */}
+          <div className="p-3 bg-travel-warning/5 rounded-lg border border-travel-warning/20">
+            <h4 className="text-sm font-semibold text-travel-warning mb-3">Veículo</h4>
+            <VehicleSelect
+              value={formData.vehicle_id}
+              onValueChange={(value) => setFormData(prev => ({ ...prev, vehicle_id: value }))}
+              tripDate={formData.trip_date}
+            />
+          </div>
 
           <div className="flex gap-2 pt-4">
             <Button type="submit" disabled={loading} className="flex-1">

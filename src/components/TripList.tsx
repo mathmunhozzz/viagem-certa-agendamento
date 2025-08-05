@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { MapPin, Users, Calendar, MoreVertical, Edit, Trash2, Car } from 'lucide-react';
+import { MapPin, Users, Calendar, MoreVertical, Edit, Trash2, Car, Eye, EyeOff } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { supabase } from '@/integrations/supabase/client';
 import { format, parseISO, isToday, isFuture } from 'date-fns';
@@ -45,6 +45,7 @@ export function TripList({ onTripUpdated }: TripListProps) {
   const [loading, setLoading] = useState(true);
   const [editingTrip, setEditingTrip] = useState<Trip | null>(null);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [showPastTrips, setShowPastTrips] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -59,8 +60,7 @@ export function TripList({ onTripUpdated }: TripListProps) {
           *,
           vehicle:vehicles(id, brand, model, plate, capacity)
         `)
-        .order('trip_date', { ascending: true })
-        .limit(10);
+        .order('trip_date', { ascending: false })
 
       if (error) throw error;
       
@@ -170,6 +170,34 @@ export function TripList({ onTripUpdated }: TripListProps) {
     }
   };
 
+  // Filter trips based on showPastTrips toggle
+  const filteredTrips = trips.filter(trip => {
+    const tripDate = parseISO(trip.trip_date);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    if (showPastTrips) {
+      return tripDate < today;
+    } else {
+      return tripDate >= today;
+    }
+  });
+
+  // Count trips for display
+  const futureTripsCount = trips.filter(trip => {
+    const tripDate = parseISO(trip.trip_date);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return tripDate >= today;
+  }).length;
+
+  const pastTripsCount = trips.filter(trip => {
+    const tripDate = parseISO(trip.trip_date);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return tripDate < today;
+  }).length;
+
   if (loading) {
     return (
       <Card className="travel-card travel-card-dark">
@@ -196,15 +224,38 @@ export function TripList({ onTripUpdated }: TripListProps) {
     <>
       <Card className="travel-card travel-card-dark animate-fade-in">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Calendar className="h-5 w-5 text-travel-primary" />
-            Próximas Viagens
-          </CardTitle>
+          <div className="flex items-center justify-between">
+            <CardTitle className="flex items-center gap-2">
+              <Calendar className="h-5 w-5 text-travel-primary" />
+              {showPastTrips ? 'Viagens Passadas' : 'Próximas Viagens'}
+              <Badge variant="outline" className="ml-2">
+                {showPastTrips ? pastTripsCount : futureTripsCount}
+              </Badge>
+            </CardTitle>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowPastTrips(!showPastTrips)}
+              className="flex items-center gap-2"
+            >
+              {showPastTrips ? (
+                <>
+                  <Eye className="h-4 w-4" />
+                  Ver Futuras ({futureTripsCount})
+                </>
+              ) : (
+                <>
+                  <EyeOff className="h-4 w-4" />
+                  Ver Passadas ({pastTripsCount})
+                </>
+              )}
+            </Button>
+          </div>
         </CardHeader>
         <CardContent>
-          {trips.length > 0 ? (
+          {filteredTrips.length > 0 ? (
             <div className="space-y-4">
-              {trips.map((trip, index) => (
+              {filteredTrips.map((trip, index) => (
                 <div
                   key={trip.id}
                   className="border rounded-xl p-5 bg-gradient-to-r from-background to-muted/20 hover:shadow-lg transition-all duration-300 animate-slide-up overflow-hidden"
@@ -315,8 +366,15 @@ export function TripList({ onTripUpdated }: TripListProps) {
           ) : (
             <div className="text-center py-12">
               <Calendar className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-              <p className="text-muted-foreground text-lg font-medium">Nenhuma viagem encontrada</p>
-              <p className="text-sm text-muted-foreground mt-1">Comece agendando sua primeira viagem</p>
+              <p className="text-muted-foreground text-lg font-medium">
+                {showPastTrips ? 'Nenhuma viagem passada encontrada' : 'Nenhuma viagem futura encontrada'}
+              </p>
+              <p className="text-sm text-muted-foreground mt-1">
+                {showPastTrips 
+                  ? 'Não há viagens realizadas ainda' 
+                  : 'Comece agendando sua primeira viagem'
+                }
+              </p>
             </div>
           )}
         </CardContent>

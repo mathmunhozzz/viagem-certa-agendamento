@@ -17,7 +17,7 @@ import { VehicleSelect } from './VehicleSelect';
 import { SectorMultiSelect } from './SectorMultiSelect';
 import { EmployeeMultiSelect } from './EmployeeMultiSelect';
 import { ClientSelect } from './ClientSelect';
-import { Clock } from 'lucide-react';
+import { Clock, Car } from 'lucide-react';
 
 interface TripFormProps {
   onTripCreated: () => void;
@@ -252,215 +252,242 @@ export function TripForm({ onTripCreated }: TripFormProps) {
       </CardHeader>
       <CardContent className="space-y-6">
         <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
-            <div className="space-y-2">
-              <Label htmlFor="title" className="text-sm font-semibold flex items-center gap-2">
-                <FileText className="h-4 w-4 text-travel-primary" />
-                Título da Viagem *
-              </Label>
-              <Input
-                id="title"
-                name="title"
-                placeholder="Ex: Reunião em São Paulo"
-                required
-                className="border-travel-primary/20 focus:border-travel-primary focus:ring-travel-primary/20 h-11"
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="time" className="text-sm font-semibold flex items-center gap-2">
-                <Clock className="h-4 w-4 text-travel-accent" />
-                Horário de Saída *
-              </Label>
-              <Input
-                id="time"
-                type="time"
-                value={time}
-                onChange={(e) => setTime(e.target.value)}
-                required
-                className="border-travel-accent/20 focus:border-travel-accent focus:ring-travel-accent/20 h-11"
-              />
-            </div>
-          </div>
+          {/* SEÇÃO 1: DATAS E HORÁRIO */}
+          <div className="p-4 bg-gradient-to-r from-travel-primary/5 to-travel-primary/10 rounded-lg border border-travel-primary/20">
+            <h3 className="text-sm font-semibold text-travel-primary mb-3 flex items-center gap-2">
+              <CalendarIcon className="h-4 w-4" />
+              Quando será a viagem?
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="space-y-3">
+                <Label className="text-sm font-semibold">Data de Início *</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        "w-full justify-start text-left font-normal h-11 border-travel-primary/20 hover:border-travel-primary hover:bg-travel-primary/5",
+                        !date && "text-muted-foreground"
+                      )}
+                    >
+                      <CalendarIcon className="mr-3 h-4 w-4 text-travel-primary" />
+                      {date ? format(date, "dd/MM/yyyy", { locale: ptBR }) : "Data de início"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={date}
+                      onSelect={(newDate) => {
+                        setDate(newDate);
+                        // Se a data final for anterior à nova data inicial, ajustar
+                        if (endDate && newDate && endDate < newDate) {
+                          setEndDate(undefined);
+                        }
+                      }}
+                      initialFocus
+                      locale={ptBR}
+                      disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
+                      className="bg-background border-0 pointer-events-auto"
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="description" className="text-sm font-semibold">Descrição</Label>
-            <Textarea
-              id="description"
-              name="description"
-              placeholder="Detalhes sobre a viagem, objetivo, local de destino..."
-              rows={3}
-              className="border-muted focus:border-travel-secondary focus:ring-travel-secondary/20 resize-none"
-            />
-          </div>
+              <div className="space-y-3">
+                <Label className="text-sm font-semibold">Data de Fim (Opcional)</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        "w-full justify-start text-left font-normal h-11 border-travel-secondary/20 hover:border-travel-secondary hover:bg-travel-secondary/5",
+                        !endDate && "text-muted-foreground"
+                      )}
+                      disabled={!date}
+                    >
+                      <CalendarIcon className="mr-3 h-4 w-4 text-travel-secondary" />
+                      {endDate ? format(endDate, "dd/MM/yyyy", { locale: ptBR }) : "Data de fim (opcional)"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={endDate}
+                      onSelect={setEndDate}
+                      initialFocus
+                      locale={ptBR}
+                      disabled={(dateToCheck) => !date || dateToCheck < new Date(new Date().setHours(0, 0, 0, 0)) || dateToCheck < date}
+                      className="bg-background border-0 pointer-events-auto"
+                    />
+                  </PopoverContent>
+                </Popover>
+                {endDate && date && (
+                  <p className="text-sm text-travel-secondary">
+                    Período: {eachDayOfInterval({ start: date, end: endDate }).length} dias
+                  </p>
+                )}
+              </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="observations" className="text-sm font-semibold">Observações</Label>
-            <Textarea
-              id="observations"
-              name="observations"
-              placeholder="Observações ou instruções específicas para os funcionários..."
-              rows={3}
-              className="border-muted focus:border-travel-accent focus:ring-travel-accent/20 resize-none"
-            />
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-3">
-              <Label className="text-sm font-semibold">Data de Início *</Label>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    className={cn(
-                      "w-full justify-start text-left font-normal h-11 border-travel-primary/20 hover:border-travel-primary hover:bg-travel-primary/5",
-                      !date && "text-muted-foreground"
-                    )}
-                  >
-                    <CalendarIcon className="mr-3 h-4 w-4 text-travel-primary" />
-                    {date ? format(date, "dd/MM/yyyy", { locale: ptBR }) : "Data de início"}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar
-                    mode="single"
-                    selected={date}
-                    onSelect={(newDate) => {
-                      setDate(newDate);
-                      // Se a data final for anterior à nova data inicial, ajustar
-                      if (endDate && newDate && endDate < newDate) {
-                        setEndDate(undefined);
-                      }
-                    }}
-                    initialFocus
-                    locale={ptBR}
-                    disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
-                    className="bg-background border-0 pointer-events-auto"
-                  />
-                </PopoverContent>
-              </Popover>
-            </div>
-
-            <div className="space-y-3">
-              <Label className="text-sm font-semibold">Data de Fim (Opcional)</Label>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    className={cn(
-                      "w-full justify-start text-left font-normal h-11 border-travel-secondary/20 hover:border-travel-secondary hover:bg-travel-secondary/5",
-                      !endDate && "text-muted-foreground"
-                    )}
-                    disabled={!date}
-                  >
-                    <CalendarIcon className="mr-3 h-4 w-4 text-travel-secondary" />
-                    {endDate ? format(endDate, "dd/MM/yyyy", { locale: ptBR }) : "Data de fim (opcional)"}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar
-                    mode="single"
-                    selected={endDate}
-                    onSelect={setEndDate}
-                    initialFocus
-                    locale={ptBR}
-                    disabled={(dateToCheck) => !date || dateToCheck < new Date(new Date().setHours(0, 0, 0, 0)) || dateToCheck < date}
-                    className="bg-background border-0 pointer-events-auto"
-                  />
-                </PopoverContent>
-              </Popover>
-              {endDate && date && (
-                <p className="text-sm text-travel-secondary">
-                  Período: {eachDayOfInterval({ start: date, end: endDate }).length} dias
-                </p>
-              )}
+              <div className="space-y-2">
+                <Label htmlFor="time" className="text-sm font-semibold flex items-center gap-2">
+                  <Clock className="h-4 w-4 text-travel-accent" />
+                  Horário de Saída *
+                </Label>
+                <Input
+                  id="time"
+                  type="time"
+                  value={time}
+                  onChange={(e) => setTime(e.target.value)}
+                  required
+                  className="border-travel-accent/20 focus:border-travel-accent focus:ring-travel-accent/20 h-11"
+                />
+              </div>
             </div>
           </div>
 
-          {/* Seleção de Cliente */}
-          <div className="space-y-2">
-            <Label className="text-sm font-semibold flex items-center gap-2">
-              <Users className="h-4 w-4 text-travel-primary" />
-              Cliente *
-            </Label>
+          {/* SEÇÃO 2: CLIENTE */}
+          <div className="p-4 bg-gradient-to-r from-travel-secondary/5 to-travel-secondary/10 rounded-lg border border-travel-secondary/20">
+            <h3 className="text-sm font-semibold text-travel-secondary mb-3 flex items-center gap-2">
+              <Users className="h-4 w-4" />
+              Para qual cliente?
+            </h3>
             <ClientSelect
               value={selectedClient}
               onValueChange={setSelectedClient}
-              required
             />
           </div>
 
-          {/* Seleção de Setores */}
-          <SectorMultiSelect
-            selectedSectors={selectedSectors}
-            onSectorToggle={handleSectorToggle}
-          />
+          {/* SEÇÃO 3: DETALHES DA VIAGEM */}
+          <div className="p-4 bg-gradient-to-r from-muted/30 to-muted/50 rounded-lg border border-muted">
+            <h3 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
+              <FileText className="h-4 w-4" />
+              Detalhes da viagem
+            </h3>
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="title" className="text-sm font-semibold">
+                  Título da Viagem *
+                </Label>
+                <Input
+                  id="title"
+                  name="title"
+                  placeholder="Ex: Reunião em São Paulo"
+                  required
+                  className="border-travel-primary/20 focus:border-travel-primary focus:ring-travel-primary/20 h-11"
+                />
+              </div>
 
-          {/* Seleção de Funcionários */}
-          <EmployeeMultiSelect
-            selectedSectors={selectedSectors}
-            selectedEmployees={selectedEmployees}
-            onEmployeeToggle={handleEmployeeToggle}
-          />
+              <div className="space-y-2">
+                <Label htmlFor="description" className="text-sm font-semibold">Descrição</Label>
+                <Textarea
+                  id="description"
+                  name="description"
+                  placeholder="Detalhes sobre a viagem, objetivo, local de destino..."
+                  rows={3}
+                  className="border-muted focus:border-travel-secondary focus:ring-travel-secondary/20 resize-none"
+                />
+              </div>
 
-          {/* Viajantes Adicionais (Opcional) */}
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <Label className="text-sm font-semibold flex items-center gap-2">
-                <Users className="h-4 w-4 text-travel-secondary" />
-                Viajantes Adicionais (Opcional)
-              </Label>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={addTraveler}
-                className="h-8 border-travel-secondary/30 hover:border-travel-secondary hover:bg-travel-secondary/10 text-travel-secondary"
-              >
-                <Plus className="h-3.5 w-3.5 mr-1" />
-                Adicionar
-              </Button>
-            </div>
-            <p className="text-sm text-muted-foreground">
-              Adicione viajantes que não estão cadastrados no sistema ou externos à empresa
-            </p>
-            <div className="space-y-3">
-              {travelers.map((traveler, index) => (
-                <div key={index} className="flex flex-col sm:flex-row gap-2 sm:gap-3 sm:items-end">
-                  <div className="flex-1 space-y-1">
-                    <Label className="text-xs text-muted-foreground">
-                      Viajante adicional {index + 1}
-                    </Label>
-                    <Input
-                      placeholder={`Nome completo do viajante ${index + 1}`}
-                      value={traveler}
-                      onChange={(e) => updateTraveler(index, e.target.value)}
-                      className="border-travel-secondary/20 focus:border-travel-secondary focus:ring-travel-secondary/20 h-11"
-                    />
-                  </div>
-                  {travelers.length > 1 && (
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => removeTraveler(index)}
-                      className="h-11 w-full sm:w-11 p-0 border-destructive/30 hover:border-destructive hover:bg-destructive/10 text-destructive"
-                    >
-                      <X className="h-4 w-4" />
-                      <span className="ml-2 sm:hidden">Remover</span>
-                    </Button>
-                  )}
-                </div>
-              ))}
+              <div className="space-y-2">
+                <Label htmlFor="observations" className="text-sm font-semibold">Observações</Label>
+                <Textarea
+                  id="observations"
+                  name="observations"
+                  placeholder="Observações ou instruções específicas para os funcionários..."
+                  rows={3}
+                  className="border-muted focus:border-travel-accent focus:ring-travel-accent/20 resize-none"
+                />
+              </div>
             </div>
           </div>
 
-          <VehicleSelect
-            value={selectedVehicle}
-            onValueChange={setSelectedVehicle}
-            tripDate={date ? format(date, 'yyyy-MM-dd') : undefined}
-            error={!selectedVehicle && loading ? 'Selecione um veículo' : undefined}
-          />
+          {/* SEÇÃO 4: PARTICIPANTES */}
+          <div className="p-4 bg-gradient-to-r from-travel-accent/5 to-travel-accent/10 rounded-lg border border-travel-accent/20">
+            <h3 className="text-sm font-semibold text-travel-accent mb-3 flex items-center gap-2">
+              <Users className="h-4 w-4" />
+              Quem vai participar?
+            </h3>
+            <div className="space-y-4">
+              {/* Seleção de Setores */}
+              <SectorMultiSelect
+                selectedSectors={selectedSectors}
+                onSectorToggle={handleSectorToggle}
+              />
+
+              {/* Seleção de Funcionários */}
+              <EmployeeMultiSelect
+                selectedSectors={selectedSectors}
+                selectedEmployees={selectedEmployees}
+                onEmployeeToggle={handleEmployeeToggle}
+              />
+
+              {/* Viajantes Adicionais (Opcional) */}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <Label className="text-sm font-semibold flex items-center gap-2">
+                    <Users className="h-4 w-4 text-travel-secondary" />
+                    Viajantes Adicionais (Opcional)
+                  </Label>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={addTraveler}
+                    className="h-8 border-travel-secondary/30 hover:border-travel-secondary hover:bg-travel-secondary/10 text-travel-secondary"
+                  >
+                    <Plus className="h-3.5 w-3.5 mr-1" />
+                    Adicionar
+                  </Button>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  Adicione viajantes que não estão cadastrados no sistema ou externos à empresa
+                </p>
+                <div className="space-y-3">
+                  {travelers.map((traveler, index) => (
+                    <div key={index} className="flex flex-col sm:flex-row gap-2 sm:gap-3 sm:items-end">
+                      <div className="flex-1 space-y-1">
+                        <Label className="text-xs text-muted-foreground">
+                          Viajante adicional {index + 1}
+                        </Label>
+                        <Input
+                          placeholder={`Nome completo do viajante ${index + 1}`}
+                          value={traveler}
+                          onChange={(e) => updateTraveler(index, e.target.value)}
+                          className="border-travel-secondary/20 focus:border-travel-secondary focus:ring-travel-secondary/20 h-11"
+                         />
+                       </div>
+                       {travelers.length > 1 && (
+                         <Button
+                           type="button"
+                           variant="outline"
+                           size="sm"
+                           onClick={() => removeTraveler(index)}
+                           className="h-11 w-full sm:w-11 p-0 border-destructive/30 hover:border-destructive hover:bg-destructive/10 text-destructive"
+                         >
+                           <X className="h-4 w-4" />
+                           <span className="ml-2 sm:hidden">Remover</span>
+                         </Button>
+                       )}
+                     </div>
+                   ))}
+                 </div>
+               </div>
+             </div>
+           </div>
+
+          {/* SEÇÃO 5: LOGÍSTICA */}
+          <div className="p-4 bg-gradient-to-r from-travel-warning/5 to-travel-warning/10 rounded-lg border border-travel-warning/20">
+            <h3 className="text-sm font-semibold text-travel-warning mb-3 flex items-center gap-2">
+              <Car className="h-4 w-4" />
+              Logística da viagem
+            </h3>
+            <VehicleSelect
+              value={selectedVehicle}
+              onValueChange={setSelectedVehicle}
+              tripDate={date ? format(date, 'yyyy-MM-dd') : undefined}
+            />
+          </div>
 
           <Button 
             type="submit" 
