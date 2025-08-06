@@ -87,156 +87,166 @@ export function TripReport({ trip, onClose }: TripReportProps) {
 
       {/* Report content */}
       <div className="print-content">
-        <div className="print-page max-w-4xl mx-auto bg-background p-8 min-h-screen">
+        <div className="print-page max-w-4xl mx-auto bg-white p-8 min-h-screen text-black">
           {/* Header */}
-          <div className="border-b-2 border-border pb-6 mb-8">
+          <div className="border-b-2 border-black pb-4 mb-6">
             <div className="flex justify-between items-start">
               <div>
-                <h1 className="text-2xl font-bold text-primary mb-2">OPPORTUNITY SISTEMAS</h1>
-                <p className="text-sm text-muted-foreground">Sistema de Gestão de Viagens</p>
+                <h1 className="text-3xl font-bold text-black mb-1">OPPORTUNITY SISTEMAS</h1>
+                <p className="text-sm text-black">Rua Exemplo, 123 - Centro - Cidade/UF - CEP: 12345-678</p>
+                <p className="text-sm text-black">Tel: (XX) XXXX-XXXX - email@opportunity.com.br</p>
               </div>
-              <div className="text-right">
-                <p className="text-sm text-muted-foreground">Data de Emissão:</p>
-                <p className="font-medium">{format(new Date(), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}</p>
+              <div className="text-right border border-black p-2 min-w-[200px]">
+                <p className="text-xs text-black font-bold">RELATÓRIO Nº</p>
+                <p className="text-lg font-bold text-black">{trip.id.substring(0, 8).toUpperCase()}</p>
+                <p className="text-xs text-black">DATA: {format(new Date(), "dd/MM/yyyy", { locale: ptBR })}</p>
               </div>
             </div>
           </div>
 
           {/* Report title */}
           <div className="text-center mb-8">
-            <h2 className="text-xl font-bold text-foreground mb-2">RELATÓRIO DE ATENDIMENTO A CLIENTE</h2>
-            <div className="w-24 h-1 bg-primary mx-auto"></div>
+            <h2 className="text-xl font-bold text-black mb-4 border border-black p-3 bg-gray-100">
+              RELATÓRIO DE ATENDIMENTO A CLIENTE
+            </h2>
           </div>
 
-          {/* Client section */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-            <div className="space-y-4">
-              <div>
-                <label className="text-sm font-medium text-muted-foreground uppercase tracking-wide">Cliente:</label>
-                <div className="border-b border-border pb-1 mt-1">
-                  <p className="font-medium">{trip.sector}</p>
-                </div>
-              </div>
-
-              <div>
-                <label className="text-sm font-medium text-muted-foreground uppercase tracking-wide">Data Atendimento:</label>
-                <div className="border-b border-border pb-1 mt-1">
-                  <p className="font-medium">{format(parseISO(trip.trip_date), "dd/MM/yyyy", { locale: ptBR })}</p>
-                </div>
-              </div>
-
-              <div>
-                <label className="text-sm font-medium text-muted-foreground uppercase tracking-wide">Tipo de Serviço:</label>
-                <div className="border-b border-border pb-1 mt-1">
-                  <p className="font-medium">Transporte / Deslocamento</p>
-                </div>
-              </div>
-            </div>
-
-            <div className="space-y-4">
-              <div>
-                <label className="text-sm font-medium text-muted-foreground uppercase tracking-wide">Situação:</label>
-                <div className="border-b border-border pb-1 mt-1">
-                  <p className="font-medium">{getStatusText(trip.status)}</p>
-                </div>
-              </div>
-
-              <div>
-                <label className="text-sm font-medium text-muted-foreground uppercase tracking-wide">Horário:</label>
-                <div className="border-b border-border pb-1 mt-1">
-                  <p className="font-medium">{trip.departure_time || 'Não informado'}</p>
-                </div>
-              </div>
-
-              <div>
-                <label className="text-sm font-medium text-muted-foreground uppercase tracking-wide">Sistema:</label>
-                <div className="border-b border-border pb-1 mt-1">
-                  <p className="font-medium">{trip.sector}</p>
-                </div>
-              </div>
-            </div>
+          {/* Client information table */}
+          <div className="mb-6">
+            <table className="w-full border-collapse border border-black text-sm">
+              <tbody>
+                <tr>
+                  <td className="border border-black p-2 bg-gray-100 font-bold w-1/6">CLIENTE:</td>
+                  <td className="border border-black p-2 w-1/3">{trip.sector}</td>
+                  <td className="border border-black p-2 bg-gray-100 font-bold w-1/6">DATA ATENDIMENTO:</td>
+                  <td className="border border-black p-2 w-1/3">{format(parseISO(trip.trip_date), "dd/MM/yyyy", { locale: ptBR })}</td>
+                </tr>
+                <tr>
+                  <td className="border border-black p-2 bg-gray-100 font-bold">TIPO DE SERVIÇO:</td>
+                  <td className="border border-black p-2">Transporte / Deslocamento</td>
+                  <td className="border border-black p-2 bg-gray-100 font-bold">SITUAÇÃO:</td>
+                  <td className="border border-black p-2">{getStatusText(trip.status)}</td>
+                </tr>
+                <tr>
+                  <td className="border border-black p-2 bg-gray-100 font-bold">HORÁRIO:</td>
+                  <td className="border border-black p-2">{trip.departure_time || 'Não informado'}</td>
+                  <td className="border border-black p-2 bg-gray-100 font-bold">SISTEMA:</td>
+                  <td className="border border-black p-2">{trip.sector}</td>
+                </tr>
+              </tbody>
+            </table>
           </div>
 
           {/* Service description */}
-          <div className="mb-8">
-            <label className="text-sm font-medium text-muted-foreground uppercase tracking-wide block mb-2">Solicitação / Descrição do Serviço:</label>
-            <div className="border border-border rounded-md p-4 min-h-[120px]">
-              <p className="text-sm leading-relaxed">{trip.description || trip.title}</p>
+          <div className="mb-6">
+            <div className="border border-black">
+              <div className="bg-gray-100 p-2 border-b border-black">
+                <p className="font-bold text-sm text-black">SOLICITAÇÃO / DESCRIÇÃO DO SERVIÇO:</p>
+              </div>
+              <div className="p-3 min-h-[100px]">
+                <p className="text-sm text-black leading-relaxed">{trip.description || trip.title}</p>
+              </div>
             </div>
           </div>
 
           {/* Participants */}
-          <div className="mb-8">
-            <label className="text-sm font-medium text-muted-foreground uppercase tracking-wide block mb-2">Participantes:</label>
-            <div className="border border-border rounded-md p-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                {trip.employees?.map((employee, index) => (
-                  <div key={employee.id} className="flex items-center gap-2">
-                    <span className="w-6 h-6 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-xs font-medium">
-                      {index + 1}
-                    </span>
-                    <span className="text-sm">{employee.name} (Funcionário)</span>
-                  </div>
-                ))}
-                {trip.travelers.map((traveler, index) => (
-                  <div key={index} className="flex items-center gap-2">
-                    <span className="w-6 h-6 bg-secondary text-secondary-foreground rounded-full flex items-center justify-center text-xs font-medium">
-                      {(trip.employees?.length || 0) + index + 1}
-                    </span>
-                    <span className="text-sm">{traveler}</span>
-                  </div>
-                ))}
+          <div className="mb-6">
+            <div className="border border-black">
+              <div className="bg-gray-100 p-2 border-b border-black">
+                <p className="font-bold text-sm text-black">PARTICIPANTES DO ATENDIMENTO:</p>
+              </div>
+              <div className="p-3">
+                <div className="space-y-2">
+                  {trip.employees?.map((employee, index) => (
+                    <div key={employee.id} className="flex items-center">
+                      <span className="text-sm text-black">• {employee.name} (Funcionário)</span>
+                    </div>
+                  ))}
+                  {trip.travelers.map((traveler, index) => (
+                    <div key={index} className="flex items-center">
+                      <span className="text-sm text-black">• {traveler}</span>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
           </div>
 
           {/* Vehicle information */}
           {trip.vehicle && (
-            <div className="mb-8">
-              <label className="text-sm font-medium text-muted-foreground uppercase tracking-wide block mb-2">Veículo Utilizado:</label>
-              <div className="border border-border rounded-md p-4">
-                <p className="text-sm">
-                  <span className="font-medium">{trip.vehicle.brand} {trip.vehicle.model}</span>
-                  {trip.vehicle.plate && <span> - Placa: {trip.vehicle.plate}</span>}
-                </p>
+            <div className="mb-6">
+              <div className="border border-black">
+                <div className="bg-gray-100 p-2 border-b border-black">
+                  <p className="font-bold text-sm text-black">VEÍCULO UTILIZADO:</p>
+                </div>
+                <div className="p-3">
+                  <p className="text-sm text-black">
+                    {trip.vehicle.brand} {trip.vehicle.model}
+                    {trip.vehicle.plate && <span> - Placa: {trip.vehicle.plate}</span>}
+                  </p>
+                </div>
               </div>
             </div>
           )}
 
-          {/* Technical responsible section */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12">
-            <div>
-              <label className="text-sm font-medium text-muted-foreground uppercase tracking-wide block mb-2">Técnico Responsável:</label>
-              <div className="border-b border-border pb-1">
-                <p className="font-medium">Sistema Opportunity</p>
+          {/* Service details */}
+          <div className="mb-8">
+            <div className="border border-black">
+              <div className="bg-gray-100 p-2 border-b border-black">
+                <p className="font-bold text-sm text-black">SERVIÇO EXECUTADO / OBSERVAÇÕES:</p>
               </div>
-            </div>
-            <div>
-              <label className="text-sm font-medium text-muted-foreground uppercase tracking-wide block mb-2">Data:</label>
-              <div className="border-b border-border pb-1">
-                <p className="font-medium">{format(new Date(), "dd/MM/yyyy", { locale: ptBR })}</p>
+              <div className="p-3 min-h-[80px]">
+                <p className="text-sm text-black">Serviço de transporte executado conforme solicitado.</p>
               </div>
             </div>
           </div>
 
-          {/* Signatures */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mt-12">
-            <div className="text-center">
-              <div className="border-t border-border pt-2 mt-16">
-                <p className="text-sm font-medium">Assinatura do Técnico</p>
+          {/* Signatures section */}
+          <div className="mt-12">
+            <div className="grid grid-cols-2 gap-8">
+              {/* Technical signature */}
+              <div className="text-center">
+                <div className="mb-8">
+                  <p className="text-sm text-black mb-2">Técnico Responsável:</p>
+                  <div className="border-b-2 border-black h-8 mb-2"></div>
+                  <p className="text-xs text-black">Sistema Opportunity</p>
+                  <p className="text-xs text-black">Data: {format(new Date(), "dd/MM/yyyy", { locale: ptBR })}</p>
+                </div>
+              </div>
+
+              {/* Client signature */}
+              <div className="text-center">
+                <div className="mb-8">
+                  <p className="text-sm text-black mb-2">Cliente:</p>
+                  <div className="border-b-2 border-black h-8 mb-2"></div>
+                  <p className="text-xs text-black">Assinatura do Responsável</p>
+                  <p className="text-xs text-black">Data: ___/___/______</p>
+                </div>
               </div>
             </div>
+          </div>
+
+          {/* Additional signature fields */}
+          <div className="mt-8 grid grid-cols-2 gap-8">
             <div className="text-center">
-              <div className="border-t border-border pt-2 mt-16">
-                <p className="text-sm font-medium">Assinatura do Cliente</p>
-              </div>
+              <p className="text-sm text-black mb-2">Visto:</p>
+              <div className="border-b-2 border-black h-8 mb-2"></div>
+              <p className="text-xs text-black">Supervisor</p>
+            </div>
+            <div className="text-center">
+              <p className="text-sm text-black mb-2">Aprovação:</p>
+              <div className="border-b-2 border-black h-8 mb-2"></div>
+              <p className="text-xs text-black">Gerência</p>
             </div>
           </div>
 
           {/* Footer */}
-          <div className="text-center mt-12 pt-8 border-t border-border">
-            <p className="text-xs text-muted-foreground">
-              Relatório gerado automaticamente pelo Sistema de Gestão de Viagens - Opportunity Sistemas
+          <div className="text-center mt-8 pt-4 border-t border-black">
+            <p className="text-xs text-black">
+              Este relatório foi gerado automaticamente pelo Sistema de Gestão de Viagens - Opportunity Sistemas
+            </p>
+            <p className="text-xs text-black mt-1">
+              Página 1 de 1 - Relatório gerado em {format(new Date(), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
             </p>
           </div>
         </div>
