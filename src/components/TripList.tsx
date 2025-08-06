@@ -3,13 +3,14 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { MapPin, Users, Calendar, MoreVertical, Edit, Trash2, Car, Eye, EyeOff } from 'lucide-react';
+import { MapPin, Users, Calendar, MoreVertical, Edit, Trash2, Car, Eye, EyeOff, Printer } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { supabase } from '@/integrations/supabase/client';
 import { format, parseISO, isToday, isFuture } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { useToast } from '@/hooks/use-toast';
 import { EditTripDialog } from './EditTripDialog';
+import { TripReport } from './TripReport';
 
 interface Trip {
   id: string;
@@ -46,6 +47,7 @@ export function TripList({ onTripUpdated }: TripListProps) {
   const [editingTrip, setEditingTrip] = useState<Trip | null>(null);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [showPastTrips, setShowPastTrips] = useState(false);
+  const [reportTrip, setReportTrip] = useState<Trip | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -144,6 +146,10 @@ export function TripList({ onTripUpdated }: TripListProps) {
   const handleTripUpdated = () => {
     fetchTrips();
     onTripUpdated();
+  };
+
+  const handlePrintReport = (trip: Trip) => {
+    setReportTrip(trip);
   };
 
   const getStatusBadge = (trip: Trip) => {
@@ -280,6 +286,13 @@ export function TripList({ onTripUpdated }: TripListProps) {
                         <DropdownMenuContent align="end" className="bg-background border shadow-lg">
                           <DropdownMenuItem 
                             className="text-muted-foreground cursor-pointer"
+                            onClick={() => handlePrintReport(trip)}
+                          >
+                            <Printer className="h-4 w-4 mr-2" />
+                            Imprimir Relatório
+                          </DropdownMenuItem>
+                          <DropdownMenuItem 
+                            className="text-muted-foreground cursor-pointer"
                             onClick={() => handleEditTrip(trip)}
                           >
                             <Edit className="h-4 w-4 mr-2" />
@@ -386,6 +399,13 @@ export function TripList({ onTripUpdated }: TripListProps) {
         onClose={handleEditDialogClose}
         onTripUpdated={handleTripUpdated}
       />
+
+      {reportTrip && (
+        <TripReport
+          trip={reportTrip}
+          onClose={() => setReportTrip(null)}
+        />
+      )}
     </>
   );
 }
