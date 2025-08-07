@@ -1,4 +1,4 @@
-import { format, parseISO } from 'date-fns';
+import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
 interface TripReportProps {
@@ -29,16 +29,6 @@ export function TripReport({ trip, onClose }: TripReportProps) {
     window.print();
   };
 
-  const getStatusText = (status: string) => {
-    switch (status) {
-      case 'scheduled': return 'Agendada';
-      case 'in_progress': return 'Em Andamento';
-      case 'completed': return 'Concluída';
-      case 'cancelled': return 'Cancelada';
-      default: return 'Agendada';
-    }
-  };
-
   return (
     <div className="fixed inset-0 bg-background z-50 overflow-auto">
       {/* Print styles */}
@@ -61,10 +51,11 @@ export function TripReport({ trip, onClose }: TripReportProps) {
           }
           .print-page {
             margin: 0;
-            padding: 20px;
+            padding: 40px;
             box-shadow: none;
             background: white !important;
             color: black !important;
+            font-family: Arial, sans-serif;
           }
         }
       `}</style>
@@ -88,165 +79,53 @@ export function TripReport({ trip, onClose }: TripReportProps) {
       {/* Report content */}
       <div className="print-content">
         <div className="print-page max-w-4xl mx-auto bg-white p-8 min-h-screen text-black">
-          {/* Header */}
-          <div className="border-b-2 border-black pb-4 mb-6">
-            <div className="flex justify-between items-start">
-              <div>
-                <h1 className="text-3xl font-bold text-black mb-1">OPPORTUNITY SISTEMAS</h1>
-                <p className="text-sm text-black">Rua Exemplo, 123 - Centro - Cidade/UF - CEP: 12345-678</p>
-                <p className="text-sm text-black">Tel: (XX) XXXX-XXXX - email@opportunity.com.br</p>
+          {/* Header identical to provided document */}
+          <div className="mb-16">
+            <div className="flex items-start justify-between mb-8">
+              <div className="flex-1">
+                <h1 className="text-4xl font-bold text-black mb-2 tracking-wide">OPPORTUNITY SISTEMAS</h1>
+                <div className="text-sm text-black space-y-1">
+                  <p>Rua dos Comerciários, 1234 - Centro - Cascavel/PR - CEP: 85801-050</p>
+                  <p>Tel: (45) 3220-7070 - contato@opportunity.com.br</p>
+                  <p>CNPJ: 12.345.678/0001-90</p>
+                </div>
               </div>
-              <div className="text-right border border-black p-2 min-w-[200px]">
-                <p className="text-xs text-black font-bold">RELATÓRIO Nº</p>
-                <p className="text-lg font-bold text-black">{trip.id.substring(0, 8).toUpperCase()}</p>
-                <p className="text-xs text-black">DATA: {format(new Date(), "dd/MM/yyyy", { locale: ptBR })}</p>
-              </div>
-            </div>
-          </div>
-
-          {/* Report title */}
-          <div className="text-center mb-8">
-            <h2 className="text-xl font-bold text-black mb-4 border border-black p-3 bg-gray-100">
-              RELATÓRIO DE ATENDIMENTO A CLIENTE
-            </h2>
-          </div>
-
-          {/* Client information table */}
-          <div className="mb-6">
-            <table className="w-full border-collapse border border-black text-sm">
-              <tbody>
-                <tr>
-                  <td className="border border-black p-2 bg-gray-100 font-bold w-1/6">CLIENTE:</td>
-                  <td className="border border-black p-2 w-1/3">{trip.sector}</td>
-                  <td className="border border-black p-2 bg-gray-100 font-bold w-1/6">DATA ATENDIMENTO:</td>
-                  <td className="border border-black p-2 w-1/3">{format(parseISO(trip.trip_date), "dd/MM/yyyy", { locale: ptBR })}</td>
-                </tr>
-                <tr>
-                  <td className="border border-black p-2 bg-gray-100 font-bold">TIPO DE SERVIÇO:</td>
-                  <td className="border border-black p-2">Transporte / Deslocamento</td>
-                  <td className="border border-black p-2 bg-gray-100 font-bold">SITUAÇÃO:</td>
-                  <td className="border border-black p-2">{getStatusText(trip.status)}</td>
-                </tr>
-                <tr>
-                  <td className="border border-black p-2 bg-gray-100 font-bold">HORÁRIO:</td>
-                  <td className="border border-black p-2">{trip.departure_time || 'Não informado'}</td>
-                  <td className="border border-black p-2 bg-gray-100 font-bold">SISTEMA:</td>
-                  <td className="border border-black p-2">{trip.sector}</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-
-          {/* Service description */}
-          <div className="mb-6">
-            <div className="border border-black">
-              <div className="bg-gray-100 p-2 border-b border-black">
-                <p className="font-bold text-sm text-black">SOLICITAÇÃO / DESCRIÇÃO DO SERVIÇO:</p>
-              </div>
-              <div className="p-3 min-h-[100px]">
-                <p className="text-sm text-black leading-relaxed">{trip.description || trip.title}</p>
-              </div>
-            </div>
-          </div>
-
-          {/* Participants */}
-          <div className="mb-6">
-            <div className="border border-black">
-              <div className="bg-gray-100 p-2 border-b border-black">
-                <p className="font-bold text-sm text-black">PARTICIPANTES DO ATENDIMENTO:</p>
-              </div>
-              <div className="p-3">
-                <div className="space-y-2">
-                  {trip.employees?.map((employee, index) => (
-                    <div key={employee.id} className="flex items-center">
-                      <span className="text-sm text-black">• {employee.name} (Funcionário)</span>
-                    </div>
-                  ))}
-                  {trip.travelers.map((traveler, index) => (
-                    <div key={index} className="flex items-center">
-                      <span className="text-sm text-black">• {traveler}</span>
-                    </div>
-                  ))}
+              
+              <div className="border-2 border-black p-4 text-center min-w-[180px]">
+                <div className="text-xs font-bold mb-1">FORMULÁRIO Nº</div>
+                <div className="text-xl font-bold mb-2">{String(Math.floor(Math.random() * 90000) + 10000)}</div>
+                <div className="text-xs">
+                  DATA: {format(new Date(), "dd/MM/yyyy", { locale: ptBR })}
                 </div>
               </div>
             </div>
-          </div>
-
-          {/* Vehicle information */}
-          {trip.vehicle && (
-            <div className="mb-6">
-              <div className="border border-black">
-                <div className="bg-gray-100 p-2 border-b border-black">
-                  <p className="font-bold text-sm text-black">VEÍCULO UTILIZADO:</p>
-                </div>
-                <div className="p-3">
-                  <p className="text-sm text-black">
-                    {trip.vehicle.brand} {trip.vehicle.model}
-                    {trip.vehicle.plate && <span> - Placa: {trip.vehicle.plate}</span>}
-                  </p>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Service details */}
-          <div className="mb-8">
-            <div className="border border-black">
-              <div className="bg-gray-100 p-2 border-b border-black">
-                <p className="font-bold text-sm text-black">SERVIÇO EXECUTADO / OBSERVAÇÕES:</p>
-              </div>
-              <div className="p-3 min-h-[80px]">
-                <p className="text-sm text-black">Serviço de transporte executado conforme solicitado.</p>
-              </div>
+            
+            <div className="border-t-2 border-black pt-4">
+              <h2 className="text-center text-lg font-bold text-black">
+                RELATÓRIO DE ATENDIMENTO A CLIENTE
+              </h2>
             </div>
           </div>
 
-          {/* Signatures section */}
-          <div className="mt-12">
-            <div className="grid grid-cols-2 gap-8">
-              {/* Technical signature */}
-              <div className="text-center">
-                <div className="mb-8">
-                  <p className="text-sm text-black mb-2">Técnico Responsável:</p>
-                  <div className="border-b-2 border-black h-8 mb-2"></div>
-                  <p className="text-xs text-black">Sistema Opportunity</p>
-                  <p className="text-xs text-black">Data: {format(new Date(), "dd/MM/yyyy", { locale: ptBR })}</p>
-                </div>
+          {/* 15 signature lines in the middle of the page */}
+          <div className="space-y-8 mt-32">
+            {Array.from({ length: 15 }, (_, i) => (
+              <div key={i} className="flex items-center">
+                <span className="text-sm text-black font-medium w-16 mr-4">
+                  {String(i + 1).padStart(2, '0')}.
+                </span>
+                <div className="flex-1 border-b-2 border-black h-8"></div>
               </div>
-
-              {/* Client signature */}
-              <div className="text-center">
-                <div className="mb-8">
-                  <p className="text-sm text-black mb-2">Cliente:</p>
-                  <div className="border-b-2 border-black h-8 mb-2"></div>
-                  <p className="text-xs text-black">Assinatura do Responsável</p>
-                  <p className="text-xs text-black">Data: ___/___/______</p>
-                </div>
-              </div>
-            </div>
+            ))}
           </div>
 
-          {/* Additional signature fields */}
-          <div className="mt-8 grid grid-cols-2 gap-8">
-            <div className="text-center">
-              <p className="text-sm text-black mb-2">Visto:</p>
-              <div className="border-b-2 border-black h-8 mb-2"></div>
-              <p className="text-xs text-black">Supervisor</p>
-            </div>
-            <div className="text-center">
-              <p className="text-sm text-black mb-2">Aprovação:</p>
-              <div className="border-b-2 border-black h-8 mb-2"></div>
-              <p className="text-xs text-black">Gerência</p>
-            </div>
-          </div>
-
-          {/* Footer */}
-          <div className="text-center mt-8 pt-4 border-t border-black">
+          {/* Footer with company info */}
+          <div className="mt-32 pt-8 border-t border-black text-center">
             <p className="text-xs text-black">
-              Este relatório foi gerado automaticamente pelo Sistema de Gestão de Viagens - Opportunity Sistemas
+              OPPORTUNITY SISTEMAS - Sistema de Gestão Empresarial
             </p>
             <p className="text-xs text-black mt-1">
-              Página 1 de 1 - Relatório gerado em {format(new Date(), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
+              Página 1 de 1 - Gerado em {format(new Date(), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
             </p>
           </div>
         </div>
