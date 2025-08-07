@@ -107,14 +107,76 @@ export function TripReport({ trip, onClose }: TripReportProps) {
             </div>
           </div>
 
-          {/* 15 signature lines in the middle of the page */}
-          <div className="space-y-8 mt-32">
+          {/* Trip information section */}
+          <div className="mb-8">
+            <h3 className="text-lg font-bold text-black mb-4 text-center">INFORMAÇÕES DA VIAGEM</h3>
+            
+            <div className="space-y-4">
+              {/* Client */}
+              <div className="flex items-center">
+                <span className="text-sm font-bold text-black w-32">CLIENTE:</span>
+                <div className="flex-1 border-b border-black h-8 flex items-end pb-1">
+                  <span className="text-sm text-black">{trip.sector}</span>
+                </div>
+              </div>
+
+              {/* City */}
+              <div className="flex items-center">
+                <span className="text-sm font-bold text-black w-32">CIDADE:</span>
+                <div className="flex-1 border-b border-black h-8"></div>
+              </div>
+
+              {/* Trip description */}
+              <div className="flex items-start">
+                <span className="text-sm font-bold text-black w-32">DESCRIÇÃO:</span>
+                <div className="flex-1 border-b border-black min-h-[32px] flex items-end pb-1">
+                  <span className="text-sm text-black">{trip.description || trip.title}</span>
+                </div>
+              </div>
+
+              {/* Employee */}
+              <div className="flex items-center">
+                <span className="text-sm font-bold text-black w-32">FUNCIONÁRIO:</span>
+                <div className="flex-1 border-b border-black h-8 flex items-end pb-1">
+                  <span className="text-sm text-black">
+                    {trip.employees?.map(emp => emp.name).join(', ') || 'Não informado'}
+                  </span>
+                </div>
+              </div>
+
+              {/* Date */}
+              <div className="flex items-center">
+                <span className="text-sm font-bold text-black w-32">DATA:</span>
+                <div className="flex-1 border-b border-black h-8 flex items-end pb-1">
+                  <span className="text-sm text-black">{format(new Date(trip.trip_date), "dd/MM/yyyy", { locale: ptBR })}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* 15 signature lines with two columns */}
+          <div className="space-y-6 mt-16">
+            <h3 className="text-lg font-bold text-black text-center mb-8">LISTA DE PRESENÇA</h3>
+            
+            {/* Header for signature columns */}
+            <div className="grid grid-cols-2 gap-8 mb-4">
+              <div className="text-center">
+                <span className="text-sm font-bold text-black">NOME COMPLETO</span>
+              </div>
+              <div className="text-center">
+                <span className="text-sm font-bold text-black">UNIDADE/SETOR</span>
+              </div>
+            </div>
+
             {Array.from({ length: 15 }, (_, i) => (
-              <div key={i} className="flex items-center">
-                <span className="text-sm text-black font-medium w-16 mr-4">
-                  {String(i + 1).padStart(2, '0')}.
-                </span>
-                <div className="flex-1 border-b-2 border-black h-8"></div>
+              <div key={i} className="grid grid-cols-2 gap-8 items-center">
+                <div className="flex items-center">
+                  <span className="text-sm text-black font-medium w-8 mr-4">
+                    {String(i + 1).padStart(2, '0')}.
+                  </span>
+                  <div className="flex-1 border-b-2 border-black h-8"></div>
+                </div>
+                <div className="border-b-2 border-black h-8"></div>
               </div>
             ))}
           </div>
