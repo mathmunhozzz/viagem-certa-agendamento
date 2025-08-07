@@ -20,6 +20,11 @@ interface TripReportProps {
       model: string;
       plate: string;
     };
+    clients?: {
+      id: string;
+      name: string;
+      municipality: string;
+    };
   };
   onClose: () => void;
 }
@@ -79,15 +84,24 @@ export function TripReport({ trip, onClose }: TripReportProps) {
       {/* Report content */}
       <div className="print-content">
         <div className="print-page max-w-4xl mx-auto bg-white p-8 min-h-screen text-black">
-          {/* Header identical to provided document */}
+          {/* Header identical to provided document with logo */}
           <div className="mb-16">
             <div className="flex items-start justify-between mb-8">
-              <div className="flex-1">
-                <h1 className="text-4xl font-bold text-black mb-2 tracking-wide">OPPORTUNITY SISTEMAS</h1>
-                <div className="text-sm text-black space-y-1">
-                  <p>Rua dos Comerciários, 1234 - Centro - Cascavel/PR - CEP: 85801-050</p>
-                  <p>Tel: (45) 3220-7070 - contato@opportunity.com.br</p>
-                  <p>CNPJ: 12.345.678/0001-90</p>
+              <div className="flex items-center gap-6">
+                <div className="w-16 h-16 flex-shrink-0">
+                  <img 
+                    src="/lovable-uploads/a031923e-3408-476a-8ad3-0b0de5cc4585.png" 
+                    alt="Opportunity Sistemas Logo" 
+                    className="w-full h-full object-contain"
+                  />
+                </div>
+                <div className="flex-1">
+                  <h1 className="text-4xl font-bold text-black mb-2 tracking-wide">OPPORTUNITY SISTEMAS</h1>
+                  <div className="text-sm text-black space-y-1">
+                    <p>Rua dos Comerciários, 1234 - Centro - Cascavel/PR - CEP: 85801-050</p>
+                    <p>Tel: (45) 3220-7070 - contato@opportunity.com.br</p>
+                    <p>CNPJ: 12.345.678/0001-90</p>
+                  </div>
                 </div>
               </div>
               
@@ -116,14 +130,16 @@ export function TripReport({ trip, onClose }: TripReportProps) {
               <div className="flex items-center">
                 <span className="text-sm font-bold text-black w-32">CLIENTE:</span>
                 <div className="flex-1 border-b border-black h-8 flex items-end pb-1">
-                  <span className="text-sm text-black">{trip.sector}</span>
+                  <span className="text-sm text-black">{trip.clients?.name || trip.sector}</span>
                 </div>
               </div>
 
               {/* City */}
               <div className="flex items-center">
                 <span className="text-sm font-bold text-black w-32">CIDADE:</span>
-                <div className="flex-1 border-b border-black h-8"></div>
+                <div className="flex-1 border-b border-black h-8 flex items-end pb-1">
+                  <span className="text-sm text-black">{trip.clients?.municipality || 'Não informado'}</span>
+                </div>
               </div>
 
               {/* Trip description */}

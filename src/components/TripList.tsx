@@ -24,6 +24,7 @@ interface Trip {
   vehicle_id: string;
   sector_id: string;
   employee_ids: string[];
+  client_id: string;
   employees?: Array<{
     id: string;
     name: string;
@@ -34,6 +35,11 @@ interface Trip {
     model: string;
     plate: string;
     capacity: number;
+  };
+  clients?: {
+    id: string;
+    name: string;
+    municipality: string;
   };
 }
 
@@ -60,7 +66,8 @@ export function TripList({ onTripUpdated }: TripListProps) {
         .from('trips')
         .select(`
           *,
-          vehicle:vehicles(id, brand, model, plate, capacity)
+          vehicle:vehicles(id, brand, model, plate, capacity),
+          clients:clients(id, name, municipality)
         `)
         .order('trip_date', { ascending: false })
 
