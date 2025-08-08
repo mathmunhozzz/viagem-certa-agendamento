@@ -243,6 +243,9 @@ const Index = () => {
               <div className="max-w-6xl mx-auto">
                 <EmployeeWeekCalendar />
               </div>
+              <div className="max-w-6xl mx-auto">
+                <EmployeeTripView />
+              </div>
             </TabsContent>
           )}
 
