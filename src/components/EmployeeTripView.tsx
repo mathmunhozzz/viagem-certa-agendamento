@@ -1,7 +1,10 @@
 import { useQuery } from "@tanstack/react-query";
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, MapPin, Users, Clock } from "lucide-react";
+import { Calendar, MapPin, Users, Clock, Paperclip, Loader2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { format, startOfWeek, endOfWeek, isWithinInterval } from "date-fns";
@@ -26,6 +29,45 @@ interface Trip {
 
 export function EmployeeTripView() {
   const { user } = useAuth();
+  const { toast } = useToast();
+  const [uploading, setUploading] = useState<Record<string, boolean>>({});
+
+  const handleUpload = async (tripId: string, files: FileList | null) => {
+    if (!files || files.length === 0) return;
+    if (!user || !employee) {
+      toast({ title: "Sessão inválida", description: "Faça login novamente.", variant: "destructive" });
+      return;
+    }
+    setUploading((prev) => ({ ...prev, [tripId]: true }));
+    try {
+      for (const file of Array.from(files)) {
+        const safeName = file.name.replace(/\s+/g, "_");
+        const path = `${employee.id}/${tripId}/${Date.now()}-${safeName}`;
+        const { error: uploadError } = await supabase.storage.from("trip-attachments").upload(path, file, {
+          contentType: file.type,
+          upsert: false,
+        });
+        if (uploadError) throw uploadError;
+        const { error: insertError } = await supabase.from("trip_attachments").insert({
+          trip_id: tripId,
+          employee_id: employee.id,
+          file_name: file.name,
+          file_path: path,
+          file_type: file.type || "application/octet-stream",
+          file_size: file.size,
+          uploaded_by: user.id,
+        });
+        if (insertError) throw insertError;
+      }
+      toast({ title: "Anexo enviado", description: "Seus arquivos foram anexados à viagem." });
+    } catch (err: any) {
+      toast({ title: "Erro ao anexar", description: err?.message || "Tente novamente.", variant: "destructive" });
+    } finally {
+      setUploading((prev) => ({ ...prev, [tripId]: false }));
+      const input = document.getElementById(`file-${tripId}`) as HTMLInputElement | null;
+      if (input) input.value = "";
+    }
+  };
 
   const { data: employee } = useQuery({
     queryKey: ["employee-by-user", user?.id],
@@ -196,6 +238,23 @@ export function EmployeeTripView() {
                       </span>
                     </div>
                   )}
+                  <div className="mt-4 pt-3 border-t flex items-center justify-between">
+                    <span className="text-xs text-muted-foreground">Envie notas e comprovantes (imagens ou PDF)</span>
+                    <div>
+                      <input
+                        id={`file-${trip.id}`}
+                        type="file"
+                        accept="image/*,application/pdf"
+                        multiple
+                        className="hidden"
+                        onChange={(e) => handleUpload(trip.id, e.target.files)}
+                      />
+                      <Button size="sm" onClick={() => document.getElementById(`file-${trip.id}`)?.click()} disabled={!!uploading[trip.id]}>
+                        {uploading[trip.id] ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Paperclip className="mr-2 h-4 w-4" />}
+                        Anexar
+                      </Button>
+                    </div>
+                  </div>
                 </CardContent>
               </Card>
             ))}
@@ -258,6 +317,23 @@ export function EmployeeTripView() {
                       </span>
                     </div>
                   )}
+                  <div className="mt-4 pt-3 border-t flex items-center justify-between">
+                    <span className="text-xs text-muted-foreground">Envie notas e comprovantes (imagens ou PDF)</span>
+                    <div>
+                      <input
+                        id={`file-${trip.id}`}
+                        type="file"
+                        accept="image/*,application/pdf"
+                        multiple
+                        className="hidden"
+                        onChange={(e) => handleUpload(trip.id, e.target.files)}
+                      />
+                      <Button size="sm" onClick={() => document.getElementById(`file-${trip.id}`)?.click()} disabled={!!uploading[trip.id]}>
+                        {uploading[trip.id] ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Paperclip className="mr-2 h-4 w-4" />}
+                        Anexar
+                      </Button>
+                    </div>
+                  </div>
                 </CardContent>
               </Card>
             ))}
@@ -307,6 +383,23 @@ export function EmployeeTripView() {
                       </span>
                     </div>
                   )}
+                  <div className="mt-4 pt-3 border-t flex items-center justify-between">
+                    <span className="text-xs text-muted-foreground">Envie notas e comprovantes (imagens ou PDF)</span>
+                    <div>
+                      <input
+                        id={`file-${trip.id}`}
+                        type="file"
+                        accept="image/*,application/pdf"
+                        multiple
+                        className="hidden"
+                        onChange={(e) => handleUpload(trip.id, e.target.files)}
+                      />
+                      <Button size="sm" onClick={() => document.getElementById(`file-${trip.id}`)?.click()} disabled={!!uploading[trip.id]}>
+                        {uploading[trip.id] ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Paperclip className="mr-2 h-4 w-4" />}
+                        Anexar
+                      </Button>
+                    </div>
+                  </div>
                 </CardContent>
               </Card>
             ))}
