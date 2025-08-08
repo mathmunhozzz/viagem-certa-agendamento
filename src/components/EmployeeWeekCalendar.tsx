@@ -2,13 +2,13 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, MapPin, Users, Clock, ChevronDown, ChevronUp, FileText } from "lucide-react";
+import { Calendar, MapPin, Users, Clock, ChevronDown, ChevronUp, FileText, Paperclip, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { format, startOfWeek, endOfWeek, addDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Button } from "@/components/ui/button";
-
+import { useToast } from "@/components/ui/use-toast";
 interface Trip {
   id: string;
   title: string;
@@ -26,8 +26,46 @@ interface Trip {
 
 export function EmployeeWeekCalendar() {
   const { user } = useAuth();
+  const { toast } = useToast();
   const [expandedTrip, setExpandedTrip] = useState<string | null>(null);
+  const [uploading, setUploading] = useState<Record<string, boolean>>({});
 
+  const handleUpload = async (tripId: string, files: FileList | null) => {
+    if (!files || files.length === 0) return;
+    if (!user || !employee) {
+      toast({ title: "Sessão inválida", description: "Faça login novamente.", variant: "destructive" });
+      return;
+    }
+    setUploading((prev) => ({ ...prev, [tripId]: true }));
+    try {
+      for (const file of Array.from(files)) {
+        const safeName = file.name.replace(/\s+/g, "_");
+        const path = `${employee.id}/${tripId}/${Date.now()}-${safeName}`;
+        const { error: uploadError } = await supabase.storage.from("trip-attachments").upload(path, file, {
+          contentType: file.type,
+          upsert: false,
+        });
+        if (uploadError) throw uploadError;
+        const { error: insertError } = await supabase.from("trip_attachments").insert({
+          trip_id: tripId,
+          employee_id: employee.id,
+          file_name: file.name,
+          file_path: path,
+          file_type: file.type || "application/octet-stream",
+          file_size: file.size,
+          uploaded_by: user.id,
+        });
+        if (insertError) throw insertError;
+      }
+      toast({ title: "Anexo enviado", description: "Seus arquivos foram anexados à viagem." });
+    } catch (err: any) {
+      toast({ title: "Erro ao anexar", description: err?.message || "Tente novamente.", variant: "destructive" });
+    } finally {
+      setUploading((prev) => ({ ...prev, [tripId]: false }));
+      const input = document.getElementById(`file-${tripId}`) as HTMLInputElement | null;
+      if (input) input.value = "";
+    }
+  };
   const { data: employee } = useQuery({
     queryKey: ["employee-by-user", user?.id],
     queryFn: async () => {
@@ -135,7 +173,7 @@ export function EmployeeWeekCalendar() {
         <p className="text-muted-foreground">Calendário Semanal - {format(startWeek, "dd", { locale: ptBR })} a {format(weekDays[6], "dd 'de' MMMM", { locale: ptBR })}</p>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-7 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
         {weekDays.map((day, index) => {
           const dateKey = format(day, 'yyyy-MM-dd');
           const dayTrips = tripsByDate[dateKey] || [];
@@ -164,61 +202,79 @@ export function EmployeeWeekCalendar() {
                     {dayTrips.map((trip) => (
                       <div key={trip.id} className="w-full">
                         <div 
-                          className={`p-2 rounded-lg border text-xs cursor-pointer transition-all hover:shadow-sm w-full ${getStatusColor(trip.status)}`}
+                          className={`p-3 rounded-lg border text-sm transition-all hover:shadow-sm w-full ${getStatusColor(trip.status)}`}
                           onClick={() => setExpandedTrip(expandedTrip === trip.id ? null : trip.id)}
                         >
                           <div className="flex items-center justify-between w-full">
-                            <div className="font-medium text-break flex-1 min-w-0 pr-1">{trip.title}</div>
+                            <div className="font-medium text-break flex-1 min-w-0 pr-2">{trip.title}</div>
                             {(trip.description || trip.observations) && (
                               <div className="ml-1 flex-shrink-0">
-                                {expandedTrip === trip.id ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
+                                {expandedTrip === trip.id ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
                               </div>
                             )}
                           </div>
                           {trip.departure_time && (
-                            <div className="flex items-center gap-1 mt-1">
-                              <Clock className="h-3 w-3 flex-shrink-0" />
+                            <div className="flex items-center gap-1.5 mt-1.5">
+                              <Clock className="h-4 w-4 flex-shrink-0" />
                               <span className="text-break">{trip.departure_time}</span>
                             </div>
                           )}
-                          <div className="flex items-center gap-1 mt-1">
-                            <MapPin className="h-3 w-3 flex-shrink-0" />
+                          <div className="flex items-center gap-1.5 mt-1.5">
+                            <MapPin className="h-4 w-4 flex-shrink-0" />
                             <span className="text-break min-w-0">{trip.sector}</span>
                           </div>
                           {trip.clients && (
-                            <div className="flex items-center gap-1 mt-1">
-                              <Users className="h-3 w-3 flex-shrink-0" />
+                            <div className="flex items-center gap-1.5 mt-1.5">
+                              <Users className="h-4 w-4 flex-shrink-0" />
                               <span className="text-break min-w-0">{trip.clients.name}</span>
                             </div>
                           )}
                         </div>
                         
                         {expandedTrip === trip.id && (trip.description || trip.observations) && (
-                          <div className="mt-2 p-2 bg-card border rounded-lg text-xs space-y-2 w-full">
+                          <div className="mt-2 p-3 bg-card border rounded-lg text-sm space-y-2 w-full">
                             {trip.description && (
                               <div className="space-y-1">
-                                <div className="flex items-center gap-1 font-medium text-muted-foreground">
-                                  <FileText className="h-3 w-3 flex-shrink-0" />
-                                  <span className="text-xs">Descrição:</span>
+                                <div className="flex items-center gap-1.5 font-medium text-muted-foreground">
+                                  <FileText className="h-4 w-4 flex-shrink-0" />
+                                  <span className="text-sm">Descrição:</span>
                                 </div>
                                 <div className="bg-muted/30 border border-muted rounded p-2 w-full">
-                                  <p className="text-xs text-foreground break-words hyphens-auto leading-relaxed whitespace-pre-wrap word-break overflow-wrap-anywhere">{trip.description}</p>
+                                  <p className="text-sm text-foreground break-words hyphens-auto leading-relaxed whitespace-pre-wrap word-break overflow-wrap-anywhere">{trip.description}</p>
                                 </div>
                               </div>
                             )}
                             {trip.observations && (
                               <div className="space-y-1">
-                                <div className="flex items-center gap-1 font-medium text-primary">
-                                  <FileText className="h-3 w-3 flex-shrink-0" />
-                                  <span className="text-xs">Observações:</span>
+                                <div className="flex items-center gap-1.5 font-medium text-primary">
+                                  <FileText className="h-4 w-4 flex-shrink-0" />
+                                  <span className="text-sm">Observações:</span>
                                 </div>
                                 <div className="bg-primary/5 border border-primary/20 rounded p-2 w-full">
-                                  <p className="text-xs text-primary break-words hyphens-auto leading-relaxed whitespace-pre-wrap word-break overflow-wrap-anywhere">{trip.observations}</p>
+                                  <p className="text-sm text-primary break-words hyphens-auto leading-relaxed whitespace-pre-wrap word-break overflow-wrap-anywhere">{trip.observations}</p>
                                 </div>
                               </div>
                             )}
                           </div>
                         )}
+
+                        <div className="mt-3 pt-2 border-t flex items-center justify-between">
+                          <span className="text-xs text-muted-foreground">Envie notas e comprovantes (imagens ou PDF)</span>
+                          <div>
+                            <input
+                              id={`file-${trip.id}`}
+                              type="file"
+                              accept="image/*,application/pdf"
+                              multiple
+                              className="hidden"
+                              onChange={(e) => handleUpload(trip.id, e.target.files)}
+                            />
+                            <Button size="sm" onClick={() => document.getElementById(`file-${trip.id}`)?.click()} disabled={!!uploading[trip.id]}>
+                              {uploading[trip.id] ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Paperclip className="mr-2 h-4 w-4" />}
+                              Anexar
+                            </Button>
+                          </div>
+                        </div>
                       </div>
                     ))}
                   </div>
