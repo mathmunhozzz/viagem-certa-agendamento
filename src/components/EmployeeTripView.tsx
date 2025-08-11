@@ -42,7 +42,7 @@ export function EmployeeTripView() {
     try {
       for (const file of Array.from(files)) {
         const safeName = file.name.replace(/\s+/g, "_");
-        const path = `${employee.id}/${tripId}/${Date.now()}-${safeName}`;
+        const path = `${user.id}/${tripId}/${Date.now()}-${safeName}`;
         const { error: uploadError } = await supabase.storage.from("trip-attachments").upload(path, file, {
           contentType: file.type,
           upsert: false,
@@ -78,7 +78,7 @@ export function EmployeeTripView() {
         .from("employees")
         .select("*")
         .eq("auth_user_id", user.id)
-        .single();
+        .maybeSingle();
       
       if (error) return null;
       return data;

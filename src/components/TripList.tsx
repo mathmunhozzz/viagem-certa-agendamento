@@ -45,9 +45,10 @@ interface Trip {
 
 interface TripListProps {
   onTripUpdated: () => void;
+  defaultToToday?: boolean;
 }
 
-export function TripList({ onTripUpdated }: TripListProps) {
+export function TripList({ onTripUpdated, defaultToToday = false }: TripListProps) {
   const [trips, setTrips] = useState<Trip[]>([]);
   const [loading, setLoading] = useState(true);
   const [editingTrip, setEditingTrip] = useState<Trip | null>(null);
@@ -90,8 +91,13 @@ export function TripList({ onTripUpdated }: TripListProps) {
       );
       
       setTrips(tripsWithEmployees);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Erro ao carregar viagens:', error);
+      toast({
+        title: 'Erro ao carregar viagens',
+        description: error?.message || 'Tente novamente mais tarde.',
+        variant: 'destructive'
+      });
     } finally {
       setLoading(false);
     }
@@ -184,18 +190,25 @@ export function TripList({ onTripUpdated }: TripListProps) {
     }
   };
 
-  // Filter trips based on showPastTrips toggle
-  const filteredTrips = trips.filter(trip => {
-    const tripDate = parseISO(trip.trip_date);
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    
-    if (showPastTrips) {
-      return tripDate < today;
-    } else {
-      return tripDate >= today;
-    }
-  });
+// Filter trips based on today or showPastTrips toggle
+const filteredTrips = trips.filter(trip => {
+  const tripDate = parseISO(trip.trip_date);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  if (defaultToToday) {
+    // Only today's trips
+    const tripOnlyDate = new Date(tripDate);
+    tripOnlyDate.setHours(0, 0, 0, 0);
+    return tripOnlyDate.getTime() === today.getTime();
+  }
+
+  if (showPastTrips) {
+    return tripDate < today;
+  } else {
+    return tripDate >= today;
+  }
+});
 
   // Count trips for display
   const futureTripsCount = trips.filter(trip => {
@@ -241,29 +254,31 @@ export function TripList({ onTripUpdated }: TripListProps) {
           <div className="flex items-center justify-between">
             <CardTitle className="flex items-center gap-2">
               <Calendar className="h-5 w-5 text-travel-primary" />
-              {showPastTrips ? 'Viagens Passadas' : 'Próximas Viagens'}
+{defaultToToday ? 'Viagens de Hoje' : showPastTrips ? 'Viagens Passadas' : 'Próximas Viagens'}
               <Badge variant="outline" className="ml-2">
                 {showPastTrips ? pastTripsCount : futureTripsCount}
               </Badge>
             </CardTitle>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setShowPastTrips(!showPastTrips)}
-              className="flex items-center gap-2"
-            >
-              {showPastTrips ? (
-                <>
-                  <Eye className="h-4 w-4" />
-                  Ver Futuras ({futureTripsCount})
-                </>
-              ) : (
-                <>
-                  <EyeOff className="h-4 w-4" />
-                  Ver Passadas ({pastTripsCount})
-                </>
-              )}
-            </Button>
+{!defaultToToday && (
+  <Button
+    variant="outline"
+    size="sm"
+    onClick={() => setShowPastTrips(!showPastTrips)}
+    className="flex items-center gap-2"
+  >
+    {showPastTrips ? (
+      <>
+        <Eye className="h-4 w-4" />
+        Ver Futuras ({futureTripsCount})
+      </>
+    ) : (
+      <>
+        <EyeOff className="h-4 w-4" />
+        Ver Passadas ({pastTripsCount})
+      </>
+    )}
+  </Button>
+)}
           </div>
         </CardHeader>
         <CardContent>

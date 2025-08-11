@@ -110,7 +110,7 @@ const Index = () => {
         {/* Estatísticas */}
         <TripStats />
 
-        <Tabs defaultValue={hasRole('user') && !hasRole('admin') && !hasRole('manager') ? "employee-calendar" : "calendar"} className="space-y-6">
+        <Tabs defaultValue={(hasRole('admin') || hasRole('manager')) ? "trips-list" : "employee-calendar"} className="space-y-6">
           <div className="flex justify-center px-2">
             <TabsList className={`grid w-full max-w-7xl ${hasRole('admin') ? 'grid-cols-6 md:grid-cols-11' : hasRole('manager') ? 'grid-cols-5 md:grid-cols-10' : 'grid-cols-1'} bg-muted/50 p-1 h-auto md:h-12 text-xs md:text-sm gap-1`}>
               {(hasRole('admin') || hasRole('manager')) && (
@@ -260,7 +260,7 @@ const Index = () => {
           {(hasRole('admin') || hasRole('manager')) && (
             <TabsContent value="trips-list" className="space-y-6">
               <div className="max-w-4xl mx-auto">
-                <TripList onTripUpdated={handleTripCreated} />
+<TripList onTripUpdated={handleTripCreated} defaultToToday />
               </div>
             </TabsContent>
           )}
