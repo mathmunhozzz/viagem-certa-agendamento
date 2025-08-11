@@ -9,6 +9,7 @@ import { format, startOfWeek, endOfWeek, addDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
+import { TripAttachmentsDialog } from "@/components/TripAttachmentsDialog";
 interface Trip {
   id: string;
   title: string;
@@ -29,6 +30,7 @@ export function EmployeeWeekCalendar() {
   const { toast } = useToast();
   const [expandedTrip, setExpandedTrip] = useState<string | null>(null);
   const [uploading, setUploading] = useState<Record<string, boolean>>({});
+  const [attachmentsTripId, setAttachmentsTripId] = useState<string | null>(null);
 
   const handleUpload = async (tripId: string, files: FileList | null) => {
     if (!files || files.length === 0) return;
@@ -260,7 +262,11 @@ export function EmployeeWeekCalendar() {
 
                         <div className="mt-3 pt-2 border-t flex items-center justify-between">
                           <span className="text-xs text-muted-foreground">Envie notas e comprovantes (imagens ou PDF)</span>
-                          <div>
+                          <div className="flex items-center gap-2">
+                            <Button variant="outline" size="sm" onClick={() => setAttachmentsTripId(trip.id)}>
+                              <FileText className="mr-2 h-4 w-4" />
+                              Ver Anexos
+                            </Button>
                             <input
                               id={`file-${trip.id}`}
                               type="file"
@@ -298,6 +304,11 @@ export function EmployeeWeekCalendar() {
           </p>
         </div>
       )}
+      <TripAttachmentsDialog
+        tripId={attachmentsTripId}
+        open={!!attachmentsTripId}
+        onClose={() => setAttachmentsTripId(null)}
+      />
     </div>
   );
 }

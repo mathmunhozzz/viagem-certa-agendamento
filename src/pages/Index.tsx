@@ -260,7 +260,7 @@ const Index = () => {
           {(hasRole('admin') || hasRole('manager')) && (
             <TabsContent value="trips-list" className="space-y-6">
               <div className="max-w-4xl mx-auto">
-<TripList onTripUpdated={handleTripCreated} defaultToToday />
+                <TripList onTripUpdated={handleTripCreated} />
               </div>
             </TabsContent>
           )}
