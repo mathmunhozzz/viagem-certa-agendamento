@@ -5,7 +5,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, Paperclip, FileText, Image as ImageIcon, Download } from 'lucide-react';
+import { Loader2, Paperclip, FileText, Image as ImageIcon, Download, Eye } from 'lucide-react';
 
 interface TripAttachmentsDialogProps {
   tripId: string | null;
@@ -81,7 +81,14 @@ export function TripAttachmentsDialog({ tripId, open, onClose }: TripAttachments
                 {data.map((att) => (
                   <li key={att.id} className="flex items-center justify-between gap-3 p-3 rounded-md border bg-background">
                     <div className="flex items-center gap-3 min-w-0">
-                      {att.file_type.includes('pdf') ? (
+                      {att.file_type.startsWith('image') && att.url ? (
+                        <img
+                          src={att.url}
+                          alt={`Pré-visualização de ${att.file_name}`}
+                          className="h-12 w-12 rounded-md object-cover border"
+                          loading="lazy"
+                        />
+                      ) : att.file_type.includes('pdf') ? (
                         <FileText className="h-5 w-5 text-travel-secondary shrink-0" />
                       ) : (
                         <ImageIcon className="h-5 w-5 text-travel-secondary shrink-0" />
@@ -94,11 +101,18 @@ export function TripAttachmentsDialog({ tripId, open, onClose }: TripAttachments
                       </div>
                     </div>
                     {att.url ? (
-                      <Button variant="outline" size="sm" asChild>
-                        <a href={att.url} target="_blank" rel="noopener noreferrer">
-                          <Download className="h-4 w-4 mr-1" /> Baixar
-                        </a>
-                      </Button>
+                      <div className="flex items-center gap-2">
+                        <Button variant="outline" size="sm" asChild>
+                          <a href={att.url} target="_blank" rel="noopener noreferrer" aria-label={`Visualizar ${att.file_name}`}>
+                            <Eye className="h-4 w-4 mr-1" /> Visualizar
+                          </a>
+                        </Button>
+                        <Button variant="outline" size="sm" asChild>
+                          <a href={att.url} download target="_blank" rel="noopener noreferrer" aria-label={`Baixar ${att.file_name}`}>
+                            <Download className="h-4 w-4 mr-1" /> Baixar
+                          </a>
+                        </Button>
+                      </div>
                     ) : (
                       <Badge variant="outline">Sem link</Badge>
                     )}

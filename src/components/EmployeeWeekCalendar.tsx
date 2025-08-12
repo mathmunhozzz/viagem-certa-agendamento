@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Calendar, MapPin, Users, Clock, ChevronDown, ChevronUp, FileText, Paperclip, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { format, startOfWeek, endOfWeek, addDays } from "date-fns";
+import { format, addDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
@@ -90,10 +90,9 @@ export function EmployeeWeekCalendar() {
     queryFn: async () => {
       if (!employee?.id) return [];
       
-      // Pegar início e fim da semana atual
       const now = new Date();
-      const startWeek = startOfWeek(now, { weekStartsOn: 1 }); // Segunda-feira
-      const endWeek = endOfWeek(now, { weekStartsOn: 1 }); // Domingo
+      const startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      const endDate = addDays(startDate, 6);
       
       const { data, error } = await supabase
         .from("trips")
@@ -105,8 +104,8 @@ export function EmployeeWeekCalendar() {
           )
         `)
         .contains("employee_ids", [employee.id])
-        .gte("trip_date", startWeek.toISOString().split('T')[0])
-        .lte("trip_date", endWeek.toISOString().split('T')[0])
+        .gte("trip_date", startDate.toISOString().split('T')[0])
+        .lte("trip_date", endDate.toISOString().split('T')[0])
         .order("trip_date", { ascending: true });
       
       if (error) throw error;
@@ -137,13 +136,10 @@ export function EmployeeWeekCalendar() {
     return <div className="text-center py-4">Carregando suas viagens...</div>;
   }
 
-  const now = new Date();
-  const startWeek = startOfWeek(now, { weekStartsOn: 1 });
-  
-  // Criar array dos 7 dias da semana
-  const weekDays = Array.from({ length: 7 }, (_, i) => addDays(startWeek, i));
-  
-  // Agrupar viagens por data
+  const today = new Date();
+  const startDate = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+  const endDate = addDays(startDate, 6);
+  const weekDays = Array.from({ length: 7 }, (_, i) => addDays(startDate, i));
   const tripsByDate = trips.reduce((acc, trip) => {
     // Tratar a data sem problemas de timezone
     const tripDate = new Date(trip.trip_date + 'T12:00:00.000Z');
@@ -172,7 +168,7 @@ export function EmployeeWeekCalendar() {
     <div className="space-y-6">
       <div className="text-center">
         <h2 className="text-2xl font-bold">Olá, {employee.name}!</h2>
-        <p className="text-muted-foreground">Calendário Semanal - {format(startWeek, "dd", { locale: ptBR })} a {format(weekDays[6], "dd 'de' MMMM", { locale: ptBR })}</p>
+        <p className="text-muted-foreground">Calendário Semanal - {format(startDate, "dd", { locale: ptBR })} a {format(weekDays[6], "dd 'de' MMMM", { locale: ptBR })}</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
