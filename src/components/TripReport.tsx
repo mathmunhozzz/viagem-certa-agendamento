@@ -1,5 +1,10 @@
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { useEffect, useState } from 'react';
+import { useCurrentEmployee } from '@/hooks/useCurrentEmployee';
+import { useCurrentUserDisplayName } from '@/hooks/useCurrentUserDisplayName';
+import { supabase } from '@/integrations/supabase/client';
+import { TripNarrativeDialog } from './TripNarrativeDialog';
 
 interface TripReportProps {
   trip: {
@@ -30,9 +35,43 @@ interface TripReportProps {
 }
 
 export function TripReport({ trip, onClose }: TripReportProps) {
+  const { employee, loading: employeeLoading } = useCurrentEmployee();
+  const { displayName } = useCurrentUserDisplayName();
+
+  const [narrative, setNarrative] = useState<string | null>(null);
+  const [narrativeLoading, setNarrativeLoading] = useState<boolean>(true);
+  const [dialogOpen, setDialogOpen] = useState<boolean>(false);
+
   const handlePrint = () => {
     window.print();
   };
+
+  // Carregar relato do funcionário atual (se houver)
+  useEffect(() => {
+    const loadNarrative = async () => {
+      if (!employee?.id) {
+        setNarrative(null);
+        setNarrativeLoading(false);
+        return;
+      }
+      setNarrativeLoading(true);
+      const { data, error } = await supabase
+        .from('trip_reports')
+        .select('content')
+        .eq('trip_id', trip.id)
+        .eq('employee_id', employee.id);
+
+      if (error) {
+        console.error('Erro ao carregar relato da viagem:', error);
+        setNarrative(null);
+      } else {
+        setNarrative(data?.[0]?.content ?? null);
+      }
+      setNarrativeLoading(false);
+    };
+
+    loadNarrative();
+  }, [employee?.id, trip.id]);
 
   return (
     <div className="fixed inset-0 bg-background z-50 overflow-auto">
@@ -68,6 +107,14 @@ export function TripReport({ trip, onClose }: TripReportProps) {
       {/* Control buttons - hidden in print */}
       <div className="no-print fixed top-4 right-4 flex gap-2 z-10">
         <button
+          onClick={() => setDialogOpen(true)}
+          className="bg-travel-secondary text-white px-4 py-2 rounded-md hover:opacity-90 transition-colors disabled:opacity-50"
+          title={!employee?.id ? 'Vincule seu usuário a um funcionário para relatar a viagem' : 'Escrever/editar relato da viagem'}
+          disabled={!employee?.id}
+        >
+          Relatar viagem
+        </button>
+        <button
           onClick={handlePrint}
           className="bg-primary text-primary-foreground px-4 py-2 rounded-md hover:bg-primary/90 transition-colors"
         >
@@ -81,10 +128,20 @@ export function TripReport({ trip, onClose }: TripReportProps) {
         </button>
       </div>
 
+      {/* Relatar Viagem Dialog */}
+      <TripNarrativeDialog
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+        tripId={trip.id}
+        employeeId={employee?.id}
+        initialContent={narrative}
+        onSaved={(content) => setNarrative(content)}
+      />
+
       {/* Report content */}
       <div className="print-content">
         <div className="print-page max-w-4xl mx-auto bg-white p-8 min-h-screen text-black">
-          {/* Header identical to provided document with logo */}
+          {/* Header */}
           <div className="mb-16">
             <div className="flex items-start justify-between mb-8">
               <div className="flex items-center gap-6">
@@ -150,12 +207,12 @@ export function TripReport({ trip, onClose }: TripReportProps) {
                 </div>
               </div>
 
-              {/* Employee */}
+              {/* Employee - mostrar apenas quem está imprimindo */}
               <div className="flex items-center">
                 <span className="text-sm font-bold text-black w-32">FUNCIONÁRIO:</span>
                 <div className="flex-1 border-b border-black h-8 flex items-end pb-1">
                   <span className="text-sm text-black">
-                    {trip.employees?.map(emp => emp.name).join(', ') || 'Não informado'}
+                    {displayName}
                   </span>
                 </div>
               </div>
@@ -170,34 +227,43 @@ export function TripReport({ trip, onClose }: TripReportProps) {
             </div>
           </div>
 
-          {/* 15 signature lines with two columns */}
-          <div className="space-y-6 mt-16">
-            <h3 className="text-lg font-bold text-black text-center mb-8">LISTA DE PRESENÇA</h3>
-            
-            {/* Header for signature columns */}
-            <div className="grid grid-cols-2 gap-8 mb-4">
-              <div className="text-center">
-                <span className="text-sm font-bold text-black">NOME COMPLETO</span>
-              </div>
-              <div className="text-center">
-                <span className="text-sm font-bold text-black">UNIDADE/SETOR</span>
+          {/* Se houver relato do funcionário atual, mostrar o relato; senão, manter a lista de presença */}
+          {!narrativeLoading && narrative ? (
+            <div className="space-y-6 mt-16">
+              <h3 className="text-lg font-bold text-black text-center mb-8">RELATO DA VIAGEM</h3>
+              <div className="border-2 border-black p-4 min-h-[320px] whitespace-pre-wrap text-sm leading-relaxed">
+                {narrative}
               </div>
             </div>
-
-            {Array.from({ length: 15 }, (_, i) => (
-              <div key={i} className="grid grid-cols-2 gap-8 items-center">
-                <div className="flex items-center">
-                  <span className="text-sm text-black font-medium w-8 mr-4">
-                    {String(i + 1).padStart(2, '0')}.
-                  </span>
-                  <div className="flex-1 border-b-2 border-black h-8"></div>
+          ) : (
+            <div className="space-y-6 mt-16">
+              <h3 className="text-lg font-bold text-black text-center mb-8">LISTA DE PRESENÇA</h3>
+              
+              {/* Header for signature columns */}
+              <div className="grid grid-cols-2 gap-8 mb-4">
+                <div className="text-center">
+                  <span className="text-sm font-bold text-black">NOME COMPLETO</span>
                 </div>
-                <div className="border-b-2 border-black h-8"></div>
+                <div className="text-center">
+                  <span className="text-sm font-bold text-black">UNIDADE/SETOR</span>
+                </div>
               </div>
-            ))}
-          </div>
 
-          {/* Footer with company info */}
+              {Array.from({ length: 15 }, (_, i) => (
+                <div key={i} className="grid grid-cols-2 gap-8 items-center">
+                  <div className="flex items-center">
+                    <span className="text-sm text-black font-medium w-8 mr-4">
+                      {String(i + 1).padStart(2, '0')}.
+                    </span>
+                    <div className="flex-1 border-b-2 border-black h-8"></div>
+                  </div>
+                  <div className="border-b-2 border-black h-8"></div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Footer */}
           <div className="mt-32 pt-8 border-t border-black text-center">
             <p className="text-xs text-black">
               OPPORTUNITY SISTEMAS - Sistema de Gestão Empresarial
