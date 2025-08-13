@@ -49,7 +49,8 @@ export function TripNarrativeDialog({
     }
 
     setSaving(true);
-    const { error } = await supabase
+    // Usar any porque a tabela trip_reports ainda não está no arquivo de tipos gerado
+    const { error } = await (supabase as any)
       .from('trip_reports')
       .upsert(
         [{ trip_id: tripId, employee_id: employeeId, content }],

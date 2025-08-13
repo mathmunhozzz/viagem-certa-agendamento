@@ -1,3 +1,4 @@
+
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { useEffect, useState } from 'react';
@@ -55,7 +56,8 @@ export function TripReport({ trip, onClose }: TripReportProps) {
         return;
       }
       setNarrativeLoading(true);
-      const { data, error } = await supabase
+      // Usar any porque a tabela trip_reports ainda não está no arquivo de tipos gerado
+      const { data, error } = await (supabase as any)
         .from('trip_reports')
         .select('content')
         .eq('trip_id', trip.id)
@@ -65,7 +67,8 @@ export function TripReport({ trip, onClose }: TripReportProps) {
         console.error('Erro ao carregar relato da viagem:', error);
         setNarrative(null);
       } else {
-        setNarrative(data?.[0]?.content ?? null);
+        const rows = (data as Array<{ content: string }> | null) ?? null;
+        setNarrative(rows?.[0]?.content ?? null);
       }
       setNarrativeLoading(false);
     };
