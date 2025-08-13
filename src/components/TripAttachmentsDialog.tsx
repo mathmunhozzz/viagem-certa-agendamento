@@ -26,7 +26,7 @@ interface Attachment {
   created_at: string;
 }
 
-type AttachmentWithUrl = Attachment & { url?: string; signedError?: string };
+type AttachmentWithUrl = Attachment & { viewUrl?: string; downloadUrl?: string; signedError?: string };
 
 function formatBytes(bytes: number) {
   if (bytes === 0) return '0 B';
@@ -52,15 +52,19 @@ export function TripAttachmentsDialog({ tripId, open, onClose }: TripAttachments
 
       const withUrls = await Promise.all(
         (data || []).map(async (att) => {
-          const { data: signed, error: signedErr } = await supabase.storage
+          const { data: view, error: viewErr } = await supabase.storage
             .from('trip-attachments')
-            .createSignedUrl(att.file_path, 60 * 60, { download: att.file_name }); // 1h, força nome no download
+            .createSignedUrl(att.file_path, 60 * 60);
 
-          if (signedErr) {
-            console.warn('Erro ao gerar link assinado:', signedErr.message, 'para', att.file_path);
+          const { data: dl, error: dlErr } = await supabase.storage
+            .from('trip-attachments')
+            .createSignedUrl(att.file_path, 60 * 60, { download: att.file_name });
+
+          if (viewErr || dlErr) {
+            console.warn('Erro ao gerar link assinado:', viewErr?.message || dlErr?.message, 'para', att.file_path);
           }
 
-          return { ...att, url: signed?.signedUrl, signedError: signedErr?.message } as AttachmentWithUrl;
+          return { ...att, viewUrl: view?.signedUrl, downloadUrl: dl?.signedUrl, signedError: viewErr?.message } as AttachmentWithUrl;
         })
       );
 
@@ -79,7 +83,7 @@ export function TripAttachmentsDialog({ tripId, open, onClose }: TripAttachments
   }, [open, refetch]);
 
   const hasAnyMissingUrl = useMemo(
-    () => (data?.some((a) => !a.url) ? true : false),
+    () => (data?.some((a) => !a.viewUrl) ? true : false),
     [data]
   );
 
@@ -122,10 +126,10 @@ export function TripAttachmentsDialog({ tripId, open, onClose }: TripAttachments
                   {data.map((att) => (
                     <li key={att.id} className="flex items-center justify-between gap-3 p-3 rounded-md border bg-background">
                       <div className="flex items-center gap-3 min-w-0">
-                        {att.file_type.startsWith('image') && att.url ? (
-                          <a href={att.url} target="_blank" rel="noopener noreferrer">
+                        {att.file_type.startsWith('image') && att.viewUrl ? (
+                          <a href={att.viewUrl} target="_blank" rel="noopener noreferrer">
                             <img
-                              src={att.url}
+                              src={att.viewUrl}
                               alt={`Pré-visualização de ${att.file_name}`}
                               className="h-12 w-12 rounded-md object-cover border"
                               loading="lazy"
@@ -141,29 +145,33 @@ export function TripAttachmentsDialog({ tripId, open, onClose }: TripAttachments
                           <p className="text-xs text-muted-foreground">
                             {att.file_type} • {formatBytes(att.file_size)}
                           </p>
-                          {!att.url && (
+                          {!att.viewUrl && (
                             <p className="text-[11px] text-amber-600 mt-1 truncate">
-                              {att.signedError ? `Sem link: ${att.signedError}` : 'Sem link de visualização/baixa para este arquivo.'}
+                              {att.signedError ? `Sem link: ${att.signedError}` : 'Sem link de visualização para este arquivo.'}
                             </p>
                           )}
                         </div>
                       </div>
-                      {att.url ? (
-                        <div className="flex items-center gap-2">
-                          <Button variant="outline" size="sm" asChild>
-                            <a href={att.url} target="_blank" rel="noopener noreferrer" aria-label={`Visualizar ${att.file_name}`}>
-                              <Eye className="h-4 w-4 mr-1" /> Visualizar
-                            </a>
-                          </Button>
-                          <Button variant="outline" size="sm" asChild>
-                            <a href={att.url} download target="_blank" rel="noopener noreferrer" aria-label={`Baixar ${att.file_name}`}>
-                              <Download className="h-4 w-4 mr-1" /> Baixar
-                            </a>
-                          </Button>
-                        </div>
-                      ) : (
-                        <Badge variant="outline">Sem link</Badge>
-                      )}
+                        {att.viewUrl || att.downloadUrl ? (
+                          <div className="flex items-center gap-2">
+                            {att.viewUrl && (
+                              <Button variant="outline" size="sm" asChild>
+                                <a href={att.viewUrl} target="_blank" rel="noopener noreferrer" aria-label={`Visualizar ${att.file_name}`}>
+                                  <Eye className="h-4 w-4 mr-1" /> Visualizar
+                                </a>
+                              </Button>
+                            )}
+                            {att.downloadUrl && (
+                              <Button variant="outline" size="sm" asChild>
+                                <a href={att.downloadUrl} download target="_blank" rel="noopener noreferrer" aria-label={`Baixar ${att.file_name}`}>
+                                  <Download className="h-4 w-4 mr-1" /> Baixar
+                                </a>
+                              </Button>
+                            )}
+                          </div>
+                        ) : (
+                          <Badge variant="outline">Sem link</Badge>
+                        )}
                     </li>
                   ))}
                 </ul>
