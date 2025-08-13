@@ -2,14 +2,15 @@ import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, MapPin, Users, Clock, Paperclip, Loader2 } from "lucide-react";
+import { Calendar, MapPin, Users, Clock, Paperclip, Loader2, Printer, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { TripReport } from "./TripReport";
+import { TripNarrativeDialog } from "./TripNarrativeDialog";
 import { format, startOfWeek, endOfWeek, isWithinInterval } from "date-fns";
 import { ptBR } from "date-fns/locale";
-
 interface Trip {
   id: string;
   title: string;
@@ -31,6 +32,10 @@ export function EmployeeTripView() {
   const { user } = useAuth();
   const { toast } = useToast();
   const [uploading, setUploading] = useState<Record<string, boolean>>({});
+  const [reportTrip, setReportTrip] = useState<Trip | null>(null);
+  const [narrativeDialogTripId, setNarrativeDialogTripId] = useState<string | null>(null);
+  const [narrativeInitialContent, setNarrativeInitialContent] = useState<string | null>(null);
+  const [narrativeLoading, setNarrativeLoading] = useState<Record<string, boolean>>({});
 
   const handleUpload = async (tripId: string, files: FileList | null) => {
     if (!files || files.length === 0) return;
@@ -176,6 +181,30 @@ export function EmployeeTripView() {
     return tripLocalDate.getTime() < today.getTime();
   });
 
+  const openNarrative = async (trip: Trip) => {
+    if (!employee?.id) {
+      toast({ title: "Funcionário não vinculado", description: "Vincule seu usuário a um funcionário para relatar a viagem.", variant: "destructive" });
+      return;
+    }
+    setNarrativeLoading((prev) => ({ ...prev, [trip.id]: true }));
+    try {
+      const { data, error } = await (supabase as any)
+        .from('trip_reports')
+        .select('content')
+        .eq('trip_id', trip.id)
+        .eq('employee_id', employee.id);
+      if (error) {
+        setNarrativeInitialContent('');
+      } else {
+        const rows = (data as Array<{ content: string }> | null) ?? null;
+        setNarrativeInitialContent(rows?.[0]?.content ?? '');
+      }
+      setNarrativeDialogTripId(trip.id);
+    } finally {
+      setNarrativeLoading((prev) => ({ ...prev, [trip.id]: false }));
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="text-center">
@@ -240,7 +269,7 @@ export function EmployeeTripView() {
                   )}
                   <div className="mt-4 pt-3 border-t flex items-center justify-between">
                     <span className="text-xs text-muted-foreground">Envie notas e comprovantes (imagens ou PDF)</span>
-                    <div>
+                    <div className="flex items-center gap-2">
                       <input
                         id={`file-${trip.id}`}
                         type="file"
@@ -252,6 +281,14 @@ export function EmployeeTripView() {
                       <Button size="sm" onClick={() => document.getElementById(`file-${trip.id}`)?.click()} disabled={!!uploading[trip.id]}>
                         {uploading[trip.id] ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Paperclip className="mr-2 h-4 w-4" />}
                         Anexar
+                      </Button>
+                      <Button size="sm" variant="secondary" onClick={() => openNarrative(trip)} disabled={!!narrativeLoading[trip.id]}>
+                        {narrativeLoading[trip.id] ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <FileText className="mr-2 h-4 w-4" />}
+                        Relatar viagem
+                      </Button>
+                      <Button size="sm" variant="outline" onClick={() => setReportTrip(trip)}>
+                        <Printer className="mr-2 h-4 w-4" />
+                        Imprimir relatório
                       </Button>
                     </div>
                   </div>
@@ -319,7 +356,7 @@ export function EmployeeTripView() {
                   )}
                   <div className="mt-4 pt-3 border-t flex items-center justify-between">
                     <span className="text-xs text-muted-foreground">Envie notas e comprovantes (imagens ou PDF)</span>
-                    <div>
+                    <div className="flex items-center gap-2">
                       <input
                         id={`file-${trip.id}`}
                         type="file"
@@ -331,6 +368,14 @@ export function EmployeeTripView() {
                       <Button size="sm" onClick={() => document.getElementById(`file-${trip.id}`)?.click()} disabled={!!uploading[trip.id]}>
                         {uploading[trip.id] ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Paperclip className="mr-2 h-4 w-4" />}
                         Anexar
+                      </Button>
+                      <Button size="sm" variant="secondary" onClick={() => openNarrative(trip)} disabled={!!narrativeLoading[trip.id]}>
+                        {narrativeLoading[trip.id] ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <FileText className="mr-2 h-4 w-4" />}
+                        Relatar viagem
+                      </Button>
+                      <Button size="sm" variant="outline" onClick={() => setReportTrip(trip)}>
+                        <Printer className="mr-2 h-4 w-4" />
+                        Imprimir relatório
                       </Button>
                     </div>
                   </div>
@@ -385,7 +430,7 @@ export function EmployeeTripView() {
                   )}
                   <div className="mt-4 pt-3 border-t flex items-center justify-between">
                     <span className="text-xs text-muted-foreground">Envie notas e comprovantes (imagens ou PDF)</span>
-                    <div>
+                    <div className="flex items-center gap-2">
                       <input
                         id={`file-${trip.id}`}
                         type="file"
@@ -397,6 +442,14 @@ export function EmployeeTripView() {
                       <Button size="sm" onClick={() => document.getElementById(`file-${trip.id}`)?.click()} disabled={!!uploading[trip.id]}>
                         {uploading[trip.id] ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Paperclip className="mr-2 h-4 w-4" />}
                         Anexar
+                      </Button>
+                      <Button size="sm" variant="secondary" onClick={() => openNarrative(trip)} disabled={!!narrativeLoading[trip.id]}>
+                        {narrativeLoading[trip.id] ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <FileText className="mr-2 h-4 w-4" />}
+                        Relatar viagem
+                      </Button>
+                      <Button size="sm" variant="outline" onClick={() => setReportTrip(trip)}>
+                        <Printer className="mr-2 h-4 w-4" />
+                        Imprimir relatório
                       </Button>
                     </div>
                   </div>
@@ -415,6 +468,28 @@ export function EmployeeTripView() {
             Você não tem viagens programadas para esta semana.
           </p>
         </div>
+      )}
+      {/* Dialog de Relato */}
+      <TripNarrativeDialog
+        open={!!narrativeDialogTripId}
+        onOpenChange={(open) => {
+          if (!open) setNarrativeDialogTripId(null);
+        }}
+        tripId={narrativeDialogTripId || ""}
+        employeeId={employee?.id}
+        initialContent={narrativeInitialContent ?? ""}
+      />
+
+      {/* Overlay de Impressão */}
+      {reportTrip && (
+        <TripReport
+          trip={{
+            ...reportTrip,
+            description: reportTrip.description ?? "",
+            departure_time: reportTrip.departure_time ?? "",
+          } as any}
+          onClose={() => setReportTrip(null)}
+        />
       )}
     </div>
   );
