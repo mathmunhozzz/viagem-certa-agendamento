@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, MapPin, Users, Clock, ChevronDown, ChevronUp, FileText, Paperclip, Loader2 } from "lucide-react";
+import { Calendar, MapPin, Users, Clock, ChevronDown, ChevronUp, FileText, Paperclip, Loader2, ChevronLeft, ChevronRight, Printer } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { format, addDays } from "date-fns";
@@ -10,6 +10,8 @@ import { ptBR } from "date-fns/locale";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import { TripAttachmentsDialog } from "@/components/TripAttachmentsDialog";
+import { TripReport } from "./TripReport";
+import { TripNarrativeDialog } from "./TripNarrativeDialog";
 interface Trip {
   id: string;
   title: string;
@@ -19,6 +21,7 @@ interface Trip {
   departure_time?: string;
   sector: string;
   status: string;
+  travelers?: string[];
   clients?: {
     name: string;
     municipality?: string;
@@ -31,6 +34,14 @@ export function EmployeeWeekCalendar() {
   const [expandedTrip, setExpandedTrip] = useState<string | null>(null);
   const [uploading, setUploading] = useState<Record<string, boolean>>({});
   const [attachmentsTripId, setAttachmentsTripId] = useState<string | null>(null);
+  const [currentWeekStart, setCurrentWeekStart] = useState<Date>(() => {
+    const now = new Date();
+    return new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  });
+  const [reportTrip, setReportTrip] = useState<Trip | null>(null);
+  const [narrativeDialogTripId, setNarrativeDialogTripId] = useState<string | null>(null);
+  const [narrativeInitialContent, setNarrativeInitialContent] = useState<string | null>(null);
+  const [narrativeLoading, setNarrativeLoading] = useState<Record<string, boolean>>({});
 
   const handleUpload = async (tripId: string, files: FileList | null) => {
     if (!files || files.length === 0) return;
@@ -86,12 +97,11 @@ export function EmployeeWeekCalendar() {
   });
 
   const { data: trips = [], isLoading } = useQuery({
-    queryKey: ["employee-week-trips", employee?.id],
+    queryKey: ["employee-week-trips", employee?.id, currentWeekStart.toISOString()],
     queryFn: async () => {
       if (!employee?.id) return [];
       
-      const now = new Date();
-      const startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      const startDate = currentWeekStart;
       const endDate = addDays(startDate, 6);
       
       const { data, error } = await supabase
@@ -137,9 +147,37 @@ export function EmployeeWeekCalendar() {
   }
 
   const today = new Date();
-  const startDate = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+  const startDate = currentWeekStart;
   const endDate = addDays(startDate, 6);
   const weekDays = Array.from({ length: 7 }, (_, i) => addDays(startDate, i));
+
+  const navigateWeek = (direction: 'prev' | 'next') => {
+    setCurrentWeekStart(prev => addDays(prev, direction === 'next' ? 7 : -7));
+  };
+
+  const openNarrative = async (trip: Trip) => {
+    if (!employee?.id) {
+      toast({ title: "Funcionário não vinculado", description: "Vincule seu usuário a um funcionário para relatar a viagem.", variant: "destructive" });
+      return;
+    }
+    setNarrativeLoading((prev) => ({ ...prev, [trip.id]: true }));
+    try {
+      const { data, error } = await (supabase as any)
+        .from('trip_reports')
+        .select('content')
+        .eq('trip_id', trip.id)
+        .eq('employee_id', employee.id);
+      if (error) {
+        setNarrativeInitialContent('');
+      } else {
+        const rows = (data as Array<{ content: string }> | null) ?? null;
+        setNarrativeInitialContent(rows?.[0]?.content ?? '');
+      }
+      setNarrativeDialogTripId(trip.id);
+    } finally {
+      setNarrativeLoading((prev) => ({ ...prev, [trip.id]: false }));
+    }
+  };
   const tripsByDate = trips.reduce((acc, trip) => {
     // Tratar a data sem problemas de timezone
     const tripDate = new Date(trip.trip_date + 'T12:00:00.000Z');
@@ -151,11 +189,11 @@ export function EmployeeWeekCalendar() {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'scheduled': return 'bg-blue-100 text-blue-800 border-blue-200';
-      case 'in_progress': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
-      case 'completed': return 'bg-green-100 text-green-800 border-green-200';
-      case 'cancelled': return 'bg-red-100 text-red-800 border-red-200';
-      default: return 'bg-gray-100 text-gray-800 border-gray-200';
+      case 'scheduled': return 'bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100';
+      case 'in_progress': return 'bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100';
+      case 'completed': return 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100';
+      case 'cancelled': return 'bg-red-50 text-red-700 border-red-200 hover:bg-red-100';
+      default: return 'bg-gray-50 text-gray-700 border-gray-200 hover:bg-gray-100';
     }
   };
 
@@ -168,7 +206,32 @@ export function EmployeeWeekCalendar() {
     <div className="space-y-6">
       <div className="text-center">
         <h2 className="text-2xl font-bold">Olá, {employee.name}!</h2>
-        <p className="text-muted-foreground">Calendário Semanal - {format(startDate, "dd", { locale: ptBR })} a {format(weekDays[6], "dd 'de' MMMM", { locale: ptBR })}</p>
+        <div className="flex items-center justify-center gap-4 mt-4">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={() => navigateWeek('prev')}
+            className="flex items-center gap-2"
+          >
+            <ChevronLeft className="h-4 w-4" />
+            Semana Anterior
+          </Button>
+          <div className="text-center">
+            <p className="text-lg font-semibold">
+              {format(startDate, "dd", { locale: ptBR })} a {format(weekDays[6], "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
+            </p>
+            <p className="text-sm text-muted-foreground">Calendário de 7 dias</p>
+          </div>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={() => navigateWeek('next')}
+            className="flex items-center gap-2"
+          >
+            Próxima Semana
+            <ChevronRight className="h-4 w-4" />
+          </Button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
@@ -179,7 +242,7 @@ export function EmployeeWeekCalendar() {
           return (
             <Card 
               key={index} 
-              className={`${isToday(day) ? 'border-primary border-2 bg-primary/5' : 'border-border'} min-h-[200px] w-full`}
+              className={`${isToday(day) ? 'border-primary border-2 bg-gradient-to-br from-primary/10 to-primary/5 shadow-md' : 'border-border hover:shadow-sm'} min-h-[280px] w-full transition-all duration-200`}
             >
               <CardHeader className="pb-2 px-3 pt-3">
                 <CardTitle className="text-sm text-center">
@@ -256,12 +319,11 @@ export function EmployeeWeekCalendar() {
                           </div>
                         )}
 
-                        <div className="mt-3 pt-2 border-t flex items-center justify-between">
-                          <span className="text-xs text-muted-foreground">Envie notas e comprovantes (imagens ou PDF)</span>
-                          <div className="flex items-center gap-2">
+                        <div className="mt-3 pt-2 border-t space-y-2">
+                          <div className="flex items-center gap-1">
                             <Button variant="outline" size="sm" onClick={() => setAttachmentsTripId(trip.id)}>
-                              <FileText className="mr-2 h-4 w-4" />
-                              Ver Anexos
+                              <FileText className="mr-1 h-3 w-3" />
+                              Anexos
                             </Button>
                             <input
                               id={`file-${trip.id}`}
@@ -272,8 +334,18 @@ export function EmployeeWeekCalendar() {
                               onChange={(e) => handleUpload(trip.id, e.target.files)}
                             />
                             <Button size="sm" onClick={() => document.getElementById(`file-${trip.id}`)?.click()} disabled={!!uploading[trip.id]}>
-                              {uploading[trip.id] ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Paperclip className="mr-2 h-4 w-4" />}
+                              {uploading[trip.id] ? <Loader2 className="mr-1 h-3 w-3 animate-spin" /> : <Paperclip className="mr-1 h-3 w-3" />}
                               Anexar
+                            </Button>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <Button size="sm" variant="secondary" onClick={() => openNarrative(trip)} disabled={!!narrativeLoading[trip.id]}>
+                              {narrativeLoading[trip.id] ? <Loader2 className="mr-1 h-3 w-3 animate-spin" /> : <FileText className="mr-1 h-3 w-3" />}
+                              Relatar
+                            </Button>
+                            <Button size="sm" variant="outline" onClick={() => setReportTrip(trip)}>
+                              <Printer className="mr-1 h-3 w-3" />
+                              Imprimir
                             </Button>
                           </div>
                         </div>
@@ -281,8 +353,9 @@ export function EmployeeWeekCalendar() {
                     ))}
                   </div>
                 ) : (
-                  <div className="text-center text-xs text-muted-foreground mt-4">
-                    Sem viagens
+                  <div className="flex flex-col items-center justify-center text-center py-6 text-muted-foreground">
+                    <Calendar className="h-8 w-8 mb-2 opacity-50" />
+                    <span className="text-xs">Sem viagens</span>
                   </div>
                 )}
               </CardContent>
@@ -304,6 +377,30 @@ export function EmployeeWeekCalendar() {
         tripId={attachmentsTripId}
         open={!!attachmentsTripId}
         onClose={() => setAttachmentsTripId(null)}
+      />
+      
+      {reportTrip && (
+        <TripReport
+          trip={{
+            ...reportTrip,
+            travelers: reportTrip.travelers || [],
+            description: reportTrip.description || "",
+            departure_time: reportTrip.departure_time || "",
+          } as any}
+          onClose={() => setReportTrip(null)}
+        />
+      )}
+
+      <TripNarrativeDialog
+        open={!!narrativeDialogTripId}
+        onOpenChange={(open) => !open && setNarrativeDialogTripId(null)}
+        tripId={narrativeDialogTripId || ''}
+        employeeId={employee?.id}
+        initialContent={narrativeInitialContent}
+        onSaved={(content) => {
+          toast({ title: "Relato salvo", description: "Seu relato da viagem foi salvo com sucesso." });
+          setNarrativeInitialContent(content);
+        }}
       />
     </div>
   );

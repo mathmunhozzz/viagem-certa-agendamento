@@ -9,7 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { TripReport } from "./TripReport";
 import { TripNarrativeDialog } from "./TripNarrativeDialog";
-import { format, startOfWeek, endOfWeek, isWithinInterval } from "date-fns";
+import { format, addDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
 interface Trip {
   id: string;
@@ -96,10 +96,10 @@ export function EmployeeTripView() {
     queryFn: async () => {
       if (!employee?.id) return [];
       
-      // Pegar início e fim da semana atual
+      // Pegar 7 dias a partir de hoje
       const now = new Date();
-      const startWeek = startOfWeek(now, { weekStartsOn: 1 }); // Segunda-feira
-      const endWeek = endOfWeek(now, { weekStartsOn: 1 }); // Domingo
+      const startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      const endDate = addDays(startDate, 6);
       
       const { data, error } = await supabase
         .from("trips")
@@ -111,8 +111,8 @@ export function EmployeeTripView() {
           )
         `)
         .contains("employee_ids", [employee.id])
-        .gte("trip_date", startWeek.toISOString().split('T')[0])
-        .lte("trip_date", endWeek.toISOString().split('T')[0])
+        .gte("trip_date", startDate.toISOString().split('T')[0])
+        .lte("trip_date", endDate.toISOString().split('T')[0])
         .order("trip_date", { ascending: true });
       
       if (error) throw error;
@@ -209,7 +209,7 @@ export function EmployeeTripView() {
     <div className="space-y-6">
       <div className="text-center">
         <h2 className="text-2xl font-bold">Olá, {employee.name}!</h2>
-        <p className="text-muted-foreground">Suas viagens desta semana</p>
+        <p className="text-muted-foreground">Suas viagens dos próximos 7 dias</p>
       </div>
 
       {todayTrips.length > 0 && (
@@ -302,7 +302,7 @@ export function EmployeeTripView() {
       {upcomingThisWeek.length > 0 && (
         <div>
           <h3 className="text-lg font-semibold mb-4 text-blue-600">
-            📅 Próximas desta Semana ({upcomingThisWeek.length})
+            📅 Próximas dos próximos 7 dias ({upcomingThisWeek.length})
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {upcomingThisWeek.map((trip) => (
@@ -389,7 +389,7 @@ export function EmployeeTripView() {
       {pastThisWeek.length > 0 && (
         <div>
           <h3 className="text-lg font-semibold mb-4 text-gray-600">
-            ✅ Anteriores desta Semana ({pastThisWeek.length})
+            ✅ Anteriores dos últimos 7 dias ({pastThisWeek.length})
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {pastThisWeek.map((trip) => (
