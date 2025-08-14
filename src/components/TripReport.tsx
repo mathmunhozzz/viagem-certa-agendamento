@@ -56,8 +56,8 @@ export function TripReport({ trip, onClose }: TripReportProps) {
         return;
       }
       setNarrativeLoading(true);
-      // Usar any porque a tabela trip_reports ainda não está no arquivo de tipos gerado
-      const { data, error } = await (supabase as any)
+      // Carregar relato do funcionário
+      const { data, error } = await supabase
         .from('trip_reports')
         .select('content')
         .eq('trip_id', trip.id)

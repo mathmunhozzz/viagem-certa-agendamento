@@ -49,33 +49,42 @@ export function TripNarrativeDialog({
     }
 
     setSaving(true);
-    // Usar any porque a tabela trip_reports ainda não está no arquivo de tipos gerado
-    const { error } = await (supabase as any)
-      .from('trip_reports')
-      .upsert(
-        [{ trip_id: tripId, employee_id: employeeId, content }],
-        { onConflict: 'trip_id,employee_id' }
-      );
+    try {
+      const { error } = await supabase
+        .from('trip_reports')
+        .upsert(
+          [{ trip_id: tripId, employee_id: employeeId, content }],
+          { onConflict: 'trip_id,employee_id' }
+        );
 
-    setSaving(false);
+      setSaving(false);
 
-    if (error) {
-      console.error('Erro ao salvar relato:', error);
+      if (error) {
+        console.error('Erro ao salvar relato:', error);
+        toast({
+          title: 'Erro ao salvar',
+          description: `Não foi possível salvar o relato: ${error.message}`,
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      toast({
+        title: 'Relato salvo',
+        description: 'Seu relato da viagem foi salvo com sucesso.',
+      });
+
+      onSaved?.(content);
+      onOpenChange(false);
+    } catch (err: any) {
+      setSaving(false);
+      console.error('Erro inesperado ao salvar relato:', err);
       toast({
         title: 'Erro ao salvar',
-        description: 'Não foi possível salvar o relato. Tente novamente.',
+        description: 'Erro inesperado. Tente novamente.',
         variant: 'destructive',
       });
-      return;
     }
-
-    toast({
-      title: 'Relato salvo',
-      description: 'Seu relato da viagem foi salvo com sucesso.',
-    });
-
-    onSaved?.(content);
-    onOpenChange(false);
   };
 
   return (

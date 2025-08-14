@@ -162,7 +162,7 @@ export function EmployeeWeekCalendar() {
     }
     setNarrativeLoading((prev) => ({ ...prev, [trip.id]: true }));
     try {
-      const { data, error } = await (supabase as any)
+      const { data, error } = await supabase
         .from('trip_reports')
         .select('content')
         .eq('trip_id', trip.id)
