@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -6,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { CalendarIcon, Save, X } from 'lucide-react';
+import { CalendarIcon, Clock, Save, X } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
@@ -54,10 +55,8 @@ export function EditTripDialog({ trip, open, onClose, onTripUpdated }: EditTripD
     employee_ids: [] as string[],
     credit_card_id: ''
   });
-
   const [selectedSectors, setSelectedSectors] = useState<string[]>([]);
   const [selectedEmployees, setSelectedEmployees] = useState<string[]>([]);
-  const [cardsLoaded, setCardsLoaded] = useState(false);
 
   useEffect(() => {
     if (trip) {
@@ -79,7 +78,7 @@ export function EditTripDialog({ trip, open, onClose, onTripUpdated }: EditTripD
   }, [trip]);
 
   const handleSectorToggle = (sectorId: string, checked: boolean) => {
-    const newSectors = checked
+    const newSectors = checked 
       ? [...selectedSectors, sectorId]
       : selectedSectors.filter(id => id !== sectorId);
     setSelectedSectors(newSectors);
@@ -100,8 +99,8 @@ export function EditTripDialog({ trip, open, onClose, onTripUpdated }: EditTripD
 
   const removeTraveler = (index: number) => {
     if (formData.travelers.length > 1) {
-      setFormData(prev => ({
-        ...prev,
+      setFormData(prev => ({ 
+        ...prev, 
         travelers: prev.travelers.filter((_, i) => i !== index)
       }));
     }
@@ -178,7 +177,7 @@ export function EditTripDialog({ trip, open, onClose, onTripUpdated }: EditTripD
             Editar Viagem
           </DialogTitle>
         </DialogHeader>
-
+        
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* Data e Horário */}
           <div className="p-3 bg-travel-primary/5 rounded-lg border border-travel-primary/20">
@@ -196,21 +195,20 @@ export function EditTripDialog({ trip, open, onClose, onTripUpdated }: EditTripD
                       )}
                     >
                       <CalendarIcon className="mr-2 h-4 w-4" />
-                      {formData.trip_date
-                        ? format(parseISO(formData.trip_date), "dd/MM/yyyy", { locale: ptBR })
-                        : "Selecione a data"}
+                      {formData.trip_date ? 
+                        format(parseISO(formData.trip_date), "dd/MM/yyyy", { locale: ptBR }) : 
+                        "Selecione a data"
+                      }
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="w-auto p-0" align="start">
                     <Calendar
                       mode="single"
                       selected={formData.trip_date ? parseISO(formData.trip_date) : undefined}
-                      onSelect={(date) =>
-                        setFormData(prev => ({
-                          ...prev,
-                          trip_date: date ? format(date, 'yyyy-MM-dd') : ''
-                        }))
-                      }
+                      onSelect={(date) => setFormData(prev => ({ 
+                        ...prev, 
+                        trip_date: date ? format(date, 'yyyy-MM-dd') : '' 
+                      }))}
                       initialFocus
                       locale={ptBR}
                       className="pointer-events-auto"
@@ -218,16 +216,14 @@ export function EditTripDialog({ trip, open, onClose, onTripUpdated }: EditTripD
                   </PopoverContent>
                 </Popover>
               </div>
-
+              
               <div className="space-y-2">
                 <Label htmlFor="time">Horário de Saída *</Label>
                 <Input
                   id="time"
                   type="time"
                   value={formData.departure_time}
-                  onChange={(e) =>
-                    setFormData(prev => ({ ...prev, departure_time: e.target.value }))
-                  }
+                  onChange={(e) => setFormData(prev => ({ ...prev, departure_time: e.target.value }))}
                   required
                 />
               </div>
@@ -327,7 +323,7 @@ export function EditTripDialog({ trip, open, onClose, onTripUpdated }: EditTripD
                 tripDate={formData.trip_date}
               />
               <CreditCardSelect
-                value={formData.credit_card_id || undefined}
+                value={formData.credit_card_id}
                 onValueChange={(value) => setFormData(prev => ({ ...prev, credit_card_id: value }))}
               />
             </div>

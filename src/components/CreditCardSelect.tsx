@@ -1,119 +1,86 @@
 import { useState, useEffect } from 'react';
-import * as Select from '@radix-ui/react-select';
-import { Check, ChevronDown, ChevronUp } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Label } from '@/components/ui/label';
 import { supabase } from '@/integrations/supabase/client';
-import { cn } from '@/lib/utils';
+import { CreditCard } from 'lucide-react';
 
-interface CreditCard {
+interface CreditCardData {
   id: string;
   name: string;
-  number: string;
-  isUsed: boolean; // Novo: indica se o cartão já está em outra viagem
+  brand: string;
+  last_four_digits: string;
 }
 
 interface CreditCardSelectProps {
-  value?: string;
+  value: string;
   onValueChange: (value: string) => void;
+  disabled?: boolean;
+  label?: string;
 }
 
-export function CreditCardSelect({ value, onValueChange }: CreditCardSelectProps) {
-  const [cards, setCards] = useState<CreditCard[]>([]);
+export function CreditCardSelect({ 
+  value, 
+  onValueChange, 
+  disabled = false,
+  label = "Cartão de Crédito (Opcional)"
+}: CreditCardSelectProps) {
+  const [creditCards, setCreditCards] = useState<CreditCardData[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    async function fetchCards() {
-      setLoading(true);
-      try {
-        // Buscar cartões cadastrados
-        const { data: allCards, error: cardsError } = await supabase
-          .from('credit_cards')
-          .select('id, name, number');
+    const fetchCreditCards = async () => {
+      let { data, error } = await supabase
+        .from('credit_cards')
+        .select('*')
+        .order('name');
 
-        if (cardsError) throw cardsError;
-
-        // Buscar cartões que já estão sendo usados em viagens futuras
-        const { data: usedTrips, error: tripsError } = await supabase
-          .from('trips')
-          .select('credit_card_id')
-          .gt('trip_date', new Date().toISOString().split('T')[0]); // viagens futuras
-
-        if (tripsError) throw tripsError;
-
-        const usedCardIds = usedTrips?.map(t => t.credit_card_id) || [];
-
-        // Mapear cartões e marcar os usados
-        const mappedCards: CreditCard[] = (allCards || []).map(card => ({
-          ...card,
-          isUsed: usedCardIds.includes(card.id)
-        }));
-
-        setCards(mappedCards);
-      } catch (err) {
-        console.error('Erro ao buscar cartões:', err);
-      } finally {
-        setLoading(false);
+      if (error) {
+        console.error('Erro ao carregar cartões:', error);
+        data = [];
       }
-    }
 
-    fetchCards();
-  }, []);
+      // Se existir um cartão selecionado que não veio na lista, busca ele isoladamente
+      if (value && value !== 'none' && !data?.find(c => c.id === value)) {
+        const { data: selectedCard } = await supabase
+          .from('credit_cards')
+          .select('*')
+          .eq('id', value)
+          .single();
+        if (selectedCard) {
+          data = [...(data || []), selectedCard];
+        }
+      }
+
+      setCreditCards(data || []);
+      setLoading(false);
+    };
+
+    fetchCreditCards();
+  }, [value]);
 
   return (
-    <Select.Root
-      value={value && cards.find(c => c.id === value) ? value : undefined}
-      onValueChange={(val) => {
-        const selectedCard = cards.find(c => c.id === val);
-        if (!selectedCard?.isUsed) onValueChange(val); // não permite selecionar cartão já usado
-      }}
-    >
-      <Select.Trigger
-        className={cn(
-          'flex items-center justify-between w-full px-3 py-2 border rounded-md',
-          'border-gray-300 bg-white text-left text-sm'
-        )}
+    <div className="space-y-2">
+      <Label className="flex items-center gap-2">
+        <CreditCard className="h-4 w-4" />
+        {label}
+      </Label>
+      <Select 
+        value={value || "none"} 
+        onValueChange={(val) => onValueChange(val === "none" ? "" : val)}
+        disabled={disabled || loading}
       >
-        <Select.Value placeholder={loading ? 'Carregando cartões...' : 'Selecione um cartão'} />
-        <Select.Icon>
-          <ChevronDown className="w-4 h-4" />
-        </Select.Icon>
-      </Select.Trigger>
-
-      <Select.Content className="bg-white border border-gray-300 rounded-md mt-1 shadow-md z-50">
-        <Select.ScrollUpButton className="flex justify-center p-1">
-          <ChevronUp className="w-4 h-4" />
-        </Select.ScrollUpButton>
-        <Select.Viewport>
-          {cards.length === 0 && !loading && (
-            <div className="p-2 text-gray-500 text-sm">Nenhum cartão disponível</div>
-          )}
-          {cards.map(card => (
-            <Select.Item
-              key={card.id}
-              value={card.id}
-              disabled={card.isUsed} // desabilita visualmente se já usado
-              className={cn(
-                'flex items-center justify-between px-3 py-2 text-sm cursor-pointer rounded',
-                card.isUsed
-                  ? 'text-gray-300 cursor-not-allowed'
-                  : 'hover:bg-gray-100 focus:bg-gray-100'
-              )}
-            >
-              <Select.ItemText>
-                {card.name} •••• {card.number.slice(-4)}
-                {card.isUsed && ' (Em uso)'}
-              </Select.ItemText>
-              {!card.isUsed && (
-                <Select.ItemIndicator>
-                  <Check className="w-4 h-4" />
-                </Select.ItemIndicator>
-              )}
-            </Select.Item>
+        <SelectTrigger>
+          <SelectValue placeholder={loading ? "Carregando..." : "Selecione um cartão"} />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="none">Nenhum cartão</SelectItem>
+          {creditCards.map((card) => (
+            <SelectItem key={card.id} value={card.id}>
+              {card.name} ({card.brand} •••• {card.last_four_digits})
+            </SelectItem>
           ))}
-        </Select.Viewport>
-        <Select.ScrollDownButton className="flex justify-center p-1">
-          <ChevronDown className="w-4 h-4" />
-        </Select.ScrollDownButton>
-      </Select.Content>
-    </Select.Root>
+        </SelectContent>
+      </Select>
+    </div>
   );
 }
