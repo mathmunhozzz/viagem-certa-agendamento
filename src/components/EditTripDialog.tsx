@@ -42,6 +42,7 @@ interface EditTripDialogProps {
 export function EditTripDialog({ trip, open, onClose, onTripUpdated }: EditTripDialogProps) {
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
+
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -54,11 +55,10 @@ export function EditTripDialog({ trip, open, onClose, onTripUpdated }: EditTripD
     employee_ids: [] as string[],
     credit_card_id: ''
   });
+
   const [selectedSectors, setSelectedSectors] = useState<string[]>([]);
   const [selectedEmployees, setSelectedEmployees] = useState<string[]>([]);
-  const [cardsLoaded, setCardsLoaded] = useState(false);
 
-  // Carregar dados da viagem ao abrir
   useEffect(() => {
     if (trip) {
       setFormData({
@@ -75,7 +75,6 @@ export function EditTripDialog({ trip, open, onClose, onTripUpdated }: EditTripD
       });
       setSelectedSectors(trip.sector_id ? [trip.sector_id] : []);
       setSelectedEmployees(trip.employee_ids || []);
-      setCardsLoaded(true);
     }
   }, [trip]);
 
@@ -83,6 +82,7 @@ export function EditTripDialog({ trip, open, onClose, onTripUpdated }: EditTripD
     const newSectors = checked
       ? [...selectedSectors, sectorId]
       : selectedSectors.filter(id => id !== sectorId);
+
     setSelectedSectors(newSectors);
     setFormData(prev => ({ ...prev, sector_id: newSectors[0] || '' }));
   };
@@ -91,6 +91,7 @@ export function EditTripDialog({ trip, open, onClose, onTripUpdated }: EditTripD
     const newEmployees = checked
       ? [...selectedEmployees, employeeId]
       : selectedEmployees.filter(id => id !== employeeId);
+
     setSelectedEmployees(newEmployees);
     setFormData(prev => ({ ...prev, employee_ids: newEmployees }));
   };
@@ -119,8 +120,9 @@ export function EditTripDialog({ trip, open, onClose, onTripUpdated }: EditTripD
     if (!trip) return;
 
     setLoading(true);
+
     try {
-      // Buscar nomes dos setores selecionados
+      // Buscar nomes dos setores
       const { data: sectorsData, error: sectorsError } = await supabase
         .from('sectors')
         .select('name')
@@ -206,7 +208,7 @@ export function EditTripDialog({ trip, open, onClose, onTripUpdated }: EditTripD
                     <Calendar
                       mode="single"
                       selected={formData.trip_date ? parseISO(formData.trip_date) : undefined}
-                      onSelect={date =>
+                      onSelect={(date) =>
                         setFormData(prev => ({
                           ...prev,
                           trip_date: date ? format(date, 'yyyy-MM-dd') : ''
@@ -226,9 +228,7 @@ export function EditTripDialog({ trip, open, onClose, onTripUpdated }: EditTripD
                   id="time"
                   type="time"
                   value={formData.departure_time}
-                  onChange={e =>
-                    setFormData(prev => ({ ...prev, departure_time: e.target.value }))
-                  }
+                  onChange={(e) => setFormData(prev => ({ ...prev, departure_time: e.target.value }))}
                   required
                 />
               </div>
@@ -244,7 +244,7 @@ export function EditTripDialog({ trip, open, onClose, onTripUpdated }: EditTripD
                 <Input
                   id="title"
                   value={formData.title}
-                  onChange={e => setFormData(prev => ({ ...prev, title: e.target.value }))}
+                  onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
                   required
                 />
               </div>
@@ -254,7 +254,7 @@ export function EditTripDialog({ trip, open, onClose, onTripUpdated }: EditTripD
                 <Textarea
                   id="description"
                   value={formData.description}
-                  onChange={e => setFormData(prev => ({ ...prev, description: e.target.value }))}
+                  onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
                   rows={3}
                 />
               </div>
@@ -264,7 +264,7 @@ export function EditTripDialog({ trip, open, onClose, onTripUpdated }: EditTripD
                 <Textarea
                   id="observations"
                   value={formData.observations}
-                  onChange={e => setFormData(prev => ({ ...prev, observations: e.target.value }))}
+                  onChange={(e) => setFormData(prev => ({ ...prev, observations: e.target.value }))}
                   rows={3}
                 />
               </div>
@@ -299,7 +299,7 @@ export function EditTripDialog({ trip, open, onClose, onTripUpdated }: EditTripD
                       <Input
                         placeholder={`Viajante ${index + 1}`}
                         value={traveler}
-                        onChange={e => updateTraveler(index, e.target.value)}
+                        onChange={(e) => updateTraveler(index, e.target.value)}
                       />
                       {formData.travelers.length > 1 && (
                         <Button
@@ -318,25 +318,22 @@ export function EditTripDialog({ trip, open, onClose, onTripUpdated }: EditTripD
             </div>
           </div>
 
-          {/* Veículo e Cartão de Crédito */}
+          {/* Veículo e Cartão */}
           <div className="p-3 bg-travel-warning/5 rounded-lg border border-travel-warning/20">
             <h4 className="text-sm font-semibold text-travel-warning mb-3">Veículo e Cartão de Crédito</h4>
             <div className="space-y-4">
               <VehicleSelect
-                value={formData.vehicle_id}
-                onValueChange={value => setFormData(prev => ({ ...prev, vehicle_id: value }))}
+                value={formData.vehicle_id || undefined}
+                onValueChange={(value) => setFormData(prev => ({ ...prev, vehicle_id: value }))}
                 tripDate={formData.trip_date}
               />
-              {cardsLoaded && (
-                <CreditCardSelect
-                  value={formData.credit_card_id}
-                  onValueChange={value => setFormData(prev => ({ ...prev, credit_card_id: value }))}
-                />
-              )}
+              <CreditCardSelect
+                value={formData.credit_card_id || undefined} // evita "" vazio
+                onValueChange={(value) => setFormData(prev => ({ ...prev, credit_card_id: value }))}
+              />
             </div>
           </div>
 
-          {/* Botões de Ação */}
           <div className="flex gap-2 pt-4">
             <Button type="submit" disabled={loading} className="flex-1">
               {loading ? 'Salvando...' : 'Salvar Alterações'}
