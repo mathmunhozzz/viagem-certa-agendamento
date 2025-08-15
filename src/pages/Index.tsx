@@ -26,6 +26,8 @@ import { ClientList } from '@/components/ClientList';
 import { EmployeeUserLink } from '@/components/EmployeeUserLink';
 import { EmployeeTripView } from '@/components/EmployeeTripView';
 import { EmployeeWeekCalendar } from '@/components/EmployeeWeekCalendar';
+import { CreditCardForm } from '@/components/CreditCardForm';
+import { CreditCardList } from '@/components/CreditCardList';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 const Index = () => {
@@ -37,6 +39,7 @@ const Index = () => {
   const [sectorRefreshKey, setSectorRefreshKey] = useState(0);
   const [employeeRefreshKey, setEmployeeRefreshKey] = useState(0);
   const [clientRefreshKey, setClientRefreshKey] = useState(0);
+  const [creditCardRefreshKey, setCreditCardRefreshKey] = useState(0);
   const [showUserManagement, setShowUserManagement] = useState(false);
 
   if (loading || statusLoading) {
@@ -92,6 +95,10 @@ const Index = () => {
     setClientRefreshKey(prev => prev + 1);
   };
 
+  const handleCreditCardCreated = () => {
+    setCreditCardRefreshKey(prev => prev + 1);
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
       <Header onShowUserManagement={hasRole('admin') ? () => setShowUserManagement(true) : undefined} />
@@ -112,7 +119,7 @@ const Index = () => {
 
         <Tabs defaultValue={(hasRole('admin') || hasRole('manager')) ? "trips-list" : "employee-calendar"} className="space-y-6">
           <div className="flex justify-center px-2">
-            <TabsList className={`grid w-full max-w-7xl ${hasRole('admin') ? 'grid-cols-6 md:grid-cols-11' : hasRole('manager') ? 'grid-cols-5 md:grid-cols-10' : 'grid-cols-1'} bg-muted/50 p-1 h-auto md:h-12 text-xs md:text-sm gap-1`}>
+            <TabsList className={`grid w-full max-w-7xl ${hasRole('admin') ? 'grid-cols-6 md:grid-cols-12' : hasRole('manager') ? 'grid-cols-5 md:grid-cols-11' : 'grid-cols-1'} bg-muted/50 p-1 h-auto md:h-12 text-xs md:text-sm gap-1`}>
               {(hasRole('admin') || hasRole('manager')) && (
                 <TabsTrigger 
                   value="calendar" 
@@ -201,6 +208,15 @@ const Index = () => {
                 >
                   <span className="block md:hidden">🚗</span>
                   <span className="hidden md:block">🚗 Carros</span>
+                </TabsTrigger>
+              )}
+              {(hasRole('admin') || hasRole('manager')) && (
+                <TabsTrigger 
+                  value="credit-cards" 
+                  className="data-[state=active]:bg-travel-secondary data-[state=active]:text-white font-semibold p-2 md:p-3 text-center min-h-[2.5rem]"
+                >
+                  <span className="block md:hidden">💳</span>
+                  <span className="hidden md:block">💳 Cartões</span>
                 </TabsTrigger>
               )}
               {hasRole('admin') && (
@@ -311,6 +327,15 @@ const Index = () => {
               <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <VehicleForm onVehicleCreated={handleVehicleCreated} />
                 <VehicleList key={vehicleRefreshKey} />
+              </div>
+            </TabsContent>
+          )}
+
+          {(hasRole('admin') || hasRole('manager')) && (
+            <TabsContent value="credit-cards" className="space-y-6">
+              <div className="max-w-4xl mx-auto space-y-6">
+                <CreditCardForm onCreditCardCreated={handleCreditCardCreated} />
+                <CreditCardList refreshTrigger={creditCardRefreshKey} />
               </div>
             </TabsContent>
           )}

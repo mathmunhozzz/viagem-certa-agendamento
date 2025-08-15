@@ -76,6 +76,18 @@ export function TripReport({ trip, onClose }: TripReportProps) {
     loadNarrative();
   }, [employee?.id, trip.id]);
 
+  const [reportType, setReportType] = useState<'narrative' | 'attendance'>('narrative');
+
+  const handlePrintNarrative = () => {
+    setReportType('narrative');
+    setTimeout(() => window.print(), 100);
+  };
+
+  const handlePrintAttendance = () => {
+    setReportType('attendance');
+    setTimeout(() => window.print(), 100);
+  };
+
   return (
     <div className="fixed inset-0 bg-background z-50 overflow-auto">
       {/* Print styles */}
@@ -104,6 +116,31 @@ export function TripReport({ trip, onClose }: TripReportProps) {
             color: black !important;
             font-family: Arial, sans-serif;
           }
+          
+          /* Multi-page print styles */
+          @page {
+            margin: 40px;
+          }
+          
+          @page :first {
+            margin-top: 40px;
+          }
+          
+          .report-header {
+            page-break-inside: avoid;
+          }
+          
+          .report-content {
+            page-break-before: auto;
+          }
+          
+          .report-content.subsequent-page .report-header {
+            display: none;
+          }
+          
+          .page-break {
+            page-break-before: always;
+          }
         }
       `}</style>
 
@@ -117,11 +154,19 @@ export function TripReport({ trip, onClose }: TripReportProps) {
         >
           Relatar viagem
         </button>
+        {!narrativeLoading && narrative && (
+          <button
+            onClick={handlePrintNarrative}
+            className="bg-primary text-primary-foreground px-4 py-2 rounded-md hover:bg-primary/90 transition-colors"
+          >
+            Imprimir Relato
+          </button>
+        )}
         <button
-          onClick={handlePrint}
+          onClick={handlePrintAttendance}
           className="bg-primary text-primary-foreground px-4 py-2 rounded-md hover:bg-primary/90 transition-colors"
         >
-          Imprimir
+          Imprimir Lista de Presença
         </button>
         <button
           onClick={onClose}
@@ -145,7 +190,7 @@ export function TripReport({ trip, onClose }: TripReportProps) {
       <div className="print-content">
         <div className="print-page max-w-4xl mx-auto bg-white p-8 min-h-screen text-black">
           {/* Header */}
-          <div className="mb-16">
+          <div className="report-header mb-16">
             <div className="flex items-start justify-between mb-8">
               <div className="flex items-center gap-6">
                 <div className="w-16 h-16 flex-shrink-0">
@@ -176,7 +221,7 @@ export function TripReport({ trip, onClose }: TripReportProps) {
             
             <div className="border-t-2 border-black pt-4">
               <h2 className="text-center text-lg font-bold text-black">
-                RELATÓRIO DE ATENDIMENTO A CLIENTE
+                {reportType === 'narrative' ? 'RELATÓRIO DE ATENDIMENTO A CLIENTE' : 'LISTA DE PRESENÇA - VIAGEM'}
               </h2>
             </div>
           </div>
@@ -230,41 +275,43 @@ export function TripReport({ trip, onClose }: TripReportProps) {
             </div>
           </div>
 
-          {/* Se houver relato do funcionário atual, mostrar o relato; senão, manter a lista de presença */}
-          {!narrativeLoading && narrative ? (
-            <div className="space-y-6 mt-16">
-              <h3 className="text-lg font-bold text-black text-center mb-8">RELATO DA VIAGEM</h3>
-              <div className="border-2 border-black p-4 min-h-[320px] whitespace-pre-wrap text-sm leading-relaxed">
-                {narrative}
-              </div>
-            </div>
-          ) : (
-            <div className="space-y-6 mt-16">
-              <h3 className="text-lg font-bold text-black text-center mb-8">LISTA DE PRESENÇA</h3>
-              
-              {/* Header for signature columns */}
-              <div className="grid grid-cols-2 gap-8 mb-4">
-                <div className="text-center">
-                  <span className="text-sm font-bold text-black">NOME COMPLETO</span>
-                </div>
-                <div className="text-center">
-                  <span className="text-sm font-bold text-black">UNIDADE/SETOR</span>
+          {/* Content based on report type */}
+          <div className="report-content">
+            {reportType === 'narrative' && !narrativeLoading && narrative ? (
+              <div className="space-y-6 mt-16">
+                <h3 className="text-lg font-bold text-black text-center mb-8">RELATO DA VIAGEM</h3>
+                <div className="border-2 border-black p-4 min-h-[320px] whitespace-pre-wrap text-sm leading-relaxed">
+                  {narrative}
                 </div>
               </div>
-
-              {Array.from({ length: 15 }, (_, i) => (
-                <div key={i} className="grid grid-cols-2 gap-8 items-center">
-                  <div className="flex items-center">
-                    <span className="text-sm text-black font-medium w-8 mr-4">
-                      {String(i + 1).padStart(2, '0')}.
-                    </span>
-                    <div className="flex-1 border-b-2 border-black h-8"></div>
+            ) : reportType === 'attendance' ? (
+              <div className="space-y-6 mt-16">
+                <h3 className="text-lg font-bold text-black text-center mb-8">LISTA DE PRESENÇA</h3>
+                
+                {/* Header for signature columns */}
+                <div className="grid grid-cols-2 gap-8 mb-4">
+                  <div className="text-center">
+                    <span className="text-sm font-bold text-black">NOME COMPLETO</span>
                   </div>
-                  <div className="border-b-2 border-black h-8"></div>
+                  <div className="text-center">
+                    <span className="text-sm font-bold text-black">UNIDADE/SETOR</span>
+                  </div>
                 </div>
-              ))}
-            </div>
-          )}
+
+                {Array.from({ length: 15 }, (_, i) => (
+                  <div key={i} className="grid grid-cols-2 gap-8 items-center">
+                    <div className="flex items-center">
+                      <span className="text-sm text-black font-medium w-8 mr-4">
+                        {String(i + 1).padStart(2, '0')}.
+                      </span>
+                      <div className="flex-1 border-b-2 border-black h-8"></div>
+                    </div>
+                    <div className="border-b-2 border-black h-8"></div>
+                  </div>
+                ))}
+              </div>
+            ) : null}
+          </div>
 
           {/* Footer */}
           <div className="mt-32 pt-8 border-t border-black text-center">

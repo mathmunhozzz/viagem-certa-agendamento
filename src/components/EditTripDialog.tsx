@@ -16,6 +16,7 @@ import { useToast } from '@/hooks/use-toast';
 import { VehicleSelect } from './VehicleSelect';
 import { SectorMultiSelect } from './SectorMultiSelect';
 import { EmployeeMultiSelect } from './EmployeeMultiSelect';
+import { CreditCardSelect } from './CreditCardSelect';
 
 interface Trip {
   id: string;
@@ -29,6 +30,7 @@ interface Trip {
   vehicle_id: string;
   sector_id: string;
   employee_ids: string[];
+  credit_card_id?: string;
 }
 
 interface EditTripDialogProps {
@@ -50,7 +52,8 @@ export function EditTripDialog({ trip, open, onClose, onTripUpdated }: EditTripD
     travelers: [''],
     vehicle_id: '',
     sector_id: '',
-    employee_ids: [] as string[]
+    employee_ids: [] as string[],
+    credit_card_id: ''
   });
   const [selectedSectors, setSelectedSectors] = useState<string[]>([]);
   const [selectedEmployees, setSelectedEmployees] = useState<string[]>([]);
@@ -66,7 +69,8 @@ export function EditTripDialog({ trip, open, onClose, onTripUpdated }: EditTripD
         travelers: trip.travelers.length > 0 ? trip.travelers : [''],
         vehicle_id: trip.vehicle_id || '',
         sector_id: trip.sector_id || '',
-        employee_ids: trip.employee_ids || []
+        employee_ids: trip.employee_ids || [],
+        credit_card_id: trip.credit_card_id || ''
       });
       setSelectedSectors(trip.sector_id ? [trip.sector_id] : []);
       setSelectedEmployees(trip.employee_ids || []);
@@ -136,7 +140,8 @@ export function EditTripDialog({ trip, open, onClose, onTripUpdated }: EditTripD
           sector_id: formData.sector_id || null,
           travelers: validTravelers,
           employee_ids: formData.employee_ids,
-          vehicle_id: formData.vehicle_id || null
+          vehicle_id: formData.vehicle_id || null,
+          credit_card_id: formData.credit_card_id || null
         })
         .eq('id', trip.id);
 
@@ -308,14 +313,20 @@ export function EditTripDialog({ trip, open, onClose, onTripUpdated }: EditTripD
             </div>
           </div>
 
-          {/* Veículo */}
+          {/* Veículo e Cartão */}
           <div className="p-3 bg-travel-warning/5 rounded-lg border border-travel-warning/20">
-            <h4 className="text-sm font-semibold text-travel-warning mb-3">Veículo</h4>
-            <VehicleSelect
-              value={formData.vehicle_id}
-              onValueChange={(value) => setFormData(prev => ({ ...prev, vehicle_id: value }))}
-              tripDate={formData.trip_date}
-            />
+            <h4 className="text-sm font-semibold text-travel-warning mb-3">Veículo e Cartão de Crédito</h4>
+            <div className="space-y-4">
+              <VehicleSelect
+                value={formData.vehicle_id}
+                onValueChange={(value) => setFormData(prev => ({ ...prev, vehicle_id: value }))}
+                tripDate={formData.trip_date}
+              />
+              <CreditCardSelect
+                value={formData.credit_card_id}
+                onValueChange={(value) => setFormData(prev => ({ ...prev, credit_card_id: value }))}
+              />
+            </div>
           </div>
 
           <div className="flex gap-2 pt-4">

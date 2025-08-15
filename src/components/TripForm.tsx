@@ -17,6 +17,7 @@ import { VehicleSelect } from './VehicleSelect';
 import { SectorMultiSelect } from './SectorMultiSelect';
 import { EmployeeMultiSelect } from './EmployeeMultiSelect';
 import { ClientSelect } from './ClientSelect';
+import { CreditCardSelect } from './CreditCardSelect';
 import { Clock, Car } from 'lucide-react';
 
 interface TripFormProps {
@@ -35,6 +36,7 @@ export function TripForm({ onTripCreated }: TripFormProps) {
   const [selectedSectors, setSelectedSectors] = useState<string[]>([]);
   const [selectedEmployees, setSelectedEmployees] = useState<string[]>([]);
   const [selectedClient, setSelectedClient] = useState<string>('');
+  const [selectedCreditCard, setSelectedCreditCard] = useState<string>('');
 
   const addTraveler = () => {
     setTravelers([...travelers, '']);
@@ -150,7 +152,8 @@ export function TripForm({ onTripCreated }: TripFormProps) {
             employee_ids: selectedEmployees, // Apenas IDs dos funcionários
             client_id: selectedClient, // Cliente obrigatório
             created_by: user.id,
-            vehicle_id: selectedVehicle
+            vehicle_id: selectedVehicle,
+            credit_card_id: selectedCreditCard || null // Cartão opcional
           })
           .select();
 
@@ -221,6 +224,7 @@ export function TripForm({ onTripCreated }: TripFormProps) {
       setSelectedSectors([]);
       setSelectedEmployees([]);
       setSelectedClient('');
+      setSelectedCreditCard('');
       onTripCreated();
 
     } catch (error) {
@@ -352,10 +356,16 @@ export function TripForm({ onTripCreated }: TripFormProps) {
               <Users className="h-4 w-4" />
               Para qual cliente?
             </h3>
-            <ClientSelect
-              value={selectedClient}
-              onValueChange={setSelectedClient}
-            />
+            <div className="space-y-4">
+              <ClientSelect
+                value={selectedClient}
+                onValueChange={setSelectedClient}
+              />
+              <CreditCardSelect
+                value={selectedCreditCard}
+                onValueChange={setSelectedCreditCard}
+              />
+            </div>
           </div>
 
           {/* SEÇÃO 3: DETALHES DA VIAGEM */}

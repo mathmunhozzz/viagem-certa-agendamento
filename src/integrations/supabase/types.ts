@@ -7,7 +7,7 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instanciate createClient with right options
+  // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
     PostgrestVersion: "12.2.3 (519615d)"
@@ -36,6 +36,33 @@ export type Database = {
           created_at?: string
           id?: string
           municipality?: string | null
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      credit_cards: {
+        Row: {
+          brand: string
+          created_at: string
+          id: string
+          last_four_digits: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          brand: string
+          created_at?: string
+          id?: string
+          last_four_digits: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          brand?: string
+          created_at?: string
+          id?: string
+          last_four_digits?: string
           name?: string
           updated_at?: string
         }
@@ -312,6 +339,7 @@ export type Database = {
           client_id: string | null
           created_at: string
           created_by: string
+          credit_card_id: string | null
           departure_time: string | null
           description: string | null
           employee_ids: string[] | null
@@ -330,6 +358,7 @@ export type Database = {
           client_id?: string | null
           created_at?: string
           created_by: string
+          credit_card_id?: string | null
           departure_time?: string | null
           description?: string | null
           employee_ids?: string[] | null
@@ -348,6 +377,7 @@ export type Database = {
           client_id?: string | null
           created_at?: string
           created_by?: string
+          credit_card_id?: string | null
           departure_time?: string | null
           description?: string | null
           employee_ids?: string[] | null
@@ -368,6 +398,13 @@ export type Database = {
             columns: ["client_id"]
             isOneToOne: false
             referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "trips_credit_card_id_fkey"
+            columns: ["credit_card_id"]
+            isOneToOne: false
+            referencedRelation: "credit_cards"
             referencedColumns: ["id"]
           },
           {
@@ -486,8 +523,8 @@ export type Database = {
       }
       has_role: {
         Args: {
-          required_role: Database["public"]["Enums"]["app_role"]
           check_user_id?: string
+          required_role: Database["public"]["Enums"]["app_role"]
         }
         Returns: boolean
       }
