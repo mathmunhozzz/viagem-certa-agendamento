@@ -29,29 +29,26 @@ export function CreditCardSelect({
 
   useEffect(() => {
     const fetchCreditCards = async () => {
-      let { data, error } = await supabase
+      const { data, error } = await supabase
         .from('credit_cards')
         .select('*')
         .order('name');
 
       if (error) {
         console.error('Erro ao carregar cartões:', error);
-        data = [];
-      }
+      } else {
+        // Se o cartão selecionado não estiver na lista, adiciona
+        if (value && !data?.some(card => card.id === value)) {
+          const { data: selectedCard } = await supabase
+            .from('credit_cards')
+            .select('*')
+            .eq('id', value)
+            .single();
 
-      // Se existir um cartão selecionado que não veio na lista, busca ele isoladamente
-      if (value && value !== 'none' && !data?.find(c => c.id === value)) {
-        const { data: selectedCard } = await supabase
-          .from('credit_cards')
-          .select('*')
-          .eq('id', value)
-          .single();
-        if (selectedCard) {
-          data = [...(data || []), selectedCard];
+          if (selectedCard) data?.push(selectedCard);
         }
+        setCreditCards(data || []);
       }
-
-      setCreditCards(data || []);
       setLoading(false);
     };
 
@@ -65,18 +62,23 @@ export function CreditCardSelect({
         {label}
       </Label>
       <Select 
-        value={value || "none"} 
-        onValueChange={(val) => onValueChange(val === "none" ? "" : val)}
+        value={value} 
+        onValueChange={onValueChange}
         disabled={disabled || loading}
       >
         <SelectTrigger>
-          <SelectValue placeholder={loading ? "Carregando..." : "Selecione um cartão"} />
+          <SelectValue placeholder={loading ? "Carregando..." : "Selecione um cartão (opcional)"} />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="none">Nenhum cartão</SelectItem>
+          <SelectItem value="">Nenhum cartão</SelectItem>
           {creditCards.map((card) => (
             <SelectItem key={card.id} value={card.id}>
-              {card.name} ({card.brand} •••• {card.last_four_digits})
+              <div className="flex items-center gap-2">
+                <span>{card.name}</span>
+                <span className="text-muted-foreground text-sm">
+                  ({card.brand} •••• {card.last_four_digits})
+                </span>
+              </div>
             </SelectItem>
           ))}
         </SelectContent>
