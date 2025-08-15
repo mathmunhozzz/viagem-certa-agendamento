@@ -42,7 +42,6 @@ interface EditTripDialogProps {
 export function EditTripDialog({ trip, open, onClose, onTripUpdated }: EditTripDialogProps) {
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
-
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -58,6 +57,7 @@ export function EditTripDialog({ trip, open, onClose, onTripUpdated }: EditTripD
 
   const [selectedSectors, setSelectedSectors] = useState<string[]>([]);
   const [selectedEmployees, setSelectedEmployees] = useState<string[]>([]);
+  const [cardsLoaded, setCardsLoaded] = useState(false);
 
   useEffect(() => {
     if (trip) {
@@ -82,7 +82,6 @@ export function EditTripDialog({ trip, open, onClose, onTripUpdated }: EditTripD
     const newSectors = checked
       ? [...selectedSectors, sectorId]
       : selectedSectors.filter(id => id !== sectorId);
-
     setSelectedSectors(newSectors);
     setFormData(prev => ({ ...prev, sector_id: newSectors[0] || '' }));
   };
@@ -91,7 +90,6 @@ export function EditTripDialog({ trip, open, onClose, onTripUpdated }: EditTripD
     const newEmployees = checked
       ? [...selectedEmployees, employeeId]
       : selectedEmployees.filter(id => id !== employeeId);
-
     setSelectedEmployees(newEmployees);
     setFormData(prev => ({ ...prev, employee_ids: newEmployees }));
   };
@@ -120,7 +118,6 @@ export function EditTripDialog({ trip, open, onClose, onTripUpdated }: EditTripD
     if (!trip) return;
 
     setLoading(true);
-
     try {
       // Buscar nomes dos setores
       const { data: sectorsData, error: sectorsError } = await supabase
@@ -152,8 +149,8 @@ export function EditTripDialog({ trip, open, onClose, onTripUpdated }: EditTripD
       if (error) throw error;
 
       toast({
-        title: 'Viagem atualizada',
-        description: 'A viagem foi atualizada com sucesso.'
+        title: "Viagem atualizada",
+        description: "A viagem foi atualizada com sucesso."
       });
 
       onTripUpdated();
@@ -161,9 +158,9 @@ export function EditTripDialog({ trip, open, onClose, onTripUpdated }: EditTripD
     } catch (error) {
       console.error('Erro ao atualizar viagem:', error);
       toast({
-        title: 'Erro ao atualizar',
-        description: 'Não foi possível atualizar a viagem. Tente novamente.',
-        variant: 'destructive'
+        title: "Erro ao atualizar",
+        description: "Não foi possível atualizar a viagem. Tente novamente.",
+        variant: "destructive"
       });
     } finally {
       setLoading(false);
@@ -194,14 +191,14 @@ export function EditTripDialog({ trip, open, onClose, onTripUpdated }: EditTripD
                     <Button
                       variant="outline"
                       className={cn(
-                        'w-full justify-start text-left font-normal',
-                        !formData.trip_date && 'text-muted-foreground'
+                        "w-full justify-start text-left font-normal",
+                        !formData.trip_date && "text-muted-foreground"
                       )}
                     >
                       <CalendarIcon className="mr-2 h-4 w-4" />
                       {formData.trip_date
-                        ? format(parseISO(formData.trip_date), 'dd/MM/yyyy', { locale: ptBR })
-                        : 'Selecione a data'}
+                        ? format(parseISO(formData.trip_date), "dd/MM/yyyy", { locale: ptBR })
+                        : "Selecione a data"}
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="w-auto p-0" align="start">
@@ -228,7 +225,9 @@ export function EditTripDialog({ trip, open, onClose, onTripUpdated }: EditTripD
                   id="time"
                   type="time"
                   value={formData.departure_time}
-                  onChange={(e) => setFormData(prev => ({ ...prev, departure_time: e.target.value }))}
+                  onChange={(e) =>
+                    setFormData(prev => ({ ...prev, departure_time: e.target.value }))
+                  }
                   required
                 />
               </div>
@@ -323,12 +322,12 @@ export function EditTripDialog({ trip, open, onClose, onTripUpdated }: EditTripD
             <h4 className="text-sm font-semibold text-travel-warning mb-3">Veículo e Cartão de Crédito</h4>
             <div className="space-y-4">
               <VehicleSelect
-                value={formData.vehicle_id || undefined}
+                value={formData.vehicle_id}
                 onValueChange={(value) => setFormData(prev => ({ ...prev, vehicle_id: value }))}
                 tripDate={formData.trip_date}
               />
               <CreditCardSelect
-                value={formData.credit_card_id || undefined} // evita "" vazio
+                value={formData.credit_card_id || undefined}
                 onValueChange={(value) => setFormData(prev => ({ ...prev, credit_card_id: value }))}
               />
             </div>
