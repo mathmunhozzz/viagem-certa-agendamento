@@ -8,6 +8,7 @@ interface CreditCard {
   id: string;
   name: string;
   number: string;
+  isUsed: boolean; // Novo: indica se o cartão já está em outra viagem
 }
 
 interface CreditCardSelectProps {
@@ -23,13 +24,30 @@ export function CreditCardSelect({ value, onValueChange }: CreditCardSelectProps
     async function fetchCards() {
       setLoading(true);
       try {
-        const { data, error } = await supabase
+        // Buscar cartões cadastrados
+        const { data: allCards, error: cardsError } = await supabase
           .from('credit_cards')
           .select('id, name, number');
 
-        if (error) throw error;
+        if (cardsError) throw cardsError;
 
-        setCards(data || []);
+        // Buscar cartões que já estão sendo usados em viagens futuras
+        const { data: usedTrips, error: tripsError } = await supabase
+          .from('trips')
+          .select('credit_card_id')
+          .gt('trip_date', new Date().toISOString().split('T')[0]); // viagens futuras
+
+        if (tripsError) throw tripsError;
+
+        const usedCardIds = usedTrips?.map(t => t.credit_card_id) || [];
+
+        // Mapear cartões e marcar os usados
+        const mappedCards: CreditCard[] = (allCards || []).map(card => ({
+          ...card,
+          isUsed: usedCardIds.includes(card.id)
+        }));
+
+        setCards(mappedCards);
       } catch (err) {
         console.error('Erro ao buscar cartões:', err);
       } finally {
@@ -43,7 +61,10 @@ export function CreditCardSelect({ value, onValueChange }: CreditCardSelectProps
   return (
     <Select.Root
       value={value && cards.find(c => c.id === value) ? value : undefined}
-      onValueChange={onValueChange}
+      onValueChange={(val) => {
+        const selectedCard = cards.find(c => c.id === val);
+        if (!selectedCard?.isUsed) onValueChange(val); // não permite selecionar cartão já usado
+      }}
     >
       <Select.Trigger
         className={cn(
@@ -69,15 +90,23 @@ export function CreditCardSelect({ value, onValueChange }: CreditCardSelectProps
             <Select.Item
               key={card.id}
               value={card.id}
+              disabled={card.isUsed} // desabilita visualmente se já usado
               className={cn(
-                'flex items-center justify-between px-3 py-2 text-sm cursor-pointer',
-                'hover:bg-gray-100 focus:bg-gray-100 rounded'
+                'flex items-center justify-between px-3 py-2 text-sm cursor-pointer rounded',
+                card.isUsed
+                  ? 'text-gray-300 cursor-not-allowed'
+                  : 'hover:bg-gray-100 focus:bg-gray-100'
               )}
             >
-              <Select.ItemText>{card.name} •••• {card.number.slice(-4)}</Select.ItemText>
-              <Select.ItemIndicator>
-                <Check className="w-4 h-4" />
-              </Select.ItemIndicator>
+              <Select.ItemText>
+                {card.name} •••• {card.number.slice(-4)}
+                {card.isUsed && ' (Em uso)'}
+              </Select.ItemText>
+              {!card.isUsed && (
+                <Select.ItemIndicator>
+                  <Check className="w-4 h-4" />
+                </Select.ItemIndicator>
+              )}
             </Select.Item>
           ))}
         </Select.Viewport>
