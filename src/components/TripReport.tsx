@@ -42,8 +42,6 @@ export function TripReport({ trip, onClose }: TripReportProps) {
   const [narrativeLoading, setNarrativeLoading] = useState<boolean>(true);
   const [dialogOpen, setDialogOpen] = useState<boolean>(false);
   const [reportType, setReportType] = useState<'narrative' | 'attendance'>('narrative');
-
-  // ANOTAÇÃO: Armazena o número do formulário em um estado para que ele não mude.
   const [formNumber] = useState(() => String(Math.floor(Math.random() * 90000) + 10000));
 
   useEffect(() => {
@@ -85,7 +83,7 @@ export function TripReport({ trip, onClose }: TripReportProps) {
 
   return (
     <div className="fixed inset-0 bg-background z-50 overflow-auto">
-      {/* ANOTAÇÃO: Estilos de impressão aprimorados */}
+      {/* Estilos de impressão com controle de quebra de página */}
       <style>{`
         @media print {
           /* Esconde tudo, exceto o conteúdo de impressão */
@@ -124,9 +122,14 @@ export function TripReport({ trip, onClose }: TripReportProps) {
             font-size: 12pt;
           }
 
+          /* Novo container para o cabeçalho da primeira página */
+          .report-first-page-header {
+            page-break-after: avoid; /* Tenta evitar uma quebra de página logo após este bloco */
+            page-break-inside: avoid; /* Tenta evitar que este bloco seja dividido em duas páginas */
+          }
+
           /* Estilos do cabeçalho */
           .report-header {
-            page-break-inside: avoid; /* Evita que o cabeçalho quebre entre páginas */
             margin-bottom: 2rem;
           }
           .header-flex {
@@ -178,10 +181,12 @@ export function TripReport({ trip, onClose }: TripReportProps) {
             font-size: 11pt;
           }
 
-          /* Estilos do conteúdo principal (relato ou lista) */
+          /* Conteúdo principal que pode fluir para múltiplas páginas */
           .report-content {
+            page-break-before: auto; /* Permite que o conteúdo comece em uma nova página se necessário */
             margin-top: 3rem;
           }
+
           .narrative-box {
             border: 1px solid black;
             padding: 1rem;
@@ -259,71 +264,73 @@ export function TripReport({ trip, onClose }: TripReportProps) {
         onSaved={(content) => setNarrative(content)}
       />
 
-      {/* ANOTAÇÃO: Classes CSS adicionadas para serem alvos dos estilos de impressão */}
       <div className="print-content">
         <div className="print-page max-w-4xl mx-auto bg-white p-8 min-h-screen text-black">
-          {/* Header */}
-          <div className="report-header">
-            <div className="header-flex">
-              <div className="flex items-center gap-6">
-                <div className="w-16 h-16 flex-shrink-0">
-                  <img src="/lovable-uploads/a031923e-3408-476a-8ad3-0b0de5cc4585.png" alt="Opportunity Sistemas Logo" className="w-full h-full object-contain"/>
+          
+          {/* Agrupando tudo que é SÓ da primeira página */}
+          <div className="report-first-page-header">
+            {/* Header */}
+            <div className="report-header">
+              <div className="header-flex">
+                <div className="flex items-center gap-6">
+                  <div className="w-16 h-16 flex-shrink-0">
+                    <img src="/lovable-uploads/a031923e-3408-476a-8ad3-0b0de5cc4585.png" alt="Opportunity Sistemas Logo" className="w-full h-full object-contain"/>
+                  </div>
+                  <div>
+                    <h1 className="text-4xl font-bold">OPPORTUNITY SISTEMAS</h1>
+                    <div className="text-sm space-y-1">
+                      <p>Rua dos Comerciários, 1234 - Centro - Cascavel/PR - CEP: 85801-050</p>
+                      <p>Tel: (45) 3220-7070 - contato@opportunity.com.br</p>
+                      <p>CNPJ: 12.345.678/0001-90</p>
+                    </div>
+                  </div>
                 </div>
-                <div>
-                  <h1 className="text-4xl font-bold">OPPORTUNITY SISTEMAS</h1>
-                  <div className="text-sm space-y-1">
-                    <p>Rua dos Comerciários, 1234 - Centro - Cascavel/PR - CEP: 85801-050</p>
-                    <p>Tel: (45) 3220-7070 - contato@opportunity.com.br</p>
-                    <p>CNPJ: 12.345.678/0001-90</p>
+                
+                <div className="form-number-box">
+                  <div className="text-xs font-bold mb-1">FORMULÁRIO Nº</div>
+                  <div className="text-xl font-bold mb-2">{formNumber}</div>
+                  <div className="text-xs">
+                    DATA: {format(new Date(), "dd/MM/yyyy", { locale: ptBR })}
                   </div>
                 </div>
               </div>
               
-              <div className="form-number-box">
-                <div className="text-xs font-bold mb-1">FORMULÁRIO Nº</div>
-                <div className="text-xl font-bold mb-2">{formNumber}</div>
-                <div className="text-xs">
-                  DATA: {format(new Date(), "dd/MM/yyyy", { locale: ptBR })}
+              <div className="border-t-2 border-black pt-4">
+                <h2 className="section-title text-lg">
+                  {reportType === 'narrative' ? 'RELATÓRIO DE ATENDIMENTO A CLIENTE' : 'LISTA DE PRESENÇA - VIAGEM'}
+                </h2>
+              </div>
+            </div>
+
+            {/* Trip information section */}
+            <div className="mb-8">
+              <h3 className="section-title text-lg">INFORMAÇÕES DA VIAGEM</h3>
+              <div className="space-y-4">
+                <div className="info-line">
+                  <span className="info-label">CLIENTE:</span>
+                  <div className="info-content">{trip.clients?.name || trip.sector}</div>
+                </div>
+                <div className="info-line">
+                  <span className="info-label">CIDADE:</span>
+                  <div className="info-content">{trip.clients?.municipality || 'Não informado'}</div>
+                </div>
+                <div className="info-line">
+                  <span className="info-label">DESCRIÇÃO:</span>
+                  <div className="info-content">{trip.description || trip.title}</div>
+                </div>
+                <div className="info-line">
+                  <span className="info-label">FUNCIONÁRIO:</span>
+                  <div className="info-content">{displayName}</div>
+                </div>
+                <div className="info-line">
+                  <span className="info-label">DATA:</span>
+                  <div className="info-content">{format(new Date(trip.trip_date), "dd/MM/yyyy", { locale: ptBR })}</div>
                 </div>
               </div>
             </div>
-            
-            <div className="border-t-2 border-black pt-4">
-              <h2 className="section-title text-lg">
-                {reportType === 'narrative' ? 'RELATÓRIO DE ATENDIMENTO A CLIENTE' : 'LISTA DE PRESENÇA - VIAGEM'}
-              </h2>
-            </div>
           </div>
 
-          {/* Trip information section */}
-          <div className="mb-8">
-            <h3 className="section-title text-lg">INFORMAÇÕES DA VIAGEM</h3>
-            
-            <div className="space-y-4">
-              <div className="info-line">
-                <span className="info-label">CLIENTE:</span>
-                <div className="info-content">{trip.clients?.name || trip.sector}</div>
-              </div>
-              <div className="info-line">
-                <span className="info-label">CIDADE:</span>
-                <div className="info-content">{trip.clients?.municipality || 'Não informado'}</div>
-              </div>
-              <div className="info-line">
-                <span className="info-label">DESCRIÇÃO:</span>
-                <div className="info-content">{trip.description || trip.title}</div>
-              </div>
-              <div className="info-line">
-                <span className="info-label">FUNCIONÁRIO:</span>
-                <div className="info-content">{displayName}</div>
-              </div>
-              <div className="info-line">
-                <span className="info-label">DATA:</span>
-                <div className="info-content">{format(new Date(trip.trip_date), "dd/MM/yyyy", { locale: ptBR })}</div>
-              </div>
-            </div>
-          </div>
-
-          {/* Content based on report type */}
+          {/* Conteúdo que pode se estender por várias páginas */}
           <div className="report-content">
             {reportType === 'narrative' && !narrativeLoading && narrative ? (
               <div>
@@ -342,9 +349,9 @@ export function TripReport({ trip, onClose }: TripReportProps) {
                   {/* Lines */}
                   {Array.from({ length: 15 }, (_, i) => (
                     <>
-                      <div className="font-medium">{String(i + 1).padStart(2, '0')}.</div>
-                      <div className="attendance-line"></div>
-                      <div className="attendance-line"></div>
+                      <div key={`num-${i}`} className="font-medium">{String(i + 1).padStart(2, '0')}.</div>
+                      <div key={`line1-${i}`} className="attendance-line"></div>
+                      <div key={`line2-${i}`} className="attendance-line"></div>
                     </>
                   ))}
                 </div>
