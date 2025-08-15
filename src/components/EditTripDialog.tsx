@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { CalendarIcon, Clock, Save, X } from 'lucide-react';
+import { CalendarIcon, Save, X } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
@@ -56,7 +56,9 @@ export function EditTripDialog({ trip, open, onClose, onTripUpdated }: EditTripD
   });
   const [selectedSectors, setSelectedSectors] = useState<string[]>([]);
   const [selectedEmployees, setSelectedEmployees] = useState<string[]>([]);
+  const [cardsLoaded, setCardsLoaded] = useState(false);
 
+  // Carregar dados da viagem ao abrir
   useEffect(() => {
     if (trip) {
       setFormData({
@@ -73,11 +75,12 @@ export function EditTripDialog({ trip, open, onClose, onTripUpdated }: EditTripD
       });
       setSelectedSectors(trip.sector_id ? [trip.sector_id] : []);
       setSelectedEmployees(trip.employee_ids || []);
+      setCardsLoaded(true);
     }
   }, [trip]);
 
   const handleSectorToggle = (sectorId: string, checked: boolean) => {
-    const newSectors = checked 
+    const newSectors = checked
       ? [...selectedSectors, sectorId]
       : selectedSectors.filter(id => id !== sectorId);
     setSelectedSectors(newSectors);
@@ -98,8 +101,8 @@ export function EditTripDialog({ trip, open, onClose, onTripUpdated }: EditTripD
 
   const removeTraveler = (index: number) => {
     if (formData.travelers.length > 1) {
-      setFormData(prev => ({ 
-        ...prev, 
+      setFormData(prev => ({
+        ...prev,
         travelers: prev.travelers.filter((_, i) => i !== index)
       }));
     }
@@ -117,7 +120,7 @@ export function EditTripDialog({ trip, open, onClose, onTripUpdated }: EditTripD
 
     setLoading(true);
     try {
-      // Buscar nomes dos setores
+      // Buscar nomes dos setores selecionados
       const { data: sectorsData, error: sectorsError } = await supabase
         .from('sectors')
         .select('name')
@@ -147,8 +150,8 @@ export function EditTripDialog({ trip, open, onClose, onTripUpdated }: EditTripD
       if (error) throw error;
 
       toast({
-        title: "Viagem atualizada",
-        description: "A viagem foi atualizada com sucesso."
+        title: 'Viagem atualizada',
+        description: 'A viagem foi atualizada com sucesso.'
       });
 
       onTripUpdated();
@@ -156,9 +159,9 @@ export function EditTripDialog({ trip, open, onClose, onTripUpdated }: EditTripD
     } catch (error) {
       console.error('Erro ao atualizar viagem:', error);
       toast({
-        title: "Erro ao atualizar",
-        description: "Não foi possível atualizar a viagem. Tente novamente.",
-        variant: "destructive"
+        title: 'Erro ao atualizar',
+        description: 'Não foi possível atualizar a viagem. Tente novamente.',
+        variant: 'destructive'
       });
     } finally {
       setLoading(false);
@@ -176,7 +179,7 @@ export function EditTripDialog({ trip, open, onClose, onTripUpdated }: EditTripD
             Editar Viagem
           </DialogTitle>
         </DialogHeader>
-        
+
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* Data e Horário */}
           <div className="p-3 bg-travel-primary/5 rounded-lg border border-travel-primary/20">
@@ -189,25 +192,26 @@ export function EditTripDialog({ trip, open, onClose, onTripUpdated }: EditTripD
                     <Button
                       variant="outline"
                       className={cn(
-                        "w-full justify-start text-left font-normal",
-                        !formData.trip_date && "text-muted-foreground"
+                        'w-full justify-start text-left font-normal',
+                        !formData.trip_date && 'text-muted-foreground'
                       )}
                     >
                       <CalendarIcon className="mr-2 h-4 w-4" />
-                      {formData.trip_date ? 
-                        format(parseISO(formData.trip_date), "dd/MM/yyyy", { locale: ptBR }) : 
-                        "Selecione a data"
-                      }
+                      {formData.trip_date
+                        ? format(parseISO(formData.trip_date), 'dd/MM/yyyy', { locale: ptBR })
+                        : 'Selecione a data'}
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="w-auto p-0" align="start">
                     <Calendar
                       mode="single"
                       selected={formData.trip_date ? parseISO(formData.trip_date) : undefined}
-                      onSelect={(date) => setFormData(prev => ({ 
-                        ...prev, 
-                        trip_date: date ? format(date, 'yyyy-MM-dd') : '' 
-                      }))}
+                      onSelect={date =>
+                        setFormData(prev => ({
+                          ...prev,
+                          trip_date: date ? format(date, 'yyyy-MM-dd') : ''
+                        }))
+                      }
                       initialFocus
                       locale={ptBR}
                       className="pointer-events-auto"
@@ -215,14 +219,16 @@ export function EditTripDialog({ trip, open, onClose, onTripUpdated }: EditTripD
                   </PopoverContent>
                 </Popover>
               </div>
-              
+
               <div className="space-y-2">
                 <Label htmlFor="time">Horário de Saída *</Label>
                 <Input
                   id="time"
                   type="time"
                   value={formData.departure_time}
-                  onChange={(e) => setFormData(prev => ({ ...prev, departure_time: e.target.value }))}
+                  onChange={e =>
+                    setFormData(prev => ({ ...prev, departure_time: e.target.value }))
+                  }
                   required
                 />
               </div>
@@ -238,7 +244,7 @@ export function EditTripDialog({ trip, open, onClose, onTripUpdated }: EditTripD
                 <Input
                   id="title"
                   value={formData.title}
-                  onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
+                  onChange={e => setFormData(prev => ({ ...prev, title: e.target.value }))}
                   required
                 />
               </div>
@@ -248,7 +254,7 @@ export function EditTripDialog({ trip, open, onClose, onTripUpdated }: EditTripD
                 <Textarea
                   id="description"
                   value={formData.description}
-                  onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+                  onChange={e => setFormData(prev => ({ ...prev, description: e.target.value }))}
                   rows={3}
                 />
               </div>
@@ -258,7 +264,7 @@ export function EditTripDialog({ trip, open, onClose, onTripUpdated }: EditTripD
                 <Textarea
                   id="observations"
                   value={formData.observations}
-                  onChange={(e) => setFormData(prev => ({ ...prev, observations: e.target.value }))}
+                  onChange={e => setFormData(prev => ({ ...prev, observations: e.target.value }))}
                   rows={3}
                 />
               </div>
@@ -293,7 +299,7 @@ export function EditTripDialog({ trip, open, onClose, onTripUpdated }: EditTripD
                       <Input
                         placeholder={`Viajante ${index + 1}`}
                         value={traveler}
-                        onChange={(e) => updateTraveler(index, e.target.value)}
+                        onChange={e => updateTraveler(index, e.target.value)}
                       />
                       {formData.travelers.length > 1 && (
                         <Button
@@ -312,22 +318,25 @@ export function EditTripDialog({ trip, open, onClose, onTripUpdated }: EditTripD
             </div>
           </div>
 
-          {/* Veículo e Cartão */}
+          {/* Veículo e Cartão de Crédito */}
           <div className="p-3 bg-travel-warning/5 rounded-lg border border-travel-warning/20">
             <h4 className="text-sm font-semibold text-travel-warning mb-3">Veículo e Cartão de Crédito</h4>
             <div className="space-y-4">
               <VehicleSelect
                 value={formData.vehicle_id}
-                onValueChange={(value) => setFormData(prev => ({ ...prev, vehicle_id: value }))}
+                onValueChange={value => setFormData(prev => ({ ...prev, vehicle_id: value }))}
                 tripDate={formData.trip_date}
               />
-              <CreditCardSelect
-                value={formData.credit_card_id}
-                onValueChange={(value) => setFormData(prev => ({ ...prev, credit_card_id: value }))}
-              />
+              {cardsLoaded && (
+                <CreditCardSelect
+                  value={formData.credit_card_id}
+                  onValueChange={value => setFormData(prev => ({ ...prev, credit_card_id: value }))}
+                />
+              )}
             </div>
           </div>
 
+          {/* Botões de Ação */}
           <div className="flex gap-2 pt-4">
             <Button type="submit" disabled={loading} className="flex-1">
               {loading ? 'Salvando...' : 'Salvar Alterações'}
