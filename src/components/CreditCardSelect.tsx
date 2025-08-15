@@ -29,21 +29,34 @@ export function CreditCardSelect({
 
   useEffect(() => {
     const fetchCreditCards = async () => {
-      const { data, error } = await supabase
+      let { data, error } = await supabase
         .from('credit_cards')
         .select('*')
         .order('name');
 
       if (error) {
         console.error('Erro ao carregar cartões:', error);
-      } else {
-        setCreditCards(data || []);
+        data = [];
       }
+
+      // Se existir um cartão selecionado que não veio na lista, busca ele isoladamente
+      if (value && value !== 'none' && !data?.find(c => c.id === value)) {
+        const { data: selectedCard } = await supabase
+          .from('credit_cards')
+          .select('*')
+          .eq('id', value)
+          .single();
+        if (selectedCard) {
+          data = [...(data || []), selectedCard];
+        }
+      }
+
+      setCreditCards(data || []);
       setLoading(false);
     };
 
     fetchCreditCards();
-  }, []);
+  }, [value]);
 
   return (
     <div className="space-y-2">
@@ -63,12 +76,7 @@ export function CreditCardSelect({
           <SelectItem value="none">Nenhum cartão</SelectItem>
           {creditCards.map((card) => (
             <SelectItem key={card.id} value={card.id}>
-              <div className="flex items-center gap-2">
-                <span>{card.name}</span>
-                <span className="text-muted-foreground text-sm">
-                  ({card.brand} •••• {card.last_four_digits})
-                </span>
-              </div>
+              {card.name} ({card.brand} •••• {card.last_four_digits})
             </SelectItem>
           ))}
         </SelectContent>
