@@ -52,15 +52,15 @@ export function CreditCardSelect({
         {label}
       </Label>
       <Select 
-        value={value} 
-        onValueChange={onValueChange}
+        value={value || "none"} 
+        onValueChange={(val) => onValueChange(val === "none" ? "" : val)}
         disabled={disabled || loading}
       >
         <SelectTrigger>
-          <SelectValue placeholder={loading ? "Carregando..." : "Selecione um cartão (opcional)"} />
+          <SelectValue placeholder={loading ? "Carregando..." : "Selecione um cartão"} />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="">Nenhum cartão</SelectItem>
+          <SelectItem value="none">Nenhum cartão</SelectItem>
           {creditCards.map((card) => (
             <SelectItem key={card.id} value={card.id}>
               <div className="flex items-center gap-2">
