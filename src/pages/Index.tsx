@@ -138,13 +138,7 @@ const Index = () => {
                 </TabsTrigger>
               )}
               {(hasRole('admin') || hasRole('manager')) && (
-                <TabsTrigger
-                  value="dashboard"
-                  className="data-[state=active]:bg-blue-600 data-[state=active]:text-white font-semibold p-2 md:p-3 text-center min-h-[2.5rem]"
-                >
-                  <span className="block md:hidden">📊</span>
-                  <span className="hidden md:block">📊 Dashboard</span>
-                </TabsTrigger>
+             
               )}
               {!hasRole('admin') && !hasRole('manager') && (
                 <TabsTrigger
