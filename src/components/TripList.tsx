@@ -25,6 +25,7 @@ interface Trip {
   sector_id: string;
   employee_ids: string[];
   client_id: string;
+  credit_card_id?: string;
   employees?: Array<{
     id: string;
     name: string;
@@ -40,6 +41,12 @@ interface Trip {
     id: string;
     name: string;
     municipality: string;
+  };
+  credit_card?: {
+    id: string;
+    name: string;
+    brand: string;
+    last_four_digits: string;
   };
 }
 
@@ -69,7 +76,8 @@ export function TripList({ onTripUpdated, defaultToToday = false }: TripListProp
         .select(`
           *,
           vehicle:vehicles(id, brand, model, plate, capacity),
-          clients:clients(id, name, municipality)
+          clients:clients(id, name, municipality),
+          credit_card:credit_cards(id, name, brand, last_four_digits)
         `)
         .order('trip_date', { ascending: false })
 
@@ -367,6 +375,14 @@ const filteredTrips = trips.filter(trip => {
                         <Car className="h-3.5 w-3.5" />
                         <span className="font-medium">
                           {trip.vehicle.brand} {trip.vehicle.model} • {trip.vehicle.plate}
+                        </span>
+                      </div>
+                    )}
+                    {trip.credit_card && (
+                      <div className="flex items-center gap-2 px-3 py-1.5 bg-travel-warning/10 text-travel-warning rounded-lg border border-travel-warning/20">
+                        <span className="font-medium text-xs">💳</span>
+                        <span className="font-medium">
+                          {trip.credit_card.name} ({trip.credit_card.brand} •••• {trip.credit_card.last_four_digits})
                         </span>
                       </div>
                     )}

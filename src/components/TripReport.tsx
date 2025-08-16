@@ -30,6 +30,12 @@ interface TripReportProps {
       name: string;
       municipality: string;
     };
+    credit_card?: {
+      id: string;
+      name: string;
+      brand: string;
+      last_four_digits: string;
+    };
   };
   onClose: () => void;
 }
@@ -320,6 +326,14 @@ export function TripReport({ trip, onClose }: TripReportProps) {
                 <span className="info-label">DATA:</span>
                 <div className="info-content">{format(new Date(trip.trip_date), "dd/MM/yyyy", { locale: ptBR })}</div>
               </div>
+              {trip.credit_card && (
+                <div className="info-line">
+                  <span className="info-label">CARTÃO:</span>
+                  <div className="info-content">
+                    {trip.credit_card.name} ({trip.credit_card.brand} •••• {trip.credit_card.last_four_digits})
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 

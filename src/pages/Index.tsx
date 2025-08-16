@@ -26,6 +26,8 @@ import { ClientList } from '@/components/ClientList';
 import { EmployeeUserLink } from '@/components/EmployeeUserLink';
 import { EmployeeTripView } from '@/components/EmployeeTripView';
 import { EmployeeWeekCalendar } from '@/components/EmployeeWeekCalendar';
+import { AbsenceForm } from '@/components/AbsenceForm';
+import { AbsenceList } from '@/components/AbsenceList';
 import { CreditCardForm } from '@/components/CreditCardForm';
 import { CreditCardList } from '@/components/CreditCardList';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -40,6 +42,7 @@ const Index = () => {
   const [employeeRefreshKey, setEmployeeRefreshKey] = useState(0);
   const [clientRefreshKey, setClientRefreshKey] = useState(0);
   const [creditCardRefreshKey, setCreditCardRefreshKey] = useState(0);
+  const [absenceRefreshKey, setAbsenceRefreshKey] = useState(0);
   const [showUserManagement, setShowUserManagement] = useState(false);
 
   if (loading || statusLoading) {
@@ -119,7 +122,7 @@ const Index = () => {
 
         <Tabs defaultValue={(hasRole('admin') || hasRole('manager')) ? "trips-list" : "employee-calendar"} className="space-y-6">
           <div className="flex justify-center px-2">
-            <TabsList className={`grid w-full max-w-7xl ${hasRole('admin') ? 'grid-cols-6 md:grid-cols-12' : hasRole('manager') ? 'grid-cols-5 md:grid-cols-11' : 'grid-cols-1'} bg-muted/50 p-1 h-auto md:h-12 text-xs md:text-sm gap-1`}>
+            <TabsList className={`grid w-full max-w-7xl ${hasRole('admin') ? 'grid-cols-6 md:grid-cols-13' : hasRole('manager') ? 'grid-cols-5 md:grid-cols-12' : 'grid-cols-2'} bg-muted/50 p-1 h-auto md:h-12 text-xs md:text-sm gap-1`}>
               {(hasRole('admin') || hasRole('manager')) && (
                 <TabsTrigger 
                   value="calendar" 
@@ -147,6 +150,13 @@ const Index = () => {
                   <span className="hidden md:block">📅 Calendário Semanal</span>
                 </TabsTrigger>
               )}
+              <TabsTrigger 
+                value="absences" 
+                className="data-[state=active]:bg-travel-accent data-[state=active]:text-white font-semibold p-2 md:p-3 text-center min-h-[2.5rem]"
+              >
+                <span className="block md:hidden">🏖️</span>
+                <span className="hidden md:block">🏖️ Ausências</span>
+              </TabsTrigger>
               {(hasRole('admin') || hasRole('manager')) && (
                 <TabsTrigger 
                   value="new-trip" 
@@ -246,13 +256,18 @@ const Index = () => {
             </TabsContent>
           )}
 
-          {(hasRole('admin') || hasRole('manager')) && (
-            <TabsContent value="dashboard" className="space-y-6">
-              <div className="max-w-7xl mx-auto">
-                <TripDashboard />
-              </div>
-            </TabsContent>
-          )}
+          <TabsContent value="absences" className="space-y-6">
+            <div className="max-w-4xl mx-auto space-y-6">
+              <AbsenceForm onAbsenceCreated={() => setAbsenceRefreshKey(prev => prev + 1)} />
+              <AbsenceList refreshTrigger={absenceRefreshKey} />
+              {hasRole('admin') && (
+                <div className="mt-8">
+                  <h3 className="text-lg font-semibold mb-4 text-center">Todas as Ausências (Administração)</h3>
+                  <AbsenceList refreshTrigger={absenceRefreshKey} showAllAbsences={true} />
+                </div>
+              )}
+            </div>
+          </TabsContent>
 
           {!hasRole('admin') && !hasRole('manager') && (
             <TabsContent value="employee-calendar" className="space-y-6">
