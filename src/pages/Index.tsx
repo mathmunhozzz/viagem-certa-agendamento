@@ -119,7 +119,10 @@ const Index = () => {
         {/* Estatísticas */}
         <TripStats />
 
-        <Tabs defaultValue={(hasRole('admin') || hasRole('manager')) ? "trips-list" : "employee-calendar"} className="space-y-6">
+        {/* **--- ALTERAÇÃO PRINCIPAL AQUI ---**
+          - O defaultValue agora é 'calendar' para admin/manager.
+        */}
+        <Tabs defaultValue={(hasRole('admin') || hasRole('manager')) ? "calendar" : "employee-calendar"} className="space-y-6">
           <div className="flex justify-center px-2">
             <TabsList className="w-full max-w-7xl flex flex-wrap justify-center gap-2 bg-muted/50 p-2 h-auto rounded-lg">
               {(hasRole('admin') || hasRole('manager')) && (
@@ -131,7 +134,6 @@ const Index = () => {
                   <span className="hidden md:block">📅 Calendário</span>
                 </TabsTrigger>
               )}
-              {/* O BOTÃO DASHBOARD FOI REMOVIDO DESTA ÁREA */}
               {!hasRole('admin') && !hasRole('manager') && (
                 <TabsTrigger
                   value="employee-calendar"
