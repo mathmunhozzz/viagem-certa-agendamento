@@ -121,12 +121,6 @@ const Index = () => {
 
         <Tabs defaultValue={(hasRole('admin') || hasRole('manager')) ? "trips-list" : "employee-calendar"} className="space-y-6">
           <div className="flex justify-center px-2">
-            {/* **--- ALTERAÇÃO PRINCIPAL AQUI ---**
-              - Trocado 'grid' por 'flex flex-wrap' para permitir que os botões quebrem a linha.
-              - 'justify-center' para centralizar os botões.
-              - 'gap-2' para um espaçamento consistente entre os botões.
-              - Removido 'grid-cols-*' e altura fixa 'h-auto md:h-12' para permitir que o contêiner cresça conforme necessário.
-            */}
             <TabsList className="w-full max-w-7xl flex flex-wrap justify-center gap-2 bg-muted/50 p-2 h-auto rounded-lg">
               {(hasRole('admin') || hasRole('manager')) && (
                 <TabsTrigger
@@ -137,9 +131,7 @@ const Index = () => {
                   <span className="hidden md:block">📅 Calendário</span>
                 </TabsTrigger>
               )}
-              {(hasRole('admin') || hasRole('manager')) && (
-             
-              )}
+              {/* O BOTÃO DASHBOARD FOI REMOVIDO DESTA ÁREA */}
               {!hasRole('admin') && !hasRole('manager') && (
                 <TabsTrigger
                   value="employee-calendar"
