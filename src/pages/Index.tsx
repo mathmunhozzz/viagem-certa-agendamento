@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useUserRole } from '@/hooks/useUserRole';
@@ -62,9 +61,9 @@ const Index = () => {
 
   // Verificar se a conta está aprovada (exceto para admins)
   if (!isApproved && !hasRole('admin')) {
-    return <PendingApprovalScreen 
-      status={accountStatus || 'pending'} 
-      userName={user.user_metadata?.name || user.email?.split('@')[0]} 
+    return <PendingApprovalScreen
+      status={accountStatus || 'pending'}
+      userName={user.user_metadata?.name || user.email?.split('@')[0]}
     />;
   }
 
@@ -122,10 +121,16 @@ const Index = () => {
 
         <Tabs defaultValue={(hasRole('admin') || hasRole('manager')) ? "trips-list" : "employee-calendar"} className="space-y-6">
           <div className="flex justify-center px-2">
-            <TabsList className={`grid w-full max-w-7xl ${hasRole('admin') ? 'grid-cols-6 md:grid-cols-13' : hasRole('manager') ? 'grid-cols-5 md:grid-cols-12' : 'grid-cols-2'} bg-muted/50 p-1 h-auto md:h-12 text-xs md:text-sm gap-1`}>
+            {/* **--- ALTERAÇÃO PRINCIPAL AQUI ---**
+              - Trocado 'grid' por 'flex flex-wrap' para permitir que os botões quebrem a linha.
+              - 'justify-center' para centralizar os botões.
+              - 'gap-2' para um espaçamento consistente entre os botões.
+              - Removido 'grid-cols-*' e altura fixa 'h-auto md:h-12' para permitir que o contêiner cresça conforme necessário.
+            */}
+            <TabsList className="w-full max-w-7xl flex flex-wrap justify-center gap-2 bg-muted/50 p-2 h-auto rounded-lg">
               {(hasRole('admin') || hasRole('manager')) && (
-                <TabsTrigger 
-                  value="calendar" 
+                <TabsTrigger
+                  value="calendar"
                   className="data-[state=active]:bg-travel-primary data-[state=active]:text-white font-semibold p-2 md:p-3 text-center min-h-[2.5rem]"
                 >
                   <span className="block md:hidden">📅</span>
@@ -133,8 +138,8 @@ const Index = () => {
                 </TabsTrigger>
               )}
               {(hasRole('admin') || hasRole('manager')) && (
-                <TabsTrigger 
-                  value="dashboard" 
+                <TabsTrigger
+                  value="dashboard"
                   className="data-[state=active]:bg-blue-600 data-[state=active]:text-white font-semibold p-2 md:p-3 text-center min-h-[2.5rem]"
                 >
                   <span className="block md:hidden">📊</span>
@@ -142,24 +147,24 @@ const Index = () => {
                 </TabsTrigger>
               )}
               {!hasRole('admin') && !hasRole('manager') && (
-                <TabsTrigger 
-                  value="employee-calendar" 
+                <TabsTrigger
+                  value="employee-calendar"
                   className="data-[state=active]:bg-travel-primary data-[state=active]:text-white font-semibold p-2 md:p-3 text-center min-h-[2.5rem]"
                 >
                   <span className="block md:hidden">📅</span>
                   <span className="hidden md:block">📅 Calendário Semanal</span>
                 </TabsTrigger>
               )}
-              <TabsTrigger 
-                value="absences" 
+              <TabsTrigger
+                value="absences"
                 className="data-[state=active]:bg-travel-accent data-[state=active]:text-white font-semibold p-2 md:p-3 text-center min-h-[2.5rem]"
               >
                 <span className="block md:hidden">🏖️</span>
                 <span className="hidden md:block">🏖️ Ausências</span>
               </TabsTrigger>
               {(hasRole('admin') || hasRole('manager')) && (
-                <TabsTrigger 
-                  value="new-trip" 
+                <TabsTrigger
+                  value="new-trip"
                   className="data-[state=active]:bg-travel-secondary data-[state=active]:text-white font-semibold p-2 md:p-3 text-center min-h-[2.5rem]"
                 >
                   <span className="block md:hidden">➕</span>
@@ -167,8 +172,8 @@ const Index = () => {
                 </TabsTrigger>
               )}
               {(hasRole('admin') || hasRole('manager')) && (
-                <TabsTrigger 
-                  value="trips-list" 
+                <TabsTrigger
+                  value="trips-list"
                   className="data-[state=active]:bg-travel-accent data-[state=active]:text-white font-semibold p-2 md:p-3 text-center min-h-[2.5rem]"
                 >
                   <span className="block md:hidden">📋</span>
@@ -176,8 +181,8 @@ const Index = () => {
                 </TabsTrigger>
               )}
               {(hasRole('admin') || hasRole('manager')) && (
-                <TabsTrigger 
-                  value="reports" 
+                <TabsTrigger
+                  value="reports"
                   className="data-[state=active]:bg-travel-primary data-[state=active]:text-white font-semibold p-2 md:p-3 text-center min-h-[2.5rem]"
                 >
                   <span className="block md:hidden">📊</span>
@@ -185,8 +190,8 @@ const Index = () => {
                 </TabsTrigger>
               )}
               {(hasRole('admin') || hasRole('manager')) && (
-                <TabsTrigger 
-                  value="clients" 
+                <TabsTrigger
+                  value="clients"
                   className="data-[state=active]:bg-travel-secondary data-[state=active]:text-white font-semibold p-2 md:p-3 text-center min-h-[2.5rem]"
                 >
                   <span className="block md:hidden">👥</span>
@@ -194,8 +199,8 @@ const Index = () => {
                 </TabsTrigger>
               )}
               {(hasRole('admin') || hasRole('manager')) && (
-                <TabsTrigger 
-                  value="sectors" 
+                <TabsTrigger
+                  value="sectors"
                   className="data-[state=active]:bg-travel-secondary data-[state=active]:text-white font-semibold p-2 md:p-3 text-center min-h-[2.5rem]"
                 >
                   <span className="block md:hidden">🏢</span>
@@ -203,8 +208,8 @@ const Index = () => {
                 </TabsTrigger>
               )}
               {(hasRole('admin') || hasRole('manager')) && (
-                <TabsTrigger 
-                  value="employees" 
+                <TabsTrigger
+                  value="employees"
                   className="data-[state=active]:bg-travel-accent data-[state=active]:text-white font-semibold p-2 md:p-3 text-center min-h-[2.5rem]"
                 >
                   <span className="block md:hidden">🧑‍💼</span>
@@ -212,8 +217,8 @@ const Index = () => {
                 </TabsTrigger>
               )}
               {(hasRole('admin') || hasRole('manager')) && (
-                <TabsTrigger 
-                  value="vehicles" 
+                <TabsTrigger
+                  value="vehicles"
                   className="data-[state=active]:bg-travel-primary data-[state=active]:text-white font-semibold p-2 md:p-3 text-center min-h-[2.5rem]"
                 >
                   <span className="block md:hidden">🚗</span>
@@ -221,8 +226,8 @@ const Index = () => {
                 </TabsTrigger>
               )}
               {(hasRole('admin') || hasRole('manager')) && (
-                <TabsTrigger 
-                  value="credit-cards" 
+                <TabsTrigger
+                  value="credit-cards"
                   className="data-[state=active]:bg-travel-secondary data-[state=active]:text-white font-semibold p-2 md:p-3 text-center min-h-[2.5rem]"
                 >
                   <span className="block md:hidden">💳</span>
@@ -231,15 +236,15 @@ const Index = () => {
               )}
               {hasRole('admin') && (
                 <>
-                  <TabsTrigger 
-                    value="employee-link" 
+                  <TabsTrigger
+                    value="employee-link"
                     className="data-[state=active]:bg-purple-600 data-[state=active]:text-white font-semibold p-2 md:p-3 text-center min-h-[2.5rem]"
                   >
                     <span className="block md:hidden">🔗</span>
                     <span className="hidden md:block">🔗 Vincular</span>
                   </TabsTrigger>
-                  <TabsTrigger 
-                    value="users" 
+                  <TabsTrigger
+                    value="users"
                     className="data-[state=active]:bg-orange-600 data-[state=active]:text-white font-semibold p-2 md:p-3 text-center min-h-[2.5rem]"
                   >
                     <span className="block md:hidden">👤</span>
