@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useUserRole } from '@/hooks/useUserRole';
 import { useAccountStatus } from '@/hooks/useAccountStatus';
+import { usePendingAbsences } from '@/hooks/usePendingAbsences';
 import { Navigate } from 'react-router-dom';
 import { Header } from '@/components/Header';
 import { TripCalendar } from '@/components/TripCalendar';
@@ -30,11 +31,13 @@ import { AbsenceList } from '@/components/AbsenceList';
 import { CreditCardForm } from '@/components/CreditCardForm';
 import { CreditCardList } from '@/components/CreditCardList';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Badge } from '@/components/ui/badge';
 
 const Index = () => {
   const { user, loading } = useAuth();
   const { hasRole, isManager } = useUserRole();
   const { accountStatus, loading: statusLoading, isApproved } = useAccountStatus();
+  const { pendingCount, refetch: refetchPendingCount } = usePendingAbsences();
   const [refreshKey, setRefreshKey] = useState(0);
   const [vehicleRefreshKey, setVehicleRefreshKey] = useState(0);
   const [sectorRefreshKey, setSectorRefreshKey] = useState(0);
@@ -145,20 +148,19 @@ const Index = () => {
               )}
               <TabsTrigger
                 value="absences"
-                className="data-[state=active]:bg-travel-accent data-[state=active]:text-white font-semibold p-2 md:p-3 text-center min-h-[2.5rem]"
+                className="data-[state=active]:bg-travel-accent data-[state=active]:text-white font-semibold p-2 md:p-3 text-center min-h-[2.5rem] relative"
               >
                 <span className="block md:hidden">🏖️</span>
                 <span className="hidden md:block">🏖️ Ausências</span>
+                {hasRole('admin') && pendingCount > 0 && (
+                  <Badge 
+                    variant="destructive" 
+                    className="absolute -top-2 -right-2 h-5 w-5 p-0 flex items-center justify-center text-xs font-bold rounded-full bg-red-500 text-white"
+                  >
+                    {pendingCount}
+                  </Badge>
+                )}
               </TabsTrigger>
-              {(hasRole('admin') || hasRole('manager')) && (
-                <TabsTrigger
-                  value="new-trip"
-                  className="data-[state=active]:bg-travel-secondary data-[state=active]:text-white font-semibold p-2 md:p-3 text-center min-h-[2.5rem]"
-                >
-                  <span className="block md:hidden">➕</span>
-                  <span className="hidden md:block">➕ Nova Viagem</span>
-                </TabsTrigger>
-              )}
               {(hasRole('admin') || hasRole('manager')) && (
                 <TabsTrigger
                   value="trips-list"
@@ -200,8 +202,8 @@ const Index = () => {
                   value="employees"
                   className="data-[state=active]:bg-travel-accent data-[state=active]:text-white font-semibold p-2 md:p-3 text-center min-h-[2.5rem]"
                 >
-                  <span className="block md:hidden">🧑‍💼</span>
-                  <span className="hidden md:block">🧑‍💼 Funcionários</span>
+                  <span className="block md:hidden">👤</span>
+                  <span className="hidden md:block">👤 Funcionários</span>
                 </TabsTrigger>
               )}
               {(hasRole('admin') || hasRole('manager')) && (
@@ -223,29 +225,25 @@ const Index = () => {
                 </TabsTrigger>
               )}
               {hasRole('admin') && (
-                <>
-                  <TabsTrigger
-                    value="employee-link"
-                    className="data-[state=active]:bg-purple-600 data-[state=active]:text-white font-semibold p-2 md:p-3 text-center min-h-[2.5rem]"
-                  >
-                    <span className="block md:hidden">🔗</span>
-                    <span className="hidden md:block">🔗 Vincular</span>
-                  </TabsTrigger>
-                  <TabsTrigger
-                    value="users"
-                    className="data-[state=active]:bg-orange-600 data-[state=active]:text-white font-semibold p-2 md:p-3 text-center min-h-[2.5rem]"
-                  >
-                    <span className="block md:hidden">👤</span>
-                    <span className="hidden md:block">👤 Usuários</span>
-                  </TabsTrigger>
-                </>
+                <TabsTrigger
+                  value="users"
+                  className="data-[state=active]:bg-orange-600 data-[state=active]:text-white font-semibold p-2 md:p-3 text-center min-h-[2.5rem]"
+                >
+                  <span className="block md:hidden">👤</span>
+                  <span className="hidden md:block">👤 Usuários</span>
+                </TabsTrigger>
               )}
             </TabsList>
           </div>
 
           {(hasRole('admin') || hasRole('manager')) && (
             <TabsContent value="calendar" key={refreshKey} className="space-y-6">
-              <TripCalendar />
+              <div className="max-w-6xl mx-auto space-y-6">
+                <div className="flex justify-center">
+                  <TripForm onTripCreated={handleTripCreated} />
+                </div>
+                <TripCalendar />
+              </div>
             </TabsContent>
           )}
 
@@ -256,7 +254,11 @@ const Index = () => {
               {hasRole('admin') && (
                 <div className="mt-8">
                   <h3 className="text-lg font-semibold mb-4 text-center">Todas as Ausências (Administração)</h3>
-                  <AbsenceList refreshTrigger={absenceRefreshKey} showAllAbsences={true} />
+                  <AbsenceList 
+                    refreshTrigger={absenceRefreshKey} 
+                    showAllAbsences={true}
+                    onStatusUpdated={refetchPendingCount}
+                  />
                 </div>
               )}
             </div>
@@ -269,14 +271,6 @@ const Index = () => {
               </div>
               <div className="max-w-6xl mx-auto">
                 <EmployeeTripView />
-              </div>
-            </TabsContent>
-          )}
-
-          {(hasRole('admin') || hasRole('manager')) && (
-            <TabsContent value="new-trip" className="space-y-6">
-              <div className="max-w-3xl mx-auto">
-                <TripForm onTripCreated={handleTripCreated} />
               </div>
             </TabsContent>
           )}
@@ -327,6 +321,16 @@ const Index = () => {
                 <EmployeeForm onEmployeeCreated={handleEmployeeCreated} />
                 <EmployeeList refreshKey={employeeRefreshKey} />
               </div>
+              {hasRole('admin') && (
+                <div className="max-w-6xl mx-auto mt-8">
+                  <div className="bg-gradient-to-r from-purple-50 to-purple-100 dark:from-purple-900/20 dark:to-purple-800/20 rounded-lg p-6 border border-purple-200 dark:border-purple-700">
+                    <h3 className="text-lg font-semibold mb-4 text-purple-800 dark:text-purple-200 flex items-center gap-2">
+                      🔗 Vincular Funcionários aos Usuários
+                    </h3>
+                    <EmployeeUserLink />
+                  </div>
+                </div>
+              )}
             </TabsContent>
           )}
 
@@ -349,18 +353,11 @@ const Index = () => {
           )}
 
           {hasRole('admin') && (
-            <>
-              <TabsContent value="employee-link" className="space-y-6">
-                <div className="max-w-6xl mx-auto">
-                  <EmployeeUserLink />
-                </div>
-              </TabsContent>
-              <TabsContent value="users" className="space-y-6">
-                <div className="max-w-6xl mx-auto">
-                  <UserManagement />
-                </div>
-              </TabsContent>
-            </>
+            <TabsContent value="users" className="space-y-6">
+              <div className="max-w-6xl mx-auto">
+                <UserManagement />
+              </div>
+            </TabsContent>
           )}
         </Tabs>
       </main>

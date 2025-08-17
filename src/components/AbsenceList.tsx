@@ -28,9 +28,10 @@ interface Absence {
 interface AbsenceListProps {
   refreshTrigger: number;
   showAllAbsences?: boolean;
+  onStatusUpdated?: () => void;
 }
 
-export function AbsenceList({ refreshTrigger, showAllAbsences = false }: AbsenceListProps) {
+export function AbsenceList({ refreshTrigger, showAllAbsences = false, onStatusUpdated }: AbsenceListProps) {
   const { toast } = useToast();
   const { employee } = useCurrentEmployee();
   const { role } = useUserRole();
@@ -261,7 +262,10 @@ export function AbsenceList({ refreshTrigger, showAllAbsences = false }: Absence
         absenceId={observationDialog.absenceId}
         employeeName={observationDialog.employeeName}
         action={observationDialog.action}
-        onSuccess={fetchAbsences}
+        onSuccess={(() => {
+          fetchAbsences();
+          onStatusUpdated?.();
+        })}
       />
     </Card>
   );
