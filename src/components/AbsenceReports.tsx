@@ -68,44 +68,62 @@ export function AbsenceReports() {
   const fetchAbsenceReports = async () => {
     setLoading(true);
     try {
-      let query = supabase
+      // Primeiro, buscamos as ausências
+      let absencesQuery = supabase
         .from('employee_absences')
-        .select(`
-          *,
-          employees!inner(id, name)
-        `);
+        .select('*');
 
       // Filtros de data
       if (filters.startDate) {
-        query = query.gte('start_date', filters.startDate);
+        absencesQuery = absencesQuery.gte('start_date', filters.startDate);
       }
       if (filters.endDate) {
-        query = query.lte('start_date', filters.endDate);
+        absencesQuery = absencesQuery.lte('start_date', filters.endDate);
       }
 
       // Filtro por funcionário
       if (filters.employeeId && filters.employeeId !== 'all') {
-        query = query.eq('employee_id', filters.employeeId);
+        absencesQuery = absencesQuery.eq('employee_id', filters.employeeId);
       }
 
       // Filtro por status
       if (filters.status && filters.status !== 'all') {
-        query = query.eq('status', filters.status);
+        absencesQuery = absencesQuery.eq('status', filters.status);
       }
 
-      const { data, error } = await query.order('created_at', { ascending: false });
+      const { data: absencesData, error: absencesError } = await absencesQuery.order('created_at', { ascending: false });
       
-      if (error) throw error;
+      if (absencesError) throw absencesError;
+
+      if (!absencesData || absencesData.length === 0) {
+        setReports([]);
+        return;
+      }
+
+      // Buscar os dados dos funcionários para os IDs encontrados
+      const employeeIds = [...new Set(absencesData.map(absence => absence.employee_id))];
+      const { data: employeesData, error: employeesError } = await supabase
+        .from('employees')
+        .select('id, name')
+        .in('id', employeeIds);
+
+      if (employeesError) throw employeesError;
+
+      // Criar um mapa de funcionários para lookup rápido
+      const employeeMap = (employeesData || []).reduce((acc, emp) => {
+        acc[emp.id] = emp.name;
+        return acc;
+      }, {} as Record<string, string>);
 
       // Agrupar dados por funcionário
-      const employeeMap = new Map<string, AbsenceReport>();
+      const reportMap = new Map<string, AbsenceReport>();
       
-      data?.forEach((absence: any) => {
+      absencesData.forEach((absence: any) => {
         const empId = absence.employee_id;
-        const empName = absence.employees?.name || 'Funcionário Desconhecido';
+        const empName = employeeMap[empId] || 'Funcionário Desconhecido';
 
-        if (!employeeMap.has(empId)) {
-          employeeMap.set(empId, {
+        if (!reportMap.has(empId)) {
+          reportMap.set(empId, {
             employee_id: empId,
             employee_name: empName,
             total_absences: 0,
@@ -116,7 +134,7 @@ export function AbsenceReports() {
           });
         }
 
-        const report = employeeMap.get(empId)!;
+        const report = reportMap.get(empId)!;
         report.total_absences++;
         
         switch (absence.status) {
@@ -142,12 +160,12 @@ export function AbsenceReports() {
         });
       });
 
-      setReports(Array.from(employeeMap.values()));
-    } catch (error) {
+      setReports(Array.from(reportMap.values()));
+    } catch (error: any) {
       console.error('Erro ao buscar relatório de ausências:', error);
       toast({
         title: "Erro ao carregar relatório",
-        description: "Não foi possível carregar os dados do relatório.",
+        description: error?.message || "Não foi possível carregar os dados do relatório.",
         variant: "destructive"
       });
     } finally {
@@ -375,7 +393,7 @@ export function AbsenceReports() {
         </Card>
       )}
 
-      {!loading && reports.length === 0 && filters.startDate && (
+      {!loading && reports.length === 0 && (filters.startDate || filters.endDate || filters.employeeId !== 'all' || filters.status !== 'all') && (
         <Card>
           <CardContent className="text-center py-12">
             <AlertCircle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
