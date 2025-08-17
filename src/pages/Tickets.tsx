@@ -27,7 +27,7 @@ const Tickets = () => {
   }
 
   if (accountStatus !== 'approved') {
-    return <PendingApprovalScreen />;
+    return <PendingApprovalScreen status={accountStatus || 'pending'} />;
   }
 
   return (

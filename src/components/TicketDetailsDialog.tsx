@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -60,7 +59,7 @@ export function TicketDetailsDialog({ ticket, open, onOpenChange, onTicketUpdate
   const [newComment, setNewComment] = useState('');
   const [isEditing, setIsEditing] = useState(false);
   const [editData, setEditData] = useState({
-    status: '',
+    status: '' as 'pendente' | 'em_analise' | 'corrigido' | 'negado',
     priority: '',
     assigned_to: '',
   });
@@ -314,7 +313,9 @@ export function TicketDetailsDialog({ ticket, open, onOpenChange, onTicketUpdate
                       <Label>Status</Label>
                       <Select
                         value={editData.status}
-                        onValueChange={(value) => setEditData(prev => ({ ...prev, status: value }))}
+                        onValueChange={(value: 'pendente' | 'em_analise' | 'corrigido' | 'negado') => 
+                          setEditData(prev => ({ ...prev, status: value }))
+                        }
                       >
                         <SelectTrigger>
                           <SelectValue />
