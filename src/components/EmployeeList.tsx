@@ -5,8 +5,9 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Trash2, Search, Users, Mail, Briefcase } from "lucide-react";
+import { Trash2, Search, Users, Mail, Briefcase, Link2 } from "lucide-react";
 import { SectorSelect } from "./SectorSelect";
+import { EmployeeLinkDialog } from "./EmployeeLinkDialog";
 
 interface Employee {
   id: string;
@@ -30,6 +31,8 @@ export function EmployeeList({ refreshKey }: EmployeeListProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [sectorFilter, setSectorFilter] = useState("");
   const { toast } = useToast();
+  const [linkOpen, setLinkOpen] = useState(false);
+  const [selectedEmployee, setSelectedEmployee] = useState<{ id: string; name: string } | null>(null);
 
   const fetchEmployees = async () => {
     try {
@@ -117,6 +120,11 @@ export function EmployeeList({ refreshKey }: EmployeeListProps) {
         variant: "destructive",
       });
     }
+  };
+
+  const openLinkDialog = (emp: Employee) => {
+    setSelectedEmployee({ id: emp.id, name: emp.name });
+    setLinkOpen(true);
   };
 
   const filteredEmployees = employees.filter((employee) => {
@@ -218,6 +226,16 @@ export function EmployeeList({ refreshKey }: EmployeeListProps) {
                     <p className="text-xs text-muted-foreground mt-2">
                       Criado em: {new Date(employee.created_at).toLocaleDateString()}
                     </p>
+
+                    <div className="mt-3">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => openLinkDialog(employee)}
+                      >
+                        <Link2 className="h-4 w-4 mr-2" /> Vincular Profissional
+                      </Button>
+                    </div>
                   </div>
                   <Button
                     variant="destructive"
@@ -231,6 +249,13 @@ export function EmployeeList({ refreshKey }: EmployeeListProps) {
             </div>
           )}
         </div>
+        <EmployeeLinkDialog
+          open={linkOpen}
+          onOpenChange={setLinkOpen}
+          employeeId={selectedEmployee?.id || ""}
+          employeeName={selectedEmployee?.name || ""}
+          onLinked={() => { setLinkOpen(false); fetchEmployees(); }}
+        />
       </CardContent>
     </Card>
   );

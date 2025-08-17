@@ -23,7 +23,6 @@ import { PendingApprovalScreen } from '@/components/PendingApprovalScreen';
 import { RoleGuard } from '@/components/RoleGuard';
 import { ClientForm } from '@/components/ClientForm';
 import { ClientList } from '@/components/ClientList';
-import { EmployeeUserLink } from '@/components/EmployeeUserLink';
 import { EmployeeTripView } from '@/components/EmployeeTripView';
 import { EmployeeWeekCalendar } from '@/components/EmployeeWeekCalendar';
 import { AbsenceForm } from '@/components/AbsenceForm';
@@ -32,6 +31,8 @@ import { CreditCardForm } from '@/components/CreditCardForm';
 import { CreditCardList } from '@/components/CreditCardList';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
 const Index = () => {
   const { user, loading } = useAuth();
@@ -46,6 +47,7 @@ const Index = () => {
   const [creditCardRefreshKey, setCreditCardRefreshKey] = useState(0);
   const [absenceRefreshKey, setAbsenceRefreshKey] = useState(0);
   const [showUserManagement, setShowUserManagement] = useState(false);
+  const [newTripOpen, setNewTripOpen] = useState(false);
 
   if (loading || statusLoading) {
     return (
@@ -155,7 +157,7 @@ const Index = () => {
                 {hasRole('admin') && pendingCount > 0 && (
                   <Badge 
                     variant="destructive" 
-                    className="absolute -top-2 -right-2 h-5 w-5 p-0 flex items-center justify-center text-xs font-bold rounded-full bg-red-500 text-white"
+                    className="absolute -top-2 -right-2 h-5 w-5 p-0 flex items-center justify-center text-xs font-bold rounded-full"
                   >
                     {pendingCount}
                   </Badge>
@@ -238,9 +240,11 @@ const Index = () => {
 
           {(hasRole('admin') || hasRole('manager')) && (
             <TabsContent value="calendar" key={refreshKey} className="space-y-6">
-              <div className="max-w-6xl mx-auto space-y-6">
-                <div className="flex justify-center">
-                  <TripForm onTripCreated={handleTripCreated} />
+              <div className="max-w-6xl mx-auto space-y-4">
+                <div className="flex justify-end">
+                  <Button onClick={() => setNewTripOpen(true)}>
+                    ➕ Nova Viagem
+                  </Button>
                 </div>
                 <TripCalendar />
               </div>
@@ -321,16 +325,6 @@ const Index = () => {
                 <EmployeeForm onEmployeeCreated={handleEmployeeCreated} />
                 <EmployeeList refreshKey={employeeRefreshKey} />
               </div>
-              {hasRole('admin') && (
-                <div className="max-w-6xl mx-auto mt-8">
-                  <div className="bg-gradient-to-r from-purple-50 to-purple-100 dark:from-purple-900/20 dark:to-purple-800/20 rounded-lg p-6 border border-purple-200 dark:border-purple-700">
-                    <h3 className="text-lg font-semibold mb-4 text-purple-800 dark:text-purple-200 flex items-center gap-2">
-                      🔗 Vincular Funcionários aos Usuários
-                    </h3>
-                    <EmployeeUserLink />
-                  </div>
-                </div>
-              )}
             </TabsContent>
           )}
 
@@ -360,6 +354,14 @@ const Index = () => {
             </TabsContent>
           )}
         </Tabs>
+        <Dialog open={newTripOpen} onOpenChange={setNewTripOpen}>
+          <DialogContent className="max-w-3xl">
+            <DialogHeader>
+              <DialogTitle>Nova Viagem</DialogTitle>
+            </DialogHeader>
+            <TripForm onTripCreated={() => { handleTripCreated(); setNewTripOpen(false); }} />
+          </DialogContent>
+        </Dialog>
       </main>
     </div>
   );
