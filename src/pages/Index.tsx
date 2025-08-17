@@ -253,8 +253,15 @@ const Index = () => {
 
           <TabsContent value="absences" className="space-y-6">
             <div className="max-w-4xl mx-auto space-y-6">
-              <AbsenceForm onAbsenceCreated={() => setAbsenceRefreshKey(prev => prev + 1)} />
-              <AbsenceList refreshTrigger={absenceRefreshKey} />
+              {!hasRole('admin') && (
+                <AbsenceForm onAbsenceCreated={() => setAbsenceRefreshKey(prev => prev + 1)} />
+              )}
+              <AbsenceList 
+                refreshTrigger={absenceRefreshKey} 
+                showAllAbsences={false}
+                hideTitle={hasRole('admin')}
+                customTitle={hasRole('admin') ? "Ausências Solicitadas/Informadas" : undefined}
+              />
               {hasRole('admin') && (
                 <div className="mt-8">
                   <h3 className="text-lg font-semibold mb-4 text-center">Todas as Ausências (Administração)</h3>

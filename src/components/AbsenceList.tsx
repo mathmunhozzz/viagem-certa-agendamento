@@ -29,9 +29,17 @@ interface AbsenceListProps {
   refreshTrigger: number;
   showAllAbsences?: boolean;
   onStatusUpdated?: () => void;
+  hideTitle?: boolean;
+  customTitle?: string;
 }
 
-export function AbsenceList({ refreshTrigger, showAllAbsences = false, onStatusUpdated }: AbsenceListProps) {
+export function AbsenceList({ 
+  refreshTrigger, 
+  showAllAbsences = false, 
+  onStatusUpdated,
+  hideTitle = false,
+  customTitle
+}: AbsenceListProps) {
   const { toast } = useToast();
   const { employee } = useCurrentEmployee();
   const { role } = useUserRole();
@@ -156,7 +164,7 @@ export function AbsenceList({ refreshTrigger, showAllAbsences = false, onStatusU
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <CalendarIcon className="h-5 w-5" />
-            {showAllAbsences ? 'Todas as Ausências' : 'Minhas Ausências'} 
+            {customTitle || (showAllAbsences ? 'Todas as Ausências' : 'Minhas Ausências')}
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -168,12 +176,14 @@ export function AbsenceList({ refreshTrigger, showAllAbsences = false, onStatusU
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <CalendarIcon className="h-5 w-5" />
-          {showAllAbsences ? 'Todas as Ausências' : 'Minhas Ausências'} ({absences.length})
-        </CardTitle>
-      </CardHeader>
+      {!hideTitle && (
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <CalendarIcon className="h-5 w-5" />
+            {customTitle || (showAllAbsences ? 'Todas as Ausências' : 'Minhas Ausências')} ({absences.length})
+          </CardTitle>
+        </CardHeader>
+      )}
       <CardContent>
         {absences.length === 0 ? (
           <div className="text-center py-8">
