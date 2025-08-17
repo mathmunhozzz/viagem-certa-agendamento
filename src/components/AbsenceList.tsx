@@ -4,11 +4,12 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { CalendarIcon, Check, X, Clock } from 'lucide-react';
+import { CalendarIcon, Check, X, Clock, MessageSquare } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { useCurrentEmployee } from '@/hooks/useCurrentEmployee';
 import { useUserRole } from '@/hooks/useUserRole';
+import { AbsenceObservationDialog } from './AbsenceObservationDialog';
 
 interface Absence {
   id: string;
@@ -18,6 +19,7 @@ interface Absence {
   status: string;
   created_at: string;
   employee_id: string;
+  admin_observation?: string;
   employees?: {
     name: string;
   } | null;
@@ -34,6 +36,17 @@ export function AbsenceList({ refreshTrigger, showAllAbsences = false }: Absence
   const { role } = useUserRole();
   const [absences, setAbsences] = useState<Absence[]>([]);
   const [loading, setLoading] = useState(true);
+  const [observationDialog, setObservationDialog] = useState<{
+    isOpen: boolean;
+    absenceId: string;
+    employeeName: string;
+    action: 'approved' | 'rejected';
+  }>({
+    isOpen: false,
+    absenceId: '',
+    employeeName: '',
+    action: 'approved'
+  });
 
   const isAdmin = role === 'admin';
   const canViewAll = showAllAbsences && isAdmin;
@@ -45,8 +58,8 @@ export function AbsenceList({ refreshTrigger, showAllAbsences = false }: Absence
         .select('*')
         .order('created_at', { ascending: false });
 
-      // Filtrar por funcionário se não for admin ou não for para mostrar todos
-      if (!canViewAll && employee?.id) {
+      // Se não for para mostrar todos (showAllAbsences=false), filtrar por funcionário
+      if (!showAllAbsences && employee?.id) {
         query = query.eq('employee_id', employee.id);
       }
 
@@ -55,7 +68,7 @@ export function AbsenceList({ refreshTrigger, showAllAbsences = false }: Absence
       if (error) throw error;
 
       // Se for para mostrar todas as ausências, buscar dados dos funcionários
-      if (canViewAll && data) {
+      if (showAllAbsences && data) {
         const employeeIds = [...new Set(data.map(absence => absence.employee_id))];
         const { data: employees } = await supabase
           .from('employees')
@@ -88,34 +101,18 @@ export function AbsenceList({ refreshTrigger, showAllAbsences = false }: Absence
     }
   };
 
-  const updateAbsenceStatus = async (absenceId: string, status: 'approved' | 'rejected') => {
-    try {
-      const { error } = await supabase
-        .from('employee_absences')
-        .update({ status })
-        .eq('id', absenceId);
-
-      if (error) throw error;
-
-      toast({
-        title: "Status atualizado",
-        description: `Ausência ${status === 'approved' ? 'aprovada' : 'rejeitada'} com sucesso.`,
-      });
-
-      fetchAbsences();
-    } catch (error) {
-      console.error('Erro ao atualizar status:', error);
-      toast({
-        title: "Erro",
-        description: "Não foi possível atualizar o status da ausência.",
-        variant: "destructive",
-      });
-    }
+  const openObservationDialog = (absenceId: string, employeeName: string, action: 'approved' | 'rejected') => {
+    setObservationDialog({
+      isOpen: true,
+      absenceId,
+      employeeName,
+      action
+    });
   };
 
   useEffect(() => {
     fetchAbsences();
-  }, [refreshTrigger, employee?.id, canViewAll]);
+  }, [refreshTrigger, employee?.id, showAllAbsences]);
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -158,7 +155,7 @@ export function AbsenceList({ refreshTrigger, showAllAbsences = false }: Absence
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <CalendarIcon className="h-5 w-5" />
-            {canViewAll ? 'Todas as Ausências' : 'Minhas Ausências'} 
+            {showAllAbsences ? 'Todas as Ausências' : 'Minhas Ausências'} 
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -173,7 +170,7 @@ export function AbsenceList({ refreshTrigger, showAllAbsences = false }: Absence
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <CalendarIcon className="h-5 w-5" />
-          {canViewAll ? 'Todas as Ausências' : 'Minhas Ausências'} ({absences.length})
+          {showAllAbsences ? 'Todas as Ausências' : 'Minhas Ausências'} ({absences.length})
         </CardTitle>
       </CardHeader>
       <CardContent>
@@ -181,10 +178,10 @@ export function AbsenceList({ refreshTrigger, showAllAbsences = false }: Absence
           <div className="text-center py-8">
             <CalendarIcon className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
             <p className="text-muted-foreground text-lg font-medium">
-              {canViewAll ? 'Nenhuma ausência encontrada' : 'Você ainda não solicitou nenhuma ausência'}
+              {showAllAbsences ? 'Nenhuma ausência encontrada' : 'Você ainda não solicitou nenhuma ausência'}
             </p>
             <p className="text-sm text-muted-foreground mt-1">
-              {!canViewAll && 'Você pode solicitar ausências usando o formulário acima'}
+              {!showAllAbsences && 'Você pode solicitar ausências usando o formulário acima'}
             </p>
           </div>
         ) : (
@@ -196,7 +193,7 @@ export function AbsenceList({ refreshTrigger, showAllAbsences = false }: Absence
               >
                 <div className="flex items-start justify-between mb-3">
                   <div className="space-y-1">
-                    {canViewAll && absence.employees && (
+                    {showAllAbsences && absence.employees && (
                       <h4 className="font-semibold text-foreground">
                         {absence.employees.name}
                       </h4>
@@ -214,7 +211,7 @@ export function AbsenceList({ refreshTrigger, showAllAbsences = false }: Absence
                           size="sm"
                           variant="outline"
                           className="h-8 px-2 text-green-600 border-green-200 hover:bg-green-50"
-                          onClick={() => updateAbsenceStatus(absence.id, 'approved')}
+                          onClick={() => openObservationDialog(absence.id, absence.employees?.name || 'Funcionário', 'approved')}
                         >
                           <Check className="h-3 w-3" />
                         </Button>
@@ -222,7 +219,7 @@ export function AbsenceList({ refreshTrigger, showAllAbsences = false }: Absence
                           size="sm"
                           variant="outline"
                           className="h-8 px-2 text-red-600 border-red-200 hover:bg-red-50"
-                          onClick={() => updateAbsenceStatus(absence.id, 'rejected')}
+                          onClick={() => openObservationDialog(absence.id, absence.employees?.name || 'Funcionário', 'rejected')}
                         >
                           <X className="h-3 w-3" />
                         </Button>
@@ -237,6 +234,18 @@ export function AbsenceList({ refreshTrigger, showAllAbsences = false }: Absence
                   </p>
                 </div>
 
+                {absence.admin_observation && (
+                  <div className="mb-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                    <div className="flex items-center gap-2 mb-2">
+                      <MessageSquare className="h-4 w-4 text-blue-600" />
+                      <span className="text-sm font-medium text-blue-800">Observação do Administrador</span>
+                    </div>
+                    <p className="text-sm text-blue-700 break-words leading-relaxed whitespace-pre-wrap">
+                      {absence.admin_observation}
+                    </p>
+                  </div>
+                )}
+
                 <p className="text-xs text-muted-foreground">
                   Solicitado em {format(parseISO(absence.created_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
                 </p>
@@ -245,6 +254,15 @@ export function AbsenceList({ refreshTrigger, showAllAbsences = false }: Absence
           </div>
         )}
       </CardContent>
+
+      <AbsenceObservationDialog
+        isOpen={observationDialog.isOpen}
+        onOpenChange={(open) => setObservationDialog(prev => ({ ...prev, isOpen: open }))}
+        absenceId={observationDialog.absenceId}
+        employeeName={observationDialog.employeeName}
+        action={observationDialog.action}
+        onSuccess={fetchAbsences}
+      />
     </Card>
   );
 }

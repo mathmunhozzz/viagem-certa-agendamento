@@ -70,6 +70,7 @@ export type Database = {
       }
       employee_absences: {
         Row: {
+          admin_observation: string | null
           approved_at: string | null
           approved_by: string | null
           created_at: string
@@ -82,6 +83,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          admin_observation?: string | null
           approved_at?: string | null
           approved_by?: string | null
           created_at?: string
@@ -94,6 +96,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          admin_observation?: string | null
           approved_at?: string | null
           approved_by?: string | null
           created_at?: string
