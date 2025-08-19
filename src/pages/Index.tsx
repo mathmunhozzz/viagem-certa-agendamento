@@ -362,11 +362,13 @@ const Index = () => {
           )}
         </Tabs>
         <Dialog open={newTripOpen} onOpenChange={setNewTripOpen}>
-          <DialogContent className="max-w-3xl">
-            <DialogHeader>
+          <DialogContent className="max-w-3xl max-h-[90vh] overflow-hidden flex flex-col">
+            <DialogHeader className="flex-shrink-0">
               <DialogTitle>Nova Viagem</DialogTitle>
             </DialogHeader>
-            <TripForm onTripCreated={() => { handleTripCreated(); setNewTripOpen(false); }} />
+            <div className="flex-1 overflow-y-auto pr-2">
+              <TripForm onTripCreated={() => { handleTripCreated(); setNewTripOpen(false); }} />
+            </div>
           </DialogContent>
         </Dialog>
       </main>
