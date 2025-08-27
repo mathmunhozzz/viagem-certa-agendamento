@@ -278,8 +278,8 @@ export function TripReport({ trip, onClose }: TripReportProps) {
                 <div>
                   <h1 className="text-4xl font-bold">OPPORTUNITY SISTEMAS</h1>
                   <div className="text-sm space-y-1">
-                    <p>Rua dos Comerciários, 1234 - Centro - Cascavel/PR - CEP: 85801-050</p>
-                    <p>Tel: (45) 3220-7070 - contato@opportunity.com.br</p>
+                    <p>Rua Benedito Francisco Vicente da Silva, Nº 17 - Centro - Pinheiral / RJ</p>
+                    <p>(24) 3112-6870</p>
                     <p>CNPJ: 12.345.678/0001-90</p>
                   </div>
                 </div>

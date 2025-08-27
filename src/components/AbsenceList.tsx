@@ -4,7 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { CalendarIcon, Check, X, Clock, MessageSquare } from 'lucide-react';
+import { CalendarIcon, Check, X, Clock, MessageSquare, Trash2 } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { useCurrentEmployee } from '@/hooks/useCurrentEmployee';
@@ -117,6 +117,36 @@ export function AbsenceList({
       employeeName,
       action
     });
+  };
+
+  const handleDeleteAbsence = async (absenceId: string) => {
+    if (!confirm('Tem certeza que deseja excluir esta ausência? Esta ação não pode ser desfeita.')) {
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('employee_absences')
+        .delete()
+        .eq('id', absenceId);
+
+      if (error) throw error;
+
+      toast({
+        title: 'Ausência excluída',
+        description: 'A ausência foi excluída com sucesso.',
+      });
+
+      fetchAbsences();
+      onStatusUpdated?.();
+    } catch (error: any) {
+      console.error('Erro ao excluir ausência:', error);
+      toast({
+        title: 'Erro ao excluir ausência',
+        description: error?.message || 'Tente novamente.',
+        variant: 'destructive'
+      });
+    }
   };
 
   useEffect(() => {
@@ -235,6 +265,17 @@ export function AbsenceList({
                           <X className="h-3 w-3" />
                         </Button>
                       </div>
+                    )}
+                    {isAdmin && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="h-8 px-2 text-red-600 border-red-200 hover:bg-red-50"
+                        onClick={() => handleDeleteAbsence(absence.id)}
+                        title="Excluir ausência"
+                      >
+                        <Trash2 className="h-3 w-3" />
+                      </Button>
                     )}
                   </div>
                 </div>
