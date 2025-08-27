@@ -113,7 +113,8 @@ export function TripReport({ trip, onClose }: TripReportProps) {
           
           /* Configurações da página */
           @page {
-            margin: 1.5cm; /* Margens da página */
+            margin: 1cm;
+            size: A4;
           }
 
           /* Estilos para o container da página de impressão */
@@ -121,13 +122,15 @@ export function TripReport({ trip, onClose }: TripReportProps) {
             width: auto !important;
             max-width: none !important;
             min-height: 0 !important;
+            height: auto !important;
             margin: 0 !important;
             padding: 0 !important;
             box-shadow: none !important;
             background: white !important;
             color: black !important;
             font-family: Arial, sans-serif;
-            font-size: 12pt;
+            font-size: 10pt;
+            page-break-after: avoid;
           }
 
           /* Estilos do cabeçalho */
@@ -310,14 +313,18 @@ export function TripReport({ trip, onClose }: TripReportProps) {
                 <span className="info-label">CLIENTE:</span>
                 <div className="info-content">{trip.clients?.name || trip.sector}</div>
               </div>
-              <div className="info-line">
-                <span className="info-label">CIDADE:</span>
-                <div className="info-content">{trip.clients?.municipality || 'Não informado'}</div>
-              </div>
-              <div className="info-line">
-                <span className="info-label">DESCRIÇÃO:</span>
-                <div className="info-content">{trip.description || trip.title}</div>
-              </div>
+              {reportType === 'narrative' && (
+                <>
+                  <div className="info-line">
+                    <span className="info-label">CIDADE:</span>
+                    <div className="info-content">{trip.clients?.municipality || 'Não informado'}</div>
+                  </div>
+                  <div className="info-line">
+                    <span className="info-label">DESCRIÇÃO:</span>
+                    <div className="info-content">{trip.description || trip.title}</div>
+                  </div>
+                </>
+              )}
               <div className="info-line">
                 <span className="info-label">FUNCIONÁRIO:</span>
                 <div className="info-content">{displayName}</div>
@@ -355,11 +362,11 @@ export function TripReport({ trip, onClose }: TripReportProps) {
 
                   {/* Lines */}
                   {Array.from({ length: 15 }, (_, i) => (
-                    <>
+                    <div key={`attendance-row-${i}`} className="contents">
                       <div className="font-medium">{String(i + 1).padStart(2, '0')}.</div>
                       <div className="attendance-line"></div>
                       <div className="attendance-line"></div>
-                    </>
+                    </div>
                   ))}
                 </div>
               </div>
