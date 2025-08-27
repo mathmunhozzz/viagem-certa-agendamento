@@ -201,7 +201,7 @@ export function TripReport({ trip, onClose }: TripReportProps) {
           }
           .attendance-grid {
             display: grid;
-            grid-template-columns: 2.5rem 1fr 1fr; /* Colunas para número, nome e setor */
+            grid-template-columns: 1fr 1fr; /* Colunas para nome e setor */
             gap: 1rem 2rem;
             align-items: center;
           }
@@ -356,17 +356,15 @@ export function TripReport({ trip, onClose }: TripReportProps) {
                 <h3 className="section-title">LISTA DE PRESENÇA</h3>
                 <div className="attendance-grid">
                   {/* Headers */}
-                  <div></div>
                   <div className="attendance-header">NOME COMPLETO</div>
                   <div className="attendance-header">UNIDADE/SETOR</div>
 
                   {/* Lines */}
-                  {Array.from({ length: 15 }, (_, i) => (
-                    <div key={`attendance-row-${i}`} className="contents">
-                      <div className="font-medium">{String(i + 1).padStart(2, '0')}.</div>
-                      <div className="attendance-line"></div>
-                      <div className="attendance-line"></div>
-                    </div>
+                  {Array.from({ length: 12 }, (_, i) => (
+                    <>
+                      <div key={`name-line-${i}`} className="attendance-line"></div>
+                      <div key={`sector-line-${i}`} className="attendance-line"></div>
+                    </>
                   ))}
                 </div>
               </div>
