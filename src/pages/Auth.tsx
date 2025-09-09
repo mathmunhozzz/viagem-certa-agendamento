@@ -5,14 +5,18 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
 import { Navigate } from 'react-router-dom';
 import { Plane } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
 
 export default function Auth() {
   const { signIn, signUp, user, loading } = useAuth();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
+  const [isForgotPasswordOpen, setIsForgotPasswordOpen] = useState(false);
+  const [forgotPasswordEmail, setForgotPasswordEmail] = useState('');
 
   if (loading) {
     return (
@@ -82,6 +86,32 @@ export default function Auth() {
     setIsLoading(false);
   };
 
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+
+    const { error } = await supabase.auth.resetPasswordForEmail(forgotPasswordEmail, {
+      redirectTo: `${window.location.origin}/reset-password`,
+    });
+
+    if (error) {
+      toast({
+        title: "Erro ao enviar email",
+        description: error.message,
+        variant: "destructive"
+      });
+    } else {
+      toast({
+        title: "Email enviado!",
+        description: "Verifique sua caixa de entrada para redefinir sua senha.",
+      });
+      setIsForgotPasswordOpen(false);
+      setForgotPasswordEmail('');
+    }
+
+    setIsLoading(false);
+  };
+
   return (
     <div className="min-h-screen flex items-center justify-center hero-gradient p-4">
       <div className="absolute inset-0 bg-grid-slate-100 [mask-image:linear-gradient(0deg,white,rgba(255,255,255,0.6))] dark:bg-grid-slate-700/25 dark:[mask-image:linear-gradient(0deg,rgba(255,255,255,0.1),rgba(255,255,255,0.5))]"></div>
@@ -133,6 +163,40 @@ export default function Auth() {
                 <Button type="submit" className="w-full bg-travel-primary hover:bg-travel-primary-light text-white shadow-lg" disabled={isLoading}>
                   {isLoading ? "Entrando..." : "Entrar"}
                 </Button>
+                
+                <div className="text-center">
+                  <Dialog open={isForgotPasswordOpen} onOpenChange={setIsForgotPasswordOpen}>
+                    <DialogTrigger asChild>
+                      <Button variant="link" className="text-sm text-muted-foreground">
+                        Esqueceu sua senha?
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent>
+                      <DialogHeader>
+                        <DialogTitle>Redefinir Senha</DialogTitle>
+                        <DialogDescription>
+                          Digite seu email para receber o link de redefinição de senha.
+                        </DialogDescription>
+                      </DialogHeader>
+                      <form onSubmit={handleForgotPassword} className="space-y-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="forgot-email">Email</Label>
+                          <Input
+                            id="forgot-email"
+                            type="email"
+                            value={forgotPasswordEmail}
+                            onChange={(e) => setForgotPasswordEmail(e.target.value)}
+                            placeholder="seu@email.com"
+                            required
+                          />
+                        </div>
+                        <Button type="submit" className="w-full" disabled={isLoading}>
+                          {isLoading ? "Enviando..." : "Enviar Link"}
+                        </Button>
+                      </form>
+                    </DialogContent>
+                  </Dialog>
+                </div>
               </form>
             </TabsContent>
             

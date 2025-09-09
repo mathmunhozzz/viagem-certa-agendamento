@@ -5,3 +5,6 @@ verify_jwt = false
 
 [functions.send-trip-created-notification]
 verify_jwt = false
+
+[functions.admin-reset-password]
+verify_jwt = true

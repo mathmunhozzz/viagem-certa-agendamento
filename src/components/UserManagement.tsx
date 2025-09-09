@@ -4,8 +4,11 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
-import { Check, X, User, UserCog } from 'lucide-react';
+import { Check, X, User, UserCog, Key } from 'lucide-react';
 
 interface Profile {
   user_id: string;
@@ -22,6 +25,12 @@ interface UserRole {
 export const UserManagement = () => {
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [loading, setLoading] = useState(true);
+  const [resetPasswordDialog, setResetPasswordDialog] = useState<{open: boolean, userId: string, userName: string}>({
+    open: false,
+    userId: '',
+    userName: ''
+  });
+  const [newPassword, setNewPassword] = useState('');
 
   useEffect(() => {
     fetchProfiles();
@@ -99,6 +108,31 @@ export const UserManagement = () => {
     } catch (error) {
       console.error('Erro ao atualizar perfil:', error);
       toast.error('Erro ao atualizar perfil do usuário');
+    }
+  };
+
+  const handleResetPassword = async () => {
+    if (!newPassword || newPassword.length < 6) {
+      toast.error('A senha deve ter pelo menos 6 caracteres');
+      return;
+    }
+
+    try {
+      const { error } = await supabase.functions.invoke('admin-reset-password', {
+        body: { 
+          userId: resetPasswordDialog.userId, 
+          newPassword 
+        }
+      });
+
+      if (error) throw error;
+
+      toast.success('Senha redefinida com sucesso');
+      setResetPasswordDialog({ open: false, userId: '', userName: '' });
+      setNewPassword('');
+    } catch (error) {
+      console.error('Erro ao redefinir senha:', error);
+      toast.error('Erro ao redefinir senha');
     }
   };
 
@@ -218,6 +252,66 @@ export const UserManagement = () => {
                         Aprovar
                       </Button>
                     )}
+
+                    <Dialog 
+                      open={resetPasswordDialog.open && resetPasswordDialog.userId === profile.user_id} 
+                      onOpenChange={(open) => !open && setResetPasswordDialog({ open: false, userId: '', userName: '' })}
+                    >
+                      <DialogTrigger asChild>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="text-blue-600 border-blue-600 hover:bg-blue-50 w-full"
+                          onClick={() => setResetPasswordDialog({ 
+                            open: true, 
+                            userId: profile.user_id, 
+                            userName: profile.name 
+                          })}
+                        >
+                          <Key className="h-4 w-4 mr-1" />
+                          Redefinir Senha
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent>
+                        <DialogHeader>
+                          <DialogTitle>Redefinir Senha</DialogTitle>
+                          <DialogDescription>
+                            Definir nova senha para {resetPasswordDialog.userName}
+                          </DialogDescription>
+                        </DialogHeader>
+                        <div className="space-y-4">
+                          <div className="space-y-2">
+                            <Label htmlFor="new-password">Nova Senha</Label>
+                            <Input
+                              id="new-password"
+                              type="password"
+                              value={newPassword}
+                              onChange={(e) => setNewPassword(e.target.value)}
+                              placeholder="Mínimo 6 caracteres"
+                              minLength={6}
+                            />
+                          </div>
+                          <div className="flex gap-2">
+                            <Button 
+                              onClick={handleResetPassword}
+                              className="flex-1"
+                            >
+                              Redefinir
+                            </Button>
+                            <Button 
+                              variant="outline" 
+                              onClick={() => {
+                                setResetPasswordDialog({ open: false, userId: '', userName: '' });
+                                setNewPassword('');
+                              }}
+                              className="flex-1"
+                            >
+                              Cancelar
+                            </Button>
+                          </div>
+                        </div>
+                      </DialogContent>
+                    </Dialog>
                   </div>
                 </div>
               </div>
