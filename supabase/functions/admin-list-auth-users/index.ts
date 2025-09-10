@@ -6,12 +6,6 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-interface ResetPasswordRequest {
-  userId?: string;
-  userEmail?: string;
-  newPassword: string;
-}
-
 const handler = async (req: Request): Promise<Response> => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
@@ -62,23 +56,6 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    // Parse the request body
-    const { userId, userEmail, newPassword }: ResetPasswordRequest = await req.json();
-
-    if ((!userId && !userEmail) || !newPassword) {
-      return new Response(
-        JSON.stringify({ error: 'Missing userId/userEmail or newPassword' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    if (newPassword.length < 6) {
-      return new Response(
-        JSON.stringify({ error: 'Password must be at least 6 characters' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
     // Create admin client with service role key
     const supabaseAdmin = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
@@ -91,61 +68,37 @@ const handler = async (req: Request): Promise<Response> => {
       }
     );
 
-    let targetUserId = userId;
-    
-    // If email is provided, find the user by email
-    if (userEmail && !userId) {
-      const { data: authUsers, error: listError } = await supabaseAdmin.auth.admin.listUsers();
-      
-      if (listError) {
-        console.log('Failed to list users:', listError);
-        return new Response(
-          JSON.stringify({ error: 'Failed to find user' }),
-          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
-      }
-      
-      const targetUser = authUsers.users.find(u => u.email === userEmail);
-      
-      if (!targetUser) {
-        console.log('User not found with email:', userEmail);
-        return new Response(
-          JSON.stringify({ error: 'User not found' }),
-          { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
-      }
-      
-      targetUserId = targetUser.id;
-    }
+    // List all auth users
+    const { data: authUsers, error: listError } = await supabaseAdmin.auth.admin.listUsers({
+      page: 1,
+      perPage: 1000
+    });
 
-    // Update the user's password
-    const { error: updateError } = await supabaseAdmin.auth.admin.updateUserById(
-      targetUserId!,
-      { password: newPassword }
-    );
-
-    if (updateError) {
-      console.log('Password update failed:', updateError);
+    if (listError) {
+      console.log('Failed to list users:', listError);
       return new Response(
-        JSON.stringify({ error: 'Failed to update password' }),
+        JSON.stringify({ error: 'Failed to list users' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    console.log(`Password successfully reset for user ${targetUserId} (${userEmail || 'ID provided'}) by admin ${user.id}`);
+    // Return users with their email and profile data
+    const usersWithEmails = authUsers.users.map(user => ({
+      id: user.id,
+      email: user.email,
+      created_at: user.created_at,
+      last_sign_in_at: user.last_sign_in_at
+    }));
+
+    console.log(`Listed ${usersWithEmails.length} auth users for admin ${user.id}`);
 
     return new Response(
-      JSON.stringify({ 
-        success: true, 
-        message: `Password updated successfully for ${userEmail || targetUserId}`,
-        userId: targetUserId,
-        userEmail: userEmail 
-      }),
+      JSON.stringify({ users: usersWithEmails }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
 
   } catch (error: any) {
-    console.error('Error in admin-reset-password function:', error);
+    console.error('Error in admin-list-auth-users function:', error);
     return new Response(
       JSON.stringify({ error: error.message }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

@@ -19,7 +19,6 @@ export default function ResetPassword() {
   const [searchParams] = useSearchParams();
 
   useEffect(() => {
-    // Check if we have the required parameters
     const accessToken = searchParams.get('access_token');
     const refreshToken = searchParams.get('refresh_token');
     
@@ -30,7 +29,24 @@ export default function ResetPassword() {
         variant: "destructive"
       });
       navigate('/auth');
+      return;
     }
+
+    // Set the session with the tokens from the URL
+    supabase.auth.setSession({
+      access_token: accessToken,
+      refresh_token: refreshToken
+    }).then(({ error }) => {
+      if (error) {
+        console.error('Erro ao definir sessão:', error);
+        toast({
+          title: "Erro de autenticação",
+          description: "Erro ao processar link de redefinição. Tente novamente.",
+          variant: "destructive"
+        });
+        navigate('/auth');
+      }
+    });
   }, [searchParams, navigate, toast]);
 
   const handleResetPassword = async (e: React.FormEvent) => {

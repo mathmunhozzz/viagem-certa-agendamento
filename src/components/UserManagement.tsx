@@ -16,6 +16,7 @@ interface Profile {
   role: string;
   account_status: string;
   created_at: string;
+  email?: string;
 }
 
 interface UserRole {
@@ -25,10 +26,11 @@ interface UserRole {
 export const UserManagement = () => {
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [loading, setLoading] = useState(true);
-  const [resetPasswordDialog, setResetPasswordDialog] = useState<{open: boolean, userId: string, userName: string}>({
+  const [resetPasswordDialog, setResetPasswordDialog] = useState<{open: boolean, userId: string, userName: string, userEmail: string}>({
     open: false,
     userId: '',
-    userName: ''
+    userName: '',
+    userEmail: ''
   });
   const [newPassword, setNewPassword] = useState('');
 
@@ -38,13 +40,33 @@ export const UserManagement = () => {
 
   const fetchProfiles = async () => {
     try {
-      const { data, error } = await supabase
+      // First fetch profiles
+      const { data: profilesData, error: profilesError } = await supabase
         .from('profiles')
         .select('user_id, name, role, account_status, created_at')
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
-      setProfiles(data || []);
+      if (profilesError) throw profilesError;
+
+      // Then fetch auth users to get emails
+      const { data: authUsersData, error: authError } = await supabase.functions.invoke('admin-list-auth-users');
+      
+      if (authError) {
+        console.log('Could not fetch auth users:', authError);
+        // Continue without emails if auth fetch fails
+        setProfiles(profilesData || []);
+      } else {
+        // Merge profile data with email data
+        const authUsers = authUsersData.users || [];
+        const profilesWithEmails = (profilesData || []).map(profile => {
+          const authUser = authUsers.find((au: any) => au.id === profile.user_id);
+          return {
+            ...profile,
+            email: authUser?.email || 'Email não disponível'
+          };
+        });
+        setProfiles(profilesWithEmails);
+      }
     } catch (error) {
       console.error('Erro ao buscar perfis:', error);
       toast.error('Erro ao carregar usuários');
@@ -118,21 +140,21 @@ export const UserManagement = () => {
     }
 
     try {
-      const { error } = await supabase.functions.invoke('admin-reset-password', {
+      const { data, error } = await supabase.functions.invoke('admin-reset-password', {
         body: { 
-          userId: resetPasswordDialog.userId, 
+          userEmail: resetPasswordDialog.userEmail,
           newPassword 
         }
       });
 
       if (error) throw error;
 
-      toast.success('Senha redefinida com sucesso');
-      setResetPasswordDialog({ open: false, userId: '', userName: '' });
+      toast.success(`Senha redefinida com sucesso para ${resetPasswordDialog.userEmail}`);
+      setResetPasswordDialog({ open: false, userId: '', userName: '', userEmail: '' });
       setNewPassword('');
     } catch (error) {
       console.error('Erro ao redefinir senha:', error);
-      toast.error('Erro ao redefinir senha');
+      toast.error(`Erro ao redefinir senha: ${error.message || 'Erro desconhecido'}`);
     }
   };
 
@@ -182,6 +204,7 @@ export const UserManagement = () => {
                   <User className="h-8 w-8 text-gray-400" />
                   <div>
                     <h3 className="font-medium">{profile.name}</h3>
+                    <p className="text-sm text-gray-500">Email: {profile.email}</p>
                     <p className="text-sm text-gray-500">ID: {profile.user_id}</p>
                     <p className="text-sm text-gray-500">
                       Criado em: {new Date(profile.created_at).toLocaleDateString()}
@@ -255,7 +278,7 @@ export const UserManagement = () => {
 
                     <Dialog 
                       open={resetPasswordDialog.open && resetPasswordDialog.userId === profile.user_id} 
-                      onOpenChange={(open) => !open && setResetPasswordDialog({ open: false, userId: '', userName: '' })}
+                      onOpenChange={(open) => !open && setResetPasswordDialog({ open: false, userId: '', userName: '', userEmail: '' })}
                     >
                       <DialogTrigger asChild>
                         <Button
@@ -265,7 +288,8 @@ export const UserManagement = () => {
                           onClick={() => setResetPasswordDialog({ 
                             open: true, 
                             userId: profile.user_id, 
-                            userName: profile.name 
+                            userName: profile.name,
+                            userEmail: profile.email || ''
                           })}
                         >
                           <Key className="h-4 w-4 mr-1" />
@@ -276,7 +300,7 @@ export const UserManagement = () => {
                         <DialogHeader>
                           <DialogTitle>Redefinir Senha</DialogTitle>
                           <DialogDescription>
-                            Definir nova senha para {resetPasswordDialog.userName}
+                            Definir nova senha para {resetPasswordDialog.userName} ({resetPasswordDialog.userEmail})
                           </DialogDescription>
                         </DialogHeader>
                         <div className="space-y-4">
@@ -301,7 +325,7 @@ export const UserManagement = () => {
                             <Button 
                               variant="outline" 
                               onClick={() => {
-                                setResetPasswordDialog({ open: false, userId: '', userName: '' });
+                                setResetPasswordDialog({ open: false, userId: '', userName: '', userEmail: '' });
                                 setNewPassword('');
                               }}
                               className="flex-1"
