@@ -14,6 +14,27 @@ export type Database = {
   }
   public: {
     Tables: {
+      cities: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       clients: {
         Row: {
           contact: string | null
@@ -176,6 +197,78 @@ export type Database = {
         }
         Relationships: []
       }
+      funcionarios_clientes: {
+        Row: {
+          approval_status: string | null
+          approved_at: string | null
+          approved_by: string | null
+          auth_user_id: string | null
+          city: string | null
+          client_id: string
+          created_at: string
+          email: string | null
+          id: string
+          is_active: boolean
+          name: string
+          notes: string | null
+          phone: string | null
+          position: string | null
+          sector_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          approval_status?: string | null
+          approved_at?: string | null
+          approved_by?: string | null
+          auth_user_id?: string | null
+          city?: string | null
+          client_id: string
+          created_at?: string
+          email?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          notes?: string | null
+          phone?: string | null
+          position?: string | null
+          sector_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          approval_status?: string | null
+          approved_at?: string | null
+          approved_by?: string | null
+          auth_user_id?: string | null
+          city?: string | null
+          client_id?: string
+          created_at?: string
+          email?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          notes?: string | null
+          phone?: string | null
+          position?: string | null
+          sector_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "funcionarios_clientes_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "funcionarios_clientes_sector_id_fkey"
+            columns: ["sector_id"]
+            isOneToOne: false
+            referencedRelation: "sectors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       notification_logs: {
         Row: {
           error_message: string | null
@@ -295,6 +388,47 @@ export type Database = {
         }
         Relationships: []
       }
+      ticket_action_logs: {
+        Row: {
+          action_type: string
+          details: Json | null
+          id: string
+          new_value: string | null
+          old_value: string | null
+          performed_at: string
+          performed_by: string
+          ticket_id: string
+        }
+        Insert: {
+          action_type: string
+          details?: Json | null
+          id?: string
+          new_value?: string | null
+          old_value?: string | null
+          performed_at?: string
+          performed_by: string
+          ticket_id: string
+        }
+        Update: {
+          action_type?: string
+          details?: Json | null
+          id?: string
+          new_value?: string | null
+          old_value?: string | null
+          performed_at?: string
+          performed_by?: string
+          ticket_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ticket_action_logs_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
+            referencedRelation: "tickets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ticket_comments: {
         Row: {
           author_user_id: string
@@ -330,6 +464,7 @@ export type Database = {
       tickets: {
         Row: {
           assigned_to: string | null
+          client_contact_id: string | null
           created_at: string
           created_by: string
           description: string | null
@@ -344,6 +479,7 @@ export type Database = {
         }
         Insert: {
           assigned_to?: string | null
+          client_contact_id?: string | null
           created_at?: string
           created_by: string
           description?: string | null
@@ -358,6 +494,7 @@ export type Database = {
         }
         Update: {
           assigned_to?: string | null
+          client_contact_id?: string | null
           created_at?: string
           created_by?: string
           description?: string | null
@@ -376,6 +513,13 @@ export type Database = {
             columns: ["assigned_to"]
             isOneToOne: false
             referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tickets_client_contact_id_fkey"
+            columns: ["client_contact_id"]
+            isOneToOne: false
+            referencedRelation: "funcionarios_clientes"
             referencedColumns: ["id"]
           },
           {
@@ -651,6 +795,31 @@ export type Database = {
       }
     }
     Functions: {
+      can_view_ticket: {
+        Args: { check_user_id?: string; ticket_uuid: string }
+        Returns: boolean
+      }
+      get_client_municipalities: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          municipality: string
+        }[]
+      }
+      get_clients_public: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          id: string
+          municipality: string
+          name: string
+        }[]
+      }
+      get_ticket_creator_names: {
+        Args: { check_user_id?: string; ticket_ids: string[] }
+        Returns: {
+          creator_name: string
+          ticket_id: string
+        }[]
+      }
       get_user_role: {
         Args: { check_user_id?: string }
         Returns: Database["public"]["Enums"]["app_role"]

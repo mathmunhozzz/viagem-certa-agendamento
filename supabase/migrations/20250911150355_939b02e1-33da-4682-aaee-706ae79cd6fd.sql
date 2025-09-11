@@ -1,0 +1,2 @@
+-- Add unique constraint on trip_reports to prevent duplicate reports per employee per trip
+CREATE UNIQUE INDEX IF NOT EXISTS trip_reports_trip_employee_uniq ON public.trip_reports (trip_id, employee_id);

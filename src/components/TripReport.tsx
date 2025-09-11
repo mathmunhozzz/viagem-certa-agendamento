@@ -3,8 +3,10 @@ import { ptBR } from 'date-fns/locale';
 import { useEffect, useState } from 'react';
 import { useCurrentEmployee } from '@/hooks/useCurrentEmployee';
 import { useCurrentUserDisplayName } from '@/hooks/useCurrentUserDisplayName';
+import { useUserRole } from '@/hooks/useUserRole';
 import { supabase } from '@/integrations/supabase/client';
 import { TripNarrativeDialog } from './TripNarrativeDialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 interface TripReportProps {
   trip: {
@@ -43,18 +45,38 @@ interface TripReportProps {
 export function TripReport({ trip, onClose }: TripReportProps) {
   const { employee } = useCurrentEmployee();
   const { displayName } = useCurrentUserDisplayName();
+  const { hasRole } = useUserRole();
 
   const [narrative, setNarrative] = useState<string | null>(null);
   const [narrativeLoading, setNarrativeLoading] = useState<boolean>(true);
   const [dialogOpen, setDialogOpen] = useState<boolean>(false);
   const [reportType, setReportType] = useState<'narrative' | 'attendance'>('narrative');
+  
+  // Employee selection for admin/manager users
+  const isAdminOrManager = hasRole('admin') || hasRole('manager');
+  const [selectedEmployeeId, setSelectedEmployeeId] = useState<string | null>(null);
+  const [selectedEmployeeName, setSelectedEmployeeName] = useState<string>('');
 
   // ANOTAÇÃO: Armazena o número do formulário em um estado para que ele não mude.
   const [formNumber] = useState(() => String(Math.floor(Math.random() * 90000) + 10000));
 
+  // Set initial selectedEmployeeId when component loads
+  useEffect(() => {
+    if (isAdminOrManager && trip.employees?.length) {
+      // Admin/Manager: default to first employee in the list
+      const firstEmployee = trip.employees[0];
+      setSelectedEmployeeId(firstEmployee.id);
+      setSelectedEmployeeName(firstEmployee.name);
+    } else if (employee?.id) {
+      // Regular employee: use their own ID
+      setSelectedEmployeeId(employee.id);
+      setSelectedEmployeeName(displayName);
+    }
+  }, [isAdminOrManager, trip.employees, employee?.id, displayName]);
+
   useEffect(() => {
     const loadNarrative = async () => {
-      if (!employee?.id) {
+      if (!selectedEmployeeId) {
         setNarrative(null);
         setNarrativeLoading(false);
         return;
@@ -64,7 +86,7 @@ export function TripReport({ trip, onClose }: TripReportProps) {
         .from('trip_reports')
         .select('content')
         .eq('trip_id', trip.id)
-        .eq('employee_id', employee.id);
+        .eq('employee_id', selectedEmployeeId);
 
       if (error) {
         console.error('Erro ao carregar relato da viagem:', error);
@@ -77,7 +99,7 @@ export function TripReport({ trip, onClose }: TripReportProps) {
     };
 
     loadNarrative();
-  }, [employee?.id, trip.id]);
+  }, [selectedEmployeeId, trip.id]);
 
   const handlePrintNarrative = () => {
     setReportType('narrative');
@@ -229,41 +251,69 @@ export function TripReport({ trip, onClose }: TripReportProps) {
 
       {/* Control buttons - hidden in print */}
       <div className="no-print fixed top-4 right-4 flex gap-2 z-10">
-        <button
-          onClick={() => setDialogOpen(true)}
-          className="bg-travel-secondary text-white px-4 py-2 rounded-md hover:opacity-90 transition-colors disabled:opacity-50"
-          title={!employee?.id ? 'Vincule seu usuário a um funcionário para relatar a viagem' : 'Escrever/editar relato da viagem'}
-          disabled={!employee?.id}
-        >
-          Relatar viagem
-        </button>
-        {!narrativeLoading && narrative && (
+        {/* Employee selector for admin/manager */}
+        {isAdminOrManager && trip.employees?.length && (
+          <div className="flex flex-col gap-1">
+            <label className="text-xs text-muted-foreground">Funcionário do relato:</label>
+            <Select
+              value={selectedEmployeeId || ''}
+              onValueChange={(value) => {
+                setSelectedEmployeeId(value);
+                const emp = trip.employees?.find(e => e.id === value);
+                setSelectedEmployeeName(emp?.name || '');
+              }}
+            >
+              <SelectTrigger className="w-48 bg-background">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {trip.employees.map((emp) => (
+                  <SelectItem key={emp.id} value={emp.id}>
+                    {emp.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
+        
+        <div className="flex gap-2">
           <button
-            onClick={handlePrintNarrative}
+            onClick={() => setDialogOpen(true)}
+            className="bg-travel-secondary text-white px-4 py-2 rounded-md hover:opacity-90 transition-colors disabled:opacity-50"
+            title={!selectedEmployeeId ? 'Selecione um funcionário para relatar a viagem' : 'Escrever/editar relato da viagem'}
+            disabled={!selectedEmployeeId}
+          >
+            Relatar viagem
+          </button>
+          {!narrativeLoading && narrative && (
+            <button
+              onClick={handlePrintNarrative}
+              className="bg-primary text-primary-foreground px-4 py-2 rounded-md hover:bg-primary/90 transition-colors"
+            >
+              Imprimir Relato
+            </button>
+          )}
+          <button
+            onClick={handlePrintAttendance}
             className="bg-primary text-primary-foreground px-4 py-2 rounded-md hover:bg-primary/90 transition-colors"
           >
-            Imprimir Relato
+            Imprimir Lista de Presença
           </button>
-        )}
-        <button
-          onClick={handlePrintAttendance}
-          className="bg-primary text-primary-foreground px-4 py-2 rounded-md hover:bg-primary/90 transition-colors"
-        >
-          Imprimir Lista de Presença
-        </button>
-        <button
-          onClick={onClose}
-          className="bg-muted text-muted-foreground px-4 py-2 rounded-md hover:bg-muted/80 transition-colors"
-        >
-          Fechar
-        </button>
+          <button
+            onClick={onClose}
+            className="bg-muted text-muted-foreground px-4 py-2 rounded-md hover:bg-muted/80 transition-colors"
+          >
+            Fechar
+          </button>
+        </div>
       </div>
 
       <TripNarrativeDialog
         open={dialogOpen}
         onOpenChange={setDialogOpen}
         tripId={trip.id}
-        employeeId={employee?.id}
+        employeeId={selectedEmployeeId}
         initialContent={narrative}
         onSaved={(content) => setNarrative(content)}
       />
@@ -327,7 +377,7 @@ export function TripReport({ trip, onClose }: TripReportProps) {
               )}
               <div className="info-line">
                 <span className="info-label">FUNCIONÁRIO:</span>
-                <div className="info-content">{displayName}</div>
+                <div className="info-content">{selectedEmployeeName || displayName}</div>
               </div>
               <div className="info-line">
                 <span className="info-label">DATA:</span>
