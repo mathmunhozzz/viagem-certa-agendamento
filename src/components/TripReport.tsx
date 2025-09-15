@@ -341,41 +341,6 @@ export function TripReport({ trip, onClose }: TripReportProps) {
             </div>
           </div>
 
-          {/* Trip information section */}
-          <div className="mb-8">
-            <h3 className="section-title text-lg">INFORMAÇÕES DA VIAGEM</h3>
-            
-            <div className="space-y-4">
-              <div className="info-line">
-                <span className="info-label">CLIENTE:</span>
-                <div className="info-content">{trip.clients?.name || trip.sector}</div>
-              </div>
-              <div className="info-line">
-                <span className="info-label">CIDADE:</span>
-                <div className="info-content">{trip.clients?.municipality || 'Não informado'}</div>
-              </div>
-              <div className="info-line">
-                <span className="info-label">DESCRIÇÃO:</span>
-                <div className="info-content">{trip.description || trip.title}</div>
-              </div>
-              <div className="info-line">
-                <span className="info-label">FUNCIONÁRIO:</span>
-                <div className="info-content">{selectedEmployeeName || displayName}</div>
-              </div>
-              <div className="info-line">
-                <span className="info-label">DATA:</span>
-                <div className="info-content">{format(new Date(trip.trip_date), "dd/MM/yyyy", { locale: ptBR })}</div>
-              </div>
-              {trip.credit_card && (
-                <div className="info-line">
-                  <span className="info-label">CARTÃO:</span>
-                  <div className="info-content">
-                    {trip.credit_card.name} ({trip.credit_card.brand} •••• {trip.credit_card.last_four_digits})
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
 
           {/* Combined Report Content */}
           <div className="report-content">
