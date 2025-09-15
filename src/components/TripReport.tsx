@@ -50,7 +50,6 @@ export function TripReport({ trip, onClose }: TripReportProps) {
   const [narrative, setNarrative] = useState<string | null>(null);
   const [narrativeLoading, setNarrativeLoading] = useState<boolean>(true);
   const [dialogOpen, setDialogOpen] = useState<boolean>(false);
-  const [reportType, setReportType] = useState<'narrative' | 'attendance'>('narrative');
   
   // Employee selection for admin/manager users
   const isAdminOrManager = hasRole('admin') || hasRole('manager');
@@ -101,13 +100,7 @@ export function TripReport({ trip, onClose }: TripReportProps) {
     loadNarrative();
   }, [selectedEmployeeId, trip.id]);
 
-  const handlePrintNarrative = () => {
-    setReportType('narrative');
-    setTimeout(() => window.print(), 100);
-  };
-
-  const handlePrintAttendance = () => {
-    setReportType('attendance');
+  const handlePrintReport = () => {
     setTimeout(() => window.print(), 100);
   };
 
@@ -288,18 +281,12 @@ export function TripReport({ trip, onClose }: TripReportProps) {
           </button>
           {!narrativeLoading && narrative && (
             <button
-              onClick={handlePrintNarrative}
+              onClick={handlePrintReport}
               className="bg-primary text-primary-foreground px-4 py-2 rounded-md hover:bg-primary/90 transition-colors"
             >
-              Imprimir Relato
+              Imprimir Relatório
             </button>
           )}
-          <button
-            onClick={handlePrintAttendance}
-            className="bg-primary text-primary-foreground px-4 py-2 rounded-md hover:bg-primary/90 transition-colors"
-          >
-            Imprimir Lista de Presença
-          </button>
           <button
             onClick={onClose}
             className="bg-muted text-muted-foreground px-4 py-2 rounded-md hover:bg-muted/80 transition-colors"
@@ -349,7 +336,7 @@ export function TripReport({ trip, onClose }: TripReportProps) {
             
             <div className="border-t-2 border-black pt-4">
               <h2 className="section-title text-lg">
-                {reportType === 'narrative' ? 'RELATÓRIO DE ATENDIMENTO A CLIENTE' : 'LISTA DE PRESENÇA - VIAGEM'}
+                RELATÓRIO DE VIAGEM E LISTA DE PRESENÇA
               </h2>
             </div>
           </div>
@@ -363,18 +350,14 @@ export function TripReport({ trip, onClose }: TripReportProps) {
                 <span className="info-label">CLIENTE:</span>
                 <div className="info-content">{trip.clients?.name || trip.sector}</div>
               </div>
-              {reportType === 'narrative' && (
-                <>
-                  <div className="info-line">
-                    <span className="info-label">CIDADE:</span>
-                    <div className="info-content">{trip.clients?.municipality || 'Não informado'}</div>
-                  </div>
-                  <div className="info-line">
-                    <span className="info-label">DESCRIÇÃO:</span>
-                    <div className="info-content">{trip.description || trip.title}</div>
-                  </div>
-                </>
-              )}
+              <div className="info-line">
+                <span className="info-label">CIDADE:</span>
+                <div className="info-content">{trip.clients?.municipality || 'Não informado'}</div>
+              </div>
+              <div className="info-line">
+                <span className="info-label">DESCRIÇÃO:</span>
+                <div className="info-content">{trip.description || trip.title}</div>
+              </div>
               <div className="info-line">
                 <span className="info-label">FUNCIONÁRIO:</span>
                 <div className="info-content">{selectedEmployeeName || displayName}</div>
@@ -394,31 +377,31 @@ export function TripReport({ trip, onClose }: TripReportProps) {
             </div>
           </div>
 
-          {/* Content based on report type */}
+          {/* Combined Report Content */}
           <div className="report-content">
-            {reportType === 'narrative' && !narrativeLoading && narrative ? (
+            {!narrativeLoading && narrative && (
               <div>
                 <h3 className="section-title">RELATO DA VIAGEM</h3>
                 <div className="narrative-box">{narrative}</div>
               </div>
-            ) : reportType === 'attendance' ? (
-              <div>
-                <h3 className="section-title">LISTA DE PRESENÇA</h3>
-                <div className="attendance-grid">
-                  {/* Headers */}
-                  <div className="attendance-header">NOME COMPLETO</div>
-                  <div className="attendance-header">UNIDADE/SETOR</div>
+            )}
+            
+            <div className="mt-8">
+              <h3 className="section-title">LISTA DE PRESENÇA</h3>
+              <div className="attendance-grid">
+                {/* Headers */}
+                <div className="attendance-header">NOME COMPLETO</div>
+                <div className="attendance-header">UNIDADE/SETOR</div>
 
-                  {/* Lines */}
-                  {Array.from({ length: 12 }, (_, i) => (
-                    <>
-                      <div key={`name-line-${i}`} className="attendance-line"></div>
-                      <div key={`sector-line-${i}`} className="attendance-line"></div>
-                    </>
-                  ))}
-                </div>
+                {/* Lines */}
+                {Array.from({ length: 12 }, (_, i) => (
+                  <>
+                    <div key={`name-line-${i}`} className="attendance-line"></div>
+                    <div key={`sector-line-${i}`} className="attendance-line"></div>
+                  </>
+                ))}
               </div>
-            ) : null}
+            </div>
           </div>
 
           {/* Footer */}
