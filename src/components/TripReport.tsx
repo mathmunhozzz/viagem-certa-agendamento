@@ -189,43 +189,31 @@ export function TripReport({ trip, onClose }: TripReportProps) {
             border-left: 4px solid #3b82f6 !important;
           }
 
-          .info-grid {
-            display: grid !important;
-            grid-template-columns: 1fr 1fr !important;
-            gap: 15px !important;
-            margin-bottom: 20px !important;
-          }
-
           .info-section {
-            background: #f1f5f9 !important;
-            padding: 15px !important;
-            border-radius: 0 !important;
-            border-left: 3px solid #3b82f6 !important;
-          }
-
-          .info-section h3 {
-            font-size: 12pt !important;
-            font-weight: bold !important;
-            color: #1e40af !important;
-            margin-bottom: 8px !important;
-            border-bottom: 1px solid #cbd5e1 !important;
-            padding-bottom: 4px !important;
+            background: #f8fafc !important;
+            padding: 20px !important;
+            margin-bottom: 25px !important;
+            border-left: 4px solid #3b82f6 !important;
           }
 
           .info-item {
             display: flex !important;
             justify-content: space-between !important;
-            margin: 4px 0 !important;
-            font-size: 10pt !important;
+            margin: 8px 0 !important;
+            font-size: 11pt !important;
+            padding: 6px 0 !important;
+            border-bottom: 1px solid #e2e8f0 !important;
           }
 
           .info-label {
             font-weight: bold !important;
-            color: #475569 !important;
+            color: #1e40af !important;
+            min-width: 120px !important;
           }
 
           .info-value {
-            color: #000 !important;
+            color: #374151 !important;
+            text-align: right !important;
           }
 
           .narrative-section {
@@ -286,17 +274,6 @@ export function TripReport({ trip, onClose }: TripReportProps) {
             background: white !important;
           }
 
-          .report-footer {
-            position: fixed !important;
-            bottom: 10mm !important;
-            left: 15mm !important;
-            right: 15mm !important;
-            text-align: center !important;
-            font-size: 9pt !important;
-            color: #64748b !important;
-            border-top: 1px solid #e2e8f0 !important;
-            padding-top: 10px !important;
-          }
 
           .status-badge {
             display: inline-block !important;
@@ -511,64 +488,33 @@ export function TripReport({ trip, onClose }: TripReportProps) {
             <div className="company-tagline">Tel: (24) 3112-6870 | CNPJ: 12.345.678/0001-90</div>
           </div>
 
-          <div className="report-title">RELATÓRIO EXECUTIVO DE VIAGEM</div>
+          <div className="report-title">RELATÓRIO DE VIAGEM</div>
 
-          <div className="info-grid">
-            <div className="info-section">
-              <h3>Dados da Viagem</h3>
-              <div className="info-item">
-                <span className="info-label">Título:</span>
-                <span className="info-value">{trip.title}</span>
-              </div>
-              <div className="info-item">
-                <span className="info-label">Data:</span>
-                <span className="info-value">{format(new Date(trip.trip_date), "dd/MM/yyyy", { locale: ptBR })}</span>
-              </div>
-              <div className="info-item">
-                <span className="info-label">Horário de Saída:</span>
-                <span className="info-value">{trip.departure_time}</span>
-              </div>
-              <div className="info-item">
-                <span className="info-label">Setor:</span>
-                <span className="info-value">{trip.sector}</span>
-              </div>
-              <div className="info-item">
-                <span className="info-label">Status:</span>
-                <span className="status-badge">{trip.status}</span>
-              </div>
+          <div className="info-section">
+            <div className="info-item">
+              <span className="info-label">Data:</span>
+              <span className="info-value">{format(new Date(trip.trip_date), "dd/MM/yyyy", { locale: ptBR })}</span>
             </div>
-
-            <div className="info-section">
-              <h3>Recursos & Responsável</h3>
-              {trip.vehicle && (
-                <>
-                  <div className="info-item">
-                    <span className="info-label">Veículo:</span>
-                    <span className="info-value">{trip.vehicle.brand} {trip.vehicle.model}</span>
-                  </div>
-                  <div className="info-item">
-                    <span className="info-label">Placa:</span>
-                    <span className="info-value">{trip.vehicle.plate}</span>
-                  </div>
-                </>
-              )}
-              {trip.clients && (
-                <>
-                  <div className="info-item">
-                    <span className="info-label">Cliente:</span>
-                    <span className="info-value">{trip.clients.name}</span>
-                  </div>
-                  <div className="info-item">
-                    <span className="info-label">Município:</span>
-                    <span className="info-value">{trip.clients.municipality}</span>
-                  </div>
-                </>
-              )}
-              <div className="info-item">
-                <span className="info-label">Responsável:</span>
-                <span className="info-value">{selectedEmployeeName}</span>
-              </div>
+            <div className="info-item">
+              <span className="info-label">Horário:</span>
+              <span className="info-value">{trip.departure_time}</span>
             </div>
+            <div className="info-item">
+              <span className="info-label">Setor:</span>
+              <span className="info-value">{trip.sector}</span>
+            </div>
+            {trip.clients && (
+              <>
+                <div className="info-item">
+                  <span className="info-label">Cliente:</span>
+                  <span className="info-value">{trip.clients.name}</span>
+                </div>
+                <div className="info-item">
+                  <span className="info-label">Município:</span>
+                  <span className="info-value">{trip.clients.municipality}</span>
+                </div>
+              </>
+            )}
           </div>
 
           <div className="narrative-section">
@@ -578,18 +524,10 @@ export function TripReport({ trip, onClose }: TripReportProps) {
             </div>
           </div>
 
-          <div className="report-footer">
-            <div>Documento gerado em {format(new Date(), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })} | Sistema Opportunity</div>
-          </div>
         </div>
 
         <div className="print-page">
           <div className="page-number">Página 2 de 2</div>
-          
-          <div className="report-header">
-            <div className="company-logo">OPPORTUNITY SISTEMAS</div>
-            <div className="company-tagline">Lista de Presença - Controle de Participação</div>
-          </div>
 
           <div className="report-title">LISTA DE PRESENÇA</div>
 
@@ -620,9 +558,6 @@ export function TripReport({ trip, onClose }: TripReportProps) {
             </table>
           </div>
 
-          <div className="report-footer">
-            <div>Este documento é válido apenas com assinatura do responsável | Sistema Opportunity Sistemas</div>
-          </div>
         </div>
       </div>
 
