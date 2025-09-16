@@ -114,24 +114,12 @@ export function TripReport({ trip, onClose }: TripReportProps) {
             padding: 0 !important;
           }
           
-          body * {
-            visibility: hidden;
-          }
-          
-          .print-content, .print-content * {
-            visibility: visible;
+          .no-print {
+            display: none !important;
           }
           
           .print-content {
-            position: absolute;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-          }
-          
-          .no-print {
-            display: none !important;
+            display: block !important;
           }
           
           @page {
@@ -141,16 +129,13 @@ export function TripReport({ trip, onClose }: TripReportProps) {
 
           .page {
             width: 100%;
-            height: 257mm; /* A4 height minus margins */
             font-family: 'Times New Roman', serif;
             font-size: 11pt;
             line-height: 1.3;
             color: #000;
             background: white;
             page-break-after: always;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
+            page-break-inside: avoid;
           }
           
           .page:last-child {
@@ -160,15 +145,14 @@ export function TripReport({ trip, onClose }: TripReportProps) {
           .header {
             text-align: center;
             border-bottom: 2px solid #000;
-            padding-bottom: 10px;
-            margin-bottom: 20px;
-            flex-shrink: 0;
+            padding-bottom: 8px;
+            margin-bottom: 15px;
           }
 
           .company-name {
             font-size: 16pt;
             font-weight: bold;
-            margin-bottom: 5px;
+            margin-bottom: 3px;
           }
 
           .company-address {
@@ -180,44 +164,42 @@ export function TripReport({ trip, onClose }: TripReportProps) {
             font-size: 14pt;
             font-weight: bold;
             text-align: center;
-            margin: 15px 0;
+            margin: 12px 0;
             text-transform: uppercase;
-            flex-shrink: 0;
           }
 
           .info {
-            margin-bottom: 15px;
-            flex-shrink: 0;
+            margin-bottom: 12px;
           }
 
           .info p {
-            margin: 3px 0;
+            margin: 2px 0;
             font-size: 11pt;
           }
 
           .narrative {
             border: 1px solid #333;
-            padding: 15px;
-            margin: 10px 0;
+            padding: 12px;
+            margin: 8px 0;
             white-space: pre-wrap;
             font-size: 11pt;
             line-height: 1.4;
-            flex: 1;
+            height: 400px;
             overflow: hidden;
           }
 
           .table {
             width: 100%;
             border-collapse: collapse;
-            flex: 1;
+            margin-top: 10px;
           }
 
           .table th,
           .table td {
             border: 1px solid #000;
-            padding: 8px;
+            padding: 6px;
             text-align: left;
-            height: 35px;
+            height: 30px;
           }
 
           .table th {
@@ -230,9 +212,8 @@ export function TripReport({ trip, onClose }: TripReportProps) {
             text-align: center;
             font-size: 9pt;
             border-top: 1px solid #333;
-            padding-top: 8px;
-            margin-top: 15px;
-            flex-shrink: 0;
+            padding-top: 6px;
+            margin-top: 10px;
           }
         }
         
