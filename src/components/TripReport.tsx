@@ -103,113 +103,152 @@ export function TripReport({ trip, onClose }: TripReportProps) {
     <div className="fixed inset-0 bg-white z-50">
       <style>{`
         @media print {
+          * {
+            margin: 0 !important;
+            padding: 0 !important;
+            box-sizing: border-box !important;
+          }
+          
+          body {
+            margin: 0 !important;
+            padding: 0 !important;
+          }
+          
           body * {
             visibility: hidden;
           }
+          
           .print-content, .print-content * {
             visibility: visible;
           }
+          
           .print-content {
             position: absolute;
             left: 0;
             top: 0;
             width: 100%;
+            height: 100%;
           }
+          
           .no-print {
             display: none !important;
           }
           
           @page {
-            margin: 20mm;
+            margin: 15mm;
             size: A4;
           }
 
-          .report-page {
+          .page {
             width: 100%;
+            height: 257mm; /* A4 height minus margins */
             font-family: 'Times New Roman', serif;
-            font-size: 12pt;
-            line-height: 1.5;
+            font-size: 11pt;
+            line-height: 1.3;
             color: #000;
             background: white;
-            margin: 0;
-            padding: 20px 0;
-          }
-
-          .page-break {
             page-break-after: always;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+          }
+          
+          .page:last-child {
+            page-break-after: auto;
           }
 
-          .simple-header {
+          .header {
             text-align: center;
             border-bottom: 2px solid #000;
-            padding-bottom: 15px;
-            margin-bottom: 30px;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+            flex-shrink: 0;
           }
 
           .company-name {
-            font-size: 18pt;
+            font-size: 16pt;
             font-weight: bold;
-            margin: 0 0 5px 0;
+            margin-bottom: 5px;
           }
 
           .company-address {
-            font-size: 10pt;
-            margin: 0;
+            font-size: 9pt;
+            line-height: 1.2;
           }
 
-          .report-title {
-            font-size: 16pt;
+          .title {
+            font-size: 14pt;
             font-weight: bold;
             text-align: center;
-            margin: 30px 0;
+            margin: 15px 0;
             text-transform: uppercase;
+            flex-shrink: 0;
           }
 
-          .employee-info {
-            margin-bottom: 30px;
+          .info {
+            margin-bottom: 15px;
+            flex-shrink: 0;
           }
 
-          .employee-info p {
-            margin: 5px 0;
-            font-size: 12pt;
+          .info p {
+            margin: 3px 0;
+            font-size: 11pt;
           }
 
-          .narrative-section {
-            border: 1px solid #ccc;
-            padding: 20px;
-            margin: 20px 0;
+          .narrative {
+            border: 1px solid #333;
+            padding: 15px;
+            margin: 10px 0;
             white-space: pre-wrap;
+            font-size: 11pt;
+            line-height: 1.4;
+            flex: 1;
+            overflow: hidden;
           }
 
-          .attendance-table {
+          .table {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 30px;
+            flex: 1;
           }
 
-          .attendance-table th,
-          .attendance-table td {
+          .table th,
+          .table td {
             border: 1px solid #000;
-            padding: 10px;
+            padding: 8px;
             text-align: left;
+            height: 35px;
           }
 
-          .attendance-table th {
-            background-color: #f0f0f0;
+          .table th {
+            background-color: #f5f5f5;
             font-weight: bold;
+            font-size: 11pt;
           }
 
-          .signature-line {
-            height: 40px;
-            border-bottom: 1px solid #000;
-          }
-
-          .page-footer {
+          .footer {
             text-align: center;
-            font-size: 10pt;
-            border-top: 1px solid #ccc;
-            padding-top: 10px;
-            margin-top: 30px;
+            font-size: 9pt;
+            border-top: 1px solid #333;
+            padding-top: 8px;
+            margin-top: 15px;
+            flex-shrink: 0;
+          }
+        }
+        
+        @media screen {
+          .print-content {
+            padding: 20px;
+            max-width: 210mm;
+            margin: 0 auto;
+          }
+          
+          .page {
+            border: 1px solid #ddd;
+            margin-bottom: 20px;
+            padding: 20px;
+            background: white;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
           }
         }
       `}</style>
@@ -275,26 +314,26 @@ export function TripReport({ trip, onClose }: TripReportProps) {
         onSaved={(content) => setNarrative(content)}
       />
 
-      {/* Print Content */}
+      {/* Print Content - EXACTLY 2 PAGES */}
       <div className="print-content">
         {/* PAGE 1 - NARRATIVE */}
-        <div className="report-page page-break">
-          <div className="simple-header">
-            <h1 className="company-name">OPPORTUNITY SISTEMAS</h1>
-            <p className="company-address">
+        <div className="page">
+          <div className="header">
+            <div className="company-name">OPPORTUNITY SISTEMAS</div>
+            <div className="company-address">
               Rua Benedito Francisco Vicente da Silva, Nº 17 - Centro - Pinheiral / RJ<br/>
               Tel: (24) 3112-6870 | CNPJ: 12.345.678/0001-90
-            </p>
+            </div>
           </div>
 
-          <h2 className="report-title">Relato da Viagem</h2>
+          <div className="title">Relato da Viagem</div>
 
-          <div className="employee-info">
+          <div className="info">
             <p><strong>Funcionário:</strong> {selectedEmployeeName}</p>
             <p><strong>Data:</strong> {format(new Date(), "dd/MM/yyyy", { locale: ptBR })}</p>
           </div>
 
-          <div className="narrative-section">
+          <div className="narrative">
             {!narrativeLoading && narrative ? (
               narrative
             ) : (
@@ -302,24 +341,24 @@ export function TripReport({ trip, onClose }: TripReportProps) {
             )}
           </div>
 
-          <div className="page-footer">
+          <div className="footer">
             Página 1 de 2
           </div>
         </div>
 
         {/* PAGE 2 - ATTENDANCE LIST */}
-        <div className="report-page">
-          <div className="simple-header">
-            <h1 className="company-name">OPPORTUNITY SISTEMAS</h1>
-            <p className="company-address">
+        <div className="page">
+          <div className="header">
+            <div className="company-name">OPPORTUNITY SISTEMAS</div>
+            <div className="company-address">
               Rua Benedito Francisco Vicente da Silva, Nº 17 - Centro - Pinheiral / RJ<br/>
               Tel: (24) 3112-6870 | CNPJ: 12.345.678/0001-90
-            </p>
+            </div>
           </div>
 
-          <h2 className="report-title">Lista de Presença</h2>
+          <div className="title">Lista de Presença</div>
 
-          <table className="attendance-table">
+          <table className="table">
             <thead>
               <tr>
                 <th style={{ width: '40%' }}>Nome</th>
@@ -327,16 +366,16 @@ export function TripReport({ trip, onClose }: TripReportProps) {
               </tr>
             </thead>
             <tbody>
-              {Array.from({ length: 12 }, (_, i) => (
+              {Array.from({ length: 10 }, (_, i) => (
                 <tr key={i}>
                   <td></td>
-                  <td className="signature-line"></td>
+                  <td></td>
                 </tr>
               ))}
             </tbody>
           </table>
 
-          <div className="page-footer">
+          <div className="footer">
             Página 2 de 2
           </div>
         </div>
