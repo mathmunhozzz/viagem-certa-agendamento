@@ -148,6 +148,11 @@ export function TripReport({ trip, onClose }: TripReportProps) {
             page-break-after: avoid;
           }
 
+          /* Força quebra de página entre as seções */
+          .page-break {
+            page-break-after: always;
+          }
+
           /* Estilos do cabeçalho */
           .report-header {
             page-break-inside: avoid; /* Evita que o cabeçalho quebre entre páginas */
@@ -307,6 +312,56 @@ export function TripReport({ trip, onClose }: TripReportProps) {
 
       {/* ANOTAÇÃO: Classes CSS adicionadas para serem alvos dos estilos de impressão */}
       <div className="print-content">
+        {/* PAGE 1 - NARRATIVE */}
+        <div className="print-page max-w-4xl mx-auto bg-white p-8 min-h-screen text-black page-break">
+          {/* Header */}
+          <div className="report-header">
+            <div className="header-flex">
+              <div className="flex items-center gap-6">
+                <div className="w-16 h-16 flex-shrink-0">
+                  <img src="/lovable-uploads/a031923e-3408-476a-8ad3-0b0de5cc4585.png" alt="Opportunity Sistemas Logo" className="w-full h-full object-contain"/>
+                </div>
+                <div>
+                  <h1 className="text-4xl font-bold">OPPORTUNITY SISTEMAS</h1>
+                  <div className="text-sm space-y-1">
+                    <p>Rua Benedito Francisco Vicente da Silva, Nº 17 - Centro - Pinheiral / RJ</p>
+                    <p>(24) 3112-6870</p>
+                    <p>CNPJ: 12.345.678/0001-90</p>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="form-number-box">
+                <div className="text-xs font-bold mb-1">FORMULÁRIO Nº</div>
+                <div className="text-xl font-bold mb-2">{formNumber}</div>
+                <div className="text-xs">
+                  DATA: {format(new Date(), "dd/MM/yyyy", { locale: ptBR })}
+                </div>
+              </div>
+            </div>
+            
+            <div className="border-t-2 border-black pt-4">
+              <h2 className="section-title text-lg">
+                RELATO DA VIAGEM
+              </h2>
+            </div>
+          </div>
+
+          {/* Narrative Content */}
+          <div className="report-content">
+            {!narrativeLoading && narrative && (
+              <div className="narrative-box">{narrative}</div>
+            )}
+          </div>
+
+          {/* Footer Page 1 */}
+          <div className="report-footer">
+            <p>OPPORTUNITY SISTEMAS - Sistema de Gestão Empresarial</p>
+            <p>Página 1 de 2 - Gerado em {format(new Date(), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}</p>
+          </div>
+        </div>
+
+        {/* PAGE 2 - ATTENDANCE LIST */}
         <div className="print-page max-w-4xl mx-auto bg-white p-8 min-h-screen text-black">
           {/* Header */}
           <div className="report-header">
@@ -336,43 +391,32 @@ export function TripReport({ trip, onClose }: TripReportProps) {
             
             <div className="border-t-2 border-black pt-4">
               <h2 className="section-title text-lg">
-                RELATÓRIO DE VIAGEM E LISTA DE PRESENÇA
+                LISTA DE PRESENÇA
               </h2>
             </div>
           </div>
 
-
-          {/* Combined Report Content */}
+          {/* Attendance List Content */}
           <div className="report-content">
-            {!narrativeLoading && narrative && (
-              <div>
-                <h3 className="section-title">RELATO DA VIAGEM</h3>
-                <div className="narrative-box">{narrative}</div>
-              </div>
-            )}
-            
-            <div className="mt-8">
-              <h3 className="section-title">LISTA DE PRESENÇA</h3>
-              <div className="attendance-grid">
-                {/* Headers */}
-                <div className="attendance-header">NOME COMPLETO</div>
-                <div className="attendance-header">UNIDADE/SETOR</div>
+            <div className="attendance-grid">
+              {/* Headers */}
+              <div className="attendance-header">NOME COMPLETO</div>
+              <div className="attendance-header">UNIDADE/SETOR</div>
 
-                {/* Lines */}
-                {Array.from({ length: 12 }, (_, i) => (
-                  <>
-                    <div key={`name-line-${i}`} className="attendance-line"></div>
-                    <div key={`sector-line-${i}`} className="attendance-line"></div>
-                  </>
-                ))}
-              </div>
+              {/* Lines */}
+              {Array.from({ length: 15 }, (_, i) => (
+                <>
+                  <div key={`name-line-${i}`} className="attendance-line"></div>
+                  <div key={`sector-line-${i}`} className="attendance-line"></div>
+                </>
+              ))}
             </div>
           </div>
 
-          {/* Footer */}
+          {/* Footer Page 2 */}
           <div className="report-footer">
             <p>OPPORTUNITY SISTEMAS - Sistema de Gestão Empresarial</p>
-            <p>Página 1 de 1 - Gerado em {format(new Date(), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}</p>
+            <p>Página 2 de 2 - Gerado em {format(new Date(), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}</p>
           </div>
         </div>
       </div>
