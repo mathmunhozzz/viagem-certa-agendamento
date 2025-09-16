@@ -116,6 +116,7 @@ export function TripReport({ trip, onClose }: TripReportProps) {
             margin: 0 !important;
             padding: 0 !important;
             background: white !important;
+            overflow: hidden !important;
           }
           
           body.print-mode * {
@@ -133,6 +134,7 @@ export function TripReport({ trip, onClose }: TripReportProps) {
             top: 0 !important;
             width: 100% !important;
             height: 100% !important;
+            overflow: hidden !important;
           }
           
           @page {
@@ -142,19 +144,31 @@ export function TripReport({ trip, onClose }: TripReportProps) {
 
           .print-page {
             width: 210mm !important;
-            min-height: 297mm !important;
+            max-height: 267mm !important;
+            height: auto !important;
             font-family: 'Arial', sans-serif !important;
             font-size: 11pt !important;
             line-height: 1.4 !important;
             color: #000 !important;
             background: white !important;
-            page-break-after: always !important;
             padding: 0 !important;
             margin: 0 !important;
+            overflow: hidden !important;
+            page-break-inside: avoid !important;
           }
           
-          .print-page:last-child {
-            page-break-after: auto !important;
+          .print-page.page-one {
+            page-break-after: always !important;
+          }
+          
+          .print-page.page-two {
+            page-break-after: never !important;
+            page-break-before: auto !important;
+          }
+          
+          /* Force exactly 2 pages - hide any additional content */
+          .print-page:nth-child(n+3) {
+            display: none !important;
           }
 
           .report-header {
@@ -478,7 +492,7 @@ export function TripReport({ trip, onClose }: TripReportProps) {
 
       {/* Print-Only Content */}
       <div className="report-print-content">
-        <div className="print-page">
+        <div className="print-page page-one">
           <div className="page-number">Página 1 de 2</div>
           
           <div className="report-header">
@@ -526,7 +540,7 @@ export function TripReport({ trip, onClose }: TripReportProps) {
 
         </div>
 
-        <div className="print-page">
+        <div className="print-page page-two">
           <div className="page-number">Página 2 de 2</div>
 
           <div className="report-title">LISTA DE PRESENÇA</div>
