@@ -56,8 +56,6 @@ export function TripReport({ trip, onClose }: TripReportProps) {
   const [selectedEmployeeId, setSelectedEmployeeId] = useState<string | null>(null);
   const [selectedEmployeeName, setSelectedEmployeeName] = useState<string>('');
 
-  const [formNumber] = useState(() => String(Math.floor(Math.random() * 90000) + 10000));
-
   // Set initial selectedEmployeeId when component loads
   useEffect(() => {
     if (isAdminOrManager && trip.employees?.length) {
@@ -102,7 +100,7 @@ export function TripReport({ trip, onClose }: TripReportProps) {
   };
 
   return (
-    <div className="fixed inset-0 bg-gradient-to-br from-slate-50 to-slate-100 z-50 overflow-auto">
+    <div className="fixed inset-0 bg-white z-50">
       <style>{`
         @media print {
           body * {
@@ -122,243 +120,109 @@ export function TripReport({ trip, onClose }: TripReportProps) {
           }
           
           @page {
-            margin: 15mm;
+            margin: 20mm;
             size: A4;
           }
 
-          .print-page {
-            width: auto !important;
-            max-width: none !important;
-            min-height: 0 !important;
-            height: auto !important;
-            margin: 0 !important;
-            padding: 20mm !important;
-            box-shadow: none !important;
-            background: white !important;
-            color: #1a1a1a !important;
-            font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
-            font-size: 11pt;
-            line-height: 1.4;
-            page-break-after: avoid;
+          .report-page {
+            width: 100%;
+            min-height: 100vh;
+            font-family: 'Times New Roman', serif;
+            font-size: 12pt;
+            line-height: 1.5;
+            color: #000;
+            background: white;
+            margin: 0;
+            padding: 0;
           }
 
           .page-break {
             page-break-after: always;
           }
 
-          /* Modern Corporate Header */
-          .corporate-header {
-            background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
-            margin: -20mm -20mm 25mm -20mm;
-            padding: 20mm 20mm 15mm 20mm;
-            color: white;
-            page-break-inside: avoid;
-          }
-          
-          .header-content {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-          }
-          
-          .company-info {
-            display: flex;
-            align-items: center;
-            gap: 20px;
-          }
-          
-          .logo-container {
-            width: 80px;
-            height: 80px;
-            background: rgba(255, 255, 255, 0.15);
-            border-radius: 12px;
-            padding: 10px;
-            backdrop-filter: blur(10px);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-          }
-          
-          .company-details h1 {
-            font-size: 28pt;
-            font-weight: 700;
-            margin: 0 0 8px 0;
-            letter-spacing: -0.02em;
-            text-shadow: 0 2px 4px rgba(0,0,0,0.1);
-          }
-          
-          .company-details p {
-            font-size: 10pt;
-            margin: 2px 0;
-            opacity: 0.95;
-          }
-          
-          .form-info {
-            background: rgba(255, 255, 255, 0.15);
-            border-radius: 12px;
-            padding: 15px 20px;
+          .simple-header {
             text-align: center;
-            min-width: 160px;
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-          }
-          
-          .form-info .form-label {
-            font-size: 9pt;
-            font-weight: 600;
-            margin-bottom: 5px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-          }
-          
-          .form-info .form-number {
-            font-size: 22pt;
-            font-weight: 800;
-            margin: 8px 0;
-            text-shadow: 0 2px 4px rgba(0,0,0,0.1);
-          }
-          
-          .form-info .form-date {
-            font-size: 9pt;
-            opacity: 0.9;
+            border-bottom: 2px solid #000;
+            padding-bottom: 15px;
+            margin-bottom: 30px;
           }
 
-          /* Section Title */
-          .section-banner {
-            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
-            margin: 0 -20mm 25mm -20mm;
-            padding: 12mm 20mm;
-            border-left: 6px solid #3b82f6;
-          }
-          
-          .section-title {
+          .company-name {
             font-size: 18pt;
-            font-weight: 700;
-            color: #1e40af;
+            font-weight: bold;
+            margin: 0 0 5px 0;
+          }
+
+          .company-address {
+            font-size: 10pt;
             margin: 0;
+          }
+
+          .report-title {
+            font-size: 16pt;
+            font-weight: bold;
             text-align: center;
-            letter-spacing: 0.5px;
+            margin: 30px 0;
             text-transform: uppercase;
           }
 
-          /* Content Areas */
-          .narrative-container {
-            background: #ffffff;
-            border-radius: 8px;
-            padding: 20mm;
-            margin: 0 -20mm;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-            border: 1px solid #e2e8f0;
-            min-height: 300px;
-          }
-          
-          .narrative-content {
-            font-size: 11pt;
-            line-height: 1.6;
-            color: #374151;
-            white-space: pre-wrap;
-            font-family: 'Times New Roman', serif;
+          .employee-info {
+            margin-bottom: 30px;
           }
 
-          .attendance-container {
-            background: #ffffff;
-            border-radius: 8px;
-            padding: 15mm 20mm 20mm 20mm;
-            margin: 0 -20mm;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-            border: 1px solid #e2e8f0;
+          .employee-info p {
+            margin: 5px 0;
+            font-size: 12pt;
           }
-          
+
+          .narrative-section {
+            min-height: 400px;
+            border: 1px solid #ccc;
+            padding: 20px;
+            margin: 20px 0;
+            white-space: pre-wrap;
+          }
+
           .attendance-table {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 10mm;
+            margin-top: 30px;
           }
-          
-          .attendance-table th {
-            background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
-            color: white;
-            padding: 12px 15px;
-            font-size: 11pt;
-            font-weight: 600;
-            text-align: left;
-            border: none;
-          }
-          
-          .attendance-table th:first-child {
-            border-top-left-radius: 6px;
-            border-bottom-left-radius: 6px;
-          }
-          
-          .attendance-table th:last-child {
-            border-top-right-radius: 6px;
-            border-bottom-right-radius: 6px;
-          }
-          
+
+          .attendance-table th,
           .attendance-table td {
-            padding: 15px;
-            border-bottom: 1px solid #e5e7eb;
-            font-size: 10pt;
-          }
-          
-          .attendance-table tr:nth-child(even) td {
-            background: #f9fafb;
-          }
-          
-          .attendance-table tr:hover td {
-            background: #f3f4f6;
+            border: 1px solid #000;
+            padding: 10px;
+            text-align: left;
           }
 
-          /* Footer */
-          .corporate-footer {
-            margin-top: 25mm;
-            padding-top: 10mm;
-            border-top: 2px solid #e2e8f0;
+          .attendance-table th {
+            background-color: #f0f0f0;
+            font-weight: bold;
+          }
+
+          .signature-line {
+            height: 40px;
+            border-bottom: 1px solid #000;
+          }
+
+          .page-footer {
+            position: fixed;
+            bottom: 0;
+            width: 100%;
             text-align: center;
+            font-size: 10pt;
+            border-top: 1px solid #ccc;
+            padding-top: 10px;
           }
-          
-          .footer-content {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            font-size: 9pt;
-            color: #6b7280;
-          }
-          
-          .footer-brand {
-            font-weight: 600;
-            color: #374151;
-          }
-          
-          .footer-page {
-            font-style: italic;
-          }
-        }
-
-        /* Screen styles for better preview */
-        .screen-header {
-          background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
-          color: white;
-          padding: 2rem;
-          border-radius: 12px;
-          margin-bottom: 2rem;
-          box-shadow: 0 10px 25px -5px rgba(59, 130, 246, 0.3);
-        }
-        
-        .screen-content {
-          background: white;
-          border-radius: 12px;
-          padding: 2rem;
-          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-          border: 1px solid #e2e8f0;
         }
       `}</style>
 
       {/* Control Panel */}
-      <div className="no-print fixed top-6 right-6 flex gap-3 z-10">
+      <div className="no-print fixed top-4 right-4 flex gap-2 z-10">
         {isAdminOrManager && trip.employees?.length && (
-          <div className="bg-white/95 backdrop-blur-sm rounded-lg p-4 shadow-lg border border-white/20">
-            <label className="block text-sm font-medium text-gray-700 mb-2">Funcionário do relato:</label>
+          <div className="bg-white rounded-lg p-3 shadow-lg border">
+            <label className="block text-sm font-medium mb-2">Funcionário:</label>
             <Select
               value={selectedEmployeeId || ''}
               onValueChange={(value) => {
@@ -367,7 +231,7 @@ export function TripReport({ trip, onClose }: TripReportProps) {
                 setSelectedEmployeeName(emp?.name || '');
               }}
             >
-              <SelectTrigger className="w-56 bg-white">
+              <SelectTrigger className="w-48">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -381,30 +245,27 @@ export function TripReport({ trip, onClose }: TripReportProps) {
           </div>
         )}
         
-        <div className="flex gap-3">
+        <div className="flex gap-2">
           <button
             onClick={() => setDialogOpen(true)}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium shadow-lg transition-all duration-200 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
-            title={!selectedEmployeeId ? 'Selecione um funcionário para relatar a viagem' : 'Escrever/editar relato da viagem'}
+            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded"
             disabled={!selectedEmployeeId}
           >
-            ✏️ Relatar viagem
+            Editar Relato
           </button>
           
-          {!narrativeLoading && narrative && (
-            <button
-              onClick={handlePrintReport}
-              className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-medium shadow-lg transition-all duration-200 transform hover:scale-105"
-            >
-              🖨️ Imprimir Relatório
-            </button>
-          )}
+          <button
+            onClick={handlePrintReport}
+            className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded"
+          >
+            Imprimir
+          </button>
           
           <button
             onClick={onClose}
-            className="bg-gray-600 hover:bg-gray-700 text-white px-6 py-3 rounded-lg font-medium shadow-lg transition-all duration-200 transform hover:scale-105"
+            className="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded"
           >
-            ✕ Fechar
+            Fechar
           </button>
         </div>
       </div>
@@ -421,155 +282,66 @@ export function TripReport({ trip, onClose }: TripReportProps) {
       {/* Print Content */}
       <div className="print-content">
         {/* PAGE 1 - NARRATIVE */}
-        <div className="print-page max-w-5xl mx-auto bg-white min-h-screen page-break">
-          {/* Corporate Header */}
-          <div className="corporate-header screen-header">
-            <div className="header-content">
-              <div className="company-info">
-                <div className="logo-container">
-                  <img 
-                    src="/lovable-uploads/a031923e-3408-476a-8ad3-0b0de5cc4585.png" 
-                    alt="Opportunity Sistemas Logo" 
-                    className="w-full h-full object-contain filter brightness-0 invert"
-                  />
-                </div>
-                <div className="company-details">
-                  <h1>OPPORTUNITY SISTEMAS</h1>
-                  <p>Rua Benedito Francisco Vicente da Silva, Nº 17 - Centro - Pinheiral / RJ</p>
-                  <p>📞 (24) 3112-6870 | CNPJ: 12.345.678/0001-90</p>
-                  <p>🌐 www.opportunitysistemas.com.br</p>
-                </div>
-              </div>
-              
-              <div className="form-info">
-                <div className="form-label">Formulário Nº</div>
-                <div className="form-number">{formNumber}</div>
-                <div className="form-date">
-                  📅 {format(new Date(), "dd/MM/yyyy", { locale: ptBR })}
-                </div>
-              </div>
-            </div>
+        <div className="report-page page-break">
+          <div className="simple-header">
+            <h1 className="company-name">OPPORTUNITY SISTEMAS</h1>
+            <p className="company-address">
+              Rua Benedito Francisco Vicente da Silva, Nº 17 - Centro - Pinheiral / RJ<br/>
+              Tel: (24) 3112-6870 | CNPJ: 12.345.678/0001-90
+            </p>
           </div>
 
-          {/* Section Banner */}
-          <div className="section-banner">
-            <h2 className="section-title">📝 Relato da Viagem</h2>
+          <h2 className="report-title">Relato da Viagem</h2>
+
+          <div className="employee-info">
+            <p><strong>Funcionário:</strong> {selectedEmployeeName}</p>
+            <p><strong>Data:</strong> {format(new Date(), "dd/MM/yyyy", { locale: ptBR })}</p>
           </div>
 
-          {/* Trip Information */}
-          <div className="screen-content mb-6">
-            <div className="grid grid-cols-2 gap-6 mb-6 text-sm">
-              <div>
-                <span className="font-semibold text-gray-600">Título:</span>
-                <p className="text-gray-800 mt-1">{trip.title}</p>
-              </div>
-              <div>
-                <span className="font-semibold text-gray-600">Data da Viagem:</span>
-                <p className="text-gray-800 mt-1">
-                  {format(new Date(trip.trip_date), "dd/MM/yyyy", { locale: ptBR })}
-                </p>
-              </div>
-              <div>
-                <span className="font-semibold text-gray-600">Funcionário:</span>
-                <p className="text-gray-800 mt-1">{selectedEmployeeName}</p>
-              </div>
-              <div>
-                <span className="font-semibold text-gray-600">Setor:</span>
-                <p className="text-gray-800 mt-1">{trip.sector}</p>
-              </div>
-            </div>
-          </div>
-
-          {/* Narrative Content */}
-          <div className="narrative-container screen-content">
+          <div className="narrative-section">
             {!narrativeLoading && narrative ? (
-              <div className="narrative-content">{narrative}</div>
+              narrative
             ) : (
-              <div className="narrative-content text-gray-400 italic">
-                Nenhum relato foi fornecido para esta viagem...
-              </div>
+              "Nenhum relato foi fornecido para esta viagem."
             )}
           </div>
 
-          {/* Footer */}
-          <div className="corporate-footer">
-            <div className="footer-content">
-              <div className="footer-brand">OPPORTUNITY SISTEMAS - Sistema de Gestão Empresarial</div>
-              <div className="footer-page">
-                Página 1 de 2 | Gerado em {format(new Date(), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
-              </div>
-            </div>
+          <div className="page-footer">
+            Página 1 de 2
           </div>
         </div>
 
         {/* PAGE 2 - ATTENDANCE LIST */}
-        <div className="print-page max-w-5xl mx-auto bg-white min-h-screen">
-          {/* Corporate Header */}
-          <div className="corporate-header screen-header">
-            <div className="header-content">
-              <div className="company-info">
-                <div className="logo-container">
-                  <img 
-                    src="/lovable-uploads/a031923e-3408-476a-8ad3-0b0de5cc4585.png" 
-                    alt="Opportunity Sistemas Logo" 
-                    className="w-full h-full object-contain filter brightness-0 invert"
-                  />
-                </div>
-                <div className="company-details">
-                  <h1>OPPORTUNITY SISTEMAS</h1>
-                  <p>Rua Benedito Francisco Vicente da Silva, Nº 17 - Centro - Pinheiral / RJ</p>
-                  <p>📞 (24) 3112-6870 | CNPJ: 12.345.678/0001-90</p>
-                  <p>🌐 www.opportunitysistemas.com.br</p>
-                </div>
-              </div>
-              
-              <div className="form-info">
-                <div className="form-label">Formulário Nº</div>
-                <div className="form-number">{formNumber}</div>
-                <div className="form-date">
-                  📅 {format(new Date(), "dd/MM/yyyy", { locale: ptBR })}
-                </div>
-              </div>
-            </div>
+        <div className="report-page">
+          <div className="simple-header">
+            <h1 className="company-name">OPPORTUNITY SISTEMAS</h1>
+            <p className="company-address">
+              Rua Benedito Francisco Vicente da Silva, Nº 17 - Centro - Pinheiral / RJ<br/>
+              Tel: (24) 3112-6870 | CNPJ: 12.345.678/0001-90
+            </p>
           </div>
 
-          {/* Section Banner */}
-          <div className="section-banner">
-            <h2 className="section-title">📋 Lista de Presença</h2>
-          </div>
+          <h2 className="report-title">Lista de Presença</h2>
 
-          {/* Attendance Table */}
-          <div className="attendance-container screen-content">
-            <div className="text-sm text-gray-600 mb-4">
-              <strong>Instrução:</strong> Todos os participantes da viagem devem assinar abaixo para confirmação de presença.
-            </div>
-            
-            <table className="attendance-table">
-              <thead>
-                <tr>
-                  <th style={{width: '60%'}}>📝 Nome Completo & Assinatura</th>
-                  <th style={{width: '40%'}}>🏢 Unidade / Setor</th>
+          <table className="attendance-table">
+            <thead>
+              <tr>
+                <th style={{ width: '40%' }}>Nome</th>
+                <th style={{ width: '60%' }}>Assinatura</th>
+              </tr>
+            </thead>
+            <tbody>
+              {Array.from({ length: 15 }, (_, i) => (
+                <tr key={i}>
+                  <td></td>
+                  <td className="signature-line"></td>
                 </tr>
-              </thead>
-              <tbody>
-                {Array.from({ length: 20 }, (_, i) => (
-                  <tr key={i}>
-                    <td style={{height: '35px'}}></td>
-                    <td></td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+              ))}
+            </tbody>
+          </table>
 
-          {/* Footer */}
-          <div className="corporate-footer">
-            <div className="footer-content">
-              <div className="footer-brand">OPPORTUNITY SISTEMAS - Sistema de Gestão Empresarial</div>
-              <div className="footer-page">
-                Página 2 de 2 | Gerado em {format(new Date(), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
-              </div>
-            </div>
+          <div className="page-footer">
+            Página 2 de 2
           </div>
         </div>
       </div>
