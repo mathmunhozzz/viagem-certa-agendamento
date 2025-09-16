@@ -118,10 +118,11 @@ export function TripReport({ trip, onClose }: TripReportProps) {
           }
           
           body.print-mode .report-print-content {
-            position: static !important;
+            position: absolute !important;
+            left: 0 !important;
+            top: 0 !important;
             width: 100% !important;
-            height: auto !important;
-            margin: 0 auto !important;
+            height: 100% !important;
           }
           
           @page {
@@ -290,7 +291,7 @@ export function TripReport({ trip, onClose }: TripReportProps) {
 
             <div className="mb-6">
               <h3 className="text-lg font-bold text-center mb-3 underline">RELATO DETALHADO</h3>
-              <div className="border-2 border-black p-4 min-h-[120px] bg-gray-50">
+              <div className="border-2 border-black p-4 min-h-32 bg-gray-50">
                 {narrative || 'Nenhum relato foi registrado para esta viagem.'}
               </div>
             </div>
