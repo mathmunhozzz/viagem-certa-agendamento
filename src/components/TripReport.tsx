@@ -103,117 +103,103 @@ export function TripReport({ trip, onClose }: TripReportProps) {
     <div className="fixed inset-0 bg-white z-50">
       <style>{`
         @media print {
-          * {
-            margin: 0 !important;
-            padding: 0 !important;
-            box-sizing: border-box !important;
-          }
-          
-          body {
-            margin: 0 !important;
-            padding: 0 !important;
-          }
-          
-          .no-print {
-            display: none !important;
-          }
-          
-          .print-content {
-            display: block !important;
-          }
+          .no-print { display: none !important; }
           
           @page {
-            margin: 15mm;
+            margin: 20mm;
             size: A4;
           }
-
+          
           .page {
-            width: 100%;
             font-family: 'Times New Roman', serif;
-            font-size: 11pt;
-            line-height: 1.3;
+            font-size: 12pt;
+            line-height: 1.4;
             color: #000;
             background: white;
-            page-break-after: always;
-            page-break-inside: avoid;
           }
           
-          .page:last-child {
+          .page-1 {
+            page-break-after: always;
+            max-height: 250mm;
+            overflow: hidden;
+          }
+          
+          .page-2 {
             page-break-after: auto;
           }
-
+          
           .header {
             text-align: center;
             border-bottom: 2px solid #000;
-            padding-bottom: 8px;
-            margin-bottom: 15px;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
           }
-
+          
           .company-name {
             font-size: 16pt;
             font-weight: bold;
-            margin-bottom: 3px;
+            margin-bottom: 5px;
           }
-
+          
           .company-address {
-            font-size: 9pt;
+            font-size: 10pt;
             line-height: 1.2;
           }
-
+          
           .title {
             font-size: 14pt;
             font-weight: bold;
             text-align: center;
-            margin: 12px 0;
+            margin: 15px 0;
             text-transform: uppercase;
           }
-
+          
           .info {
-            margin-bottom: 12px;
+            margin-bottom: 15px;
           }
-
+          
           .info p {
-            margin: 2px 0;
-            font-size: 11pt;
+            margin: 3px 0;
+            font-size: 12pt;
           }
-
+          
           .narrative {
             border: 1px solid #333;
-            padding: 12px;
-            margin: 8px 0;
+            padding: 15px;
+            margin: 10px 0 20px 0;
             white-space: pre-wrap;
             font-size: 11pt;
             line-height: 1.4;
-            height: 400px;
+            max-height: 150mm;
             overflow: hidden;
           }
-
+          
           .table {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 10px;
+            margin-top: 15px;
           }
-
+          
           .table th,
           .table td {
             border: 1px solid #000;
-            padding: 6px;
+            padding: 8px;
             text-align: left;
-            height: 30px;
+            height: 35px;
           }
-
+          
           .table th {
             background-color: #f5f5f5;
             font-weight: bold;
-            font-size: 11pt;
+            font-size: 12pt;
           }
-
+          
           .footer {
             text-align: center;
-            font-size: 9pt;
+            font-size: 10pt;
             border-top: 1px solid #333;
-            padding-top: 6px;
-            margin-top: 10px;
+            padding-top: 10px;
+            margin-top: 20px;
           }
         }
         
@@ -297,8 +283,8 @@ export function TripReport({ trip, onClose }: TripReportProps) {
 
       {/* Print Content - EXACTLY 2 PAGES */}
       <div className="print-content">
-        {/* PAGE 1 - NARRATIVE */}
-        <div className="page">
+        {/* PAGE 1 - NARRATIVE ONLY */}
+        <div className="page page-1">
           <div className="header">
             <div className="company-name">OPPORTUNITY SISTEMAS</div>
             <div className="company-address">
@@ -327,8 +313,8 @@ export function TripReport({ trip, onClose }: TripReportProps) {
           </div>
         </div>
 
-        {/* PAGE 2 - ATTENDANCE LIST */}
-        <div className="page">
+        {/* PAGE 2 - SIGNATURES ONLY */}
+        <div className="page page-2">
           <div className="header">
             <div className="company-name">OPPORTUNITY SISTEMAS</div>
             <div className="company-address">
@@ -347,10 +333,10 @@ export function TripReport({ trip, onClose }: TripReportProps) {
               </tr>
             </thead>
             <tbody>
-              {Array.from({ length: 10 }, (_, i) => (
+              {Array.from({ length: 15 }, (_, i) => (
                 <tr key={i}>
-                  <td></td>
-                  <td></td>
+                  <td>&nbsp;</td>
+                  <td>&nbsp;</td>
                 </tr>
               ))}
             </tbody>
