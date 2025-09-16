@@ -126,14 +126,13 @@ export function TripReport({ trip, onClose }: TripReportProps) {
 
           .report-page {
             width: 100%;
-            min-height: 100vh;
             font-family: 'Times New Roman', serif;
             font-size: 12pt;
             line-height: 1.5;
             color: #000;
             background: white;
             margin: 0;
-            padding: 0;
+            padding: 20px 0;
           }
 
           .page-break {
@@ -176,7 +175,6 @@ export function TripReport({ trip, onClose }: TripReportProps) {
           }
 
           .narrative-section {
-            min-height: 400px;
             border: 1px solid #ccc;
             padding: 20px;
             margin: 20px 0;
@@ -207,13 +205,11 @@ export function TripReport({ trip, onClose }: TripReportProps) {
           }
 
           .page-footer {
-            position: fixed;
-            bottom: 0;
-            width: 100%;
             text-align: center;
             font-size: 10pt;
             border-top: 1px solid #ccc;
             padding-top: 10px;
+            margin-top: 30px;
           }
         }
       `}</style>
@@ -331,7 +327,7 @@ export function TripReport({ trip, onClose }: TripReportProps) {
               </tr>
             </thead>
             <tbody>
-              {Array.from({ length: 15 }, (_, i) => (
+              {Array.from({ length: 12 }, (_, i) => (
                 <tr key={i}>
                   <td></td>
                   <td className="signature-line"></td>
