@@ -37,36 +37,113 @@ export function EmployeeTripView() {
   const [narrativeInitialContent, setNarrativeInitialContent] = useState<string | null>(null);
   const [narrativeLoading, setNarrativeLoading] = useState<Record<string, boolean>>({});
 
+  // Função para sanitizar nome do arquivo
+  const sanitizeFileName = (fileName: string): string => {
+    return fileName
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '') // Remove acentos
+      .replace(/[^a-zA-Z0-9._-]/g, '_') // Remove caracteres especiais
+      .replace(/_{2,}/g, '_') // Remove underscores consecutivos
+      .replace(/^_+|_+$/g, '') // Remove underscores do início e fim
+      .toLowerCase();
+  };
+
   const handleUpload = async (tripId: string, files: FileList | null) => {
     if (!files || files.length === 0) return;
+    
     if (!user || !employee) {
       toast({ title: "Sessão inválida", description: "Faça login novamente.", variant: "destructive" });
       return;
     }
+
+    // Validação de arquivos
+    const maxSize = 20 * 1024 * 1024; // 20MB
+    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'application/pdf'];
+    
+    for (const file of Array.from(files)) {
+      if (file.size > maxSize) {
+        toast({ title: "Arquivo muito grande", description: `${file.name} excede o limite de 20MB.`, variant: "destructive" });
+        return;
+      }
+      
+      if (!allowedTypes.includes(file.type)) {
+        toast({ title: "Tipo não permitido", description: `${file.name} não é um tipo de arquivo permitido (JPG, PNG, WebP, PDF).`, variant: "destructive" });
+        return;
+      }
+    }
+
     setUploading((prev) => ({ ...prev, [tripId]: true }));
+    
     try {
       for (const file of Array.from(files)) {
-        const safeName = file.name.replace(/\s+/g, "_");
-        const path = `${user.id}/${tripId}/${Date.now()}-${safeName}`;
-        const { error: uploadError } = await supabase.storage.from("trip-attachments").upload(path, file, {
-          contentType: file.type,
-          upsert: false,
+        // Sanitizar nome do arquivo
+        const originalName = file.name;
+        const fileExtension = originalName.split('.').pop() || '';
+        const nameWithoutExt = originalName.replace(`.${fileExtension}`, '');
+        const sanitizedName = sanitizeFileName(nameWithoutExt);
+        const finalFileName = `${sanitizedName}.${fileExtension.toLowerCase()}`;
+        
+        // Criar caminho único
+        const timestamp = Date.now();
+        const randomId = Math.random().toString(36).substring(2, 8);
+        const path = `${user.id}/${tripId}/${timestamp}_${randomId}_${finalFileName}`;
+        
+        console.log('Uploading file:', {
+          originalName,
+          finalFileName,
+          path,
+          fileType: file.type,
+          fileSize: file.size
         });
-        if (uploadError) throw uploadError;
-        const { error: insertError } = await supabase.from("trip_attachments").insert({
-          trip_id: tripId,
-          employee_id: employee.id,
-          file_name: file.name,
-          file_path: path,
-          file_type: file.type || "application/octet-stream",
-          file_size: file.size,
-          uploaded_by: user.id,
-        });
-        if (insertError) throw insertError;
+
+        // Upload para o storage
+        const { error: uploadError } = await supabase.storage
+          .from("trip-attachments")
+          .upload(path, file, {
+            contentType: file.type,
+            upsert: false,
+          });
+        
+        if (uploadError) {
+          console.error('Storage upload error:', uploadError);
+          throw new Error(`Erro no upload: ${uploadError.message}`);
+        }
+
+        // Inserir registro na tabela
+        const { error: insertError } = await supabase
+          .from("trip_attachments")
+          .insert({
+            trip_id: tripId,
+            employee_id: employee.id,
+            file_name: originalName,
+            file_path: path,
+            file_type: file.type || "application/octet-stream",
+            file_size: file.size,
+            uploaded_by: user.id,
+          });
+        
+        if (insertError) {
+          console.error('Database insert error:', insertError);
+          // Tentar limpar o arquivo do storage se inserção falhar
+          await supabase.storage.from("trip-attachments").remove([path]);
+          throw new Error(`Erro no banco de dados: ${insertError.message}`);
+        }
+        
+        console.log('File uploaded successfully:', finalFileName);
       }
-      toast({ title: "Anexo enviado", description: "Seus arquivos foram anexados à viagem." });
+      
+      toast({ 
+        title: "Anexos enviados", 
+        description: `${files.length} arquivo(s) anexado(s) com sucesso à viagem.` 
+      });
+      
     } catch (err: any) {
-      toast({ title: "Erro ao anexar", description: err?.message || "Tente novamente.", variant: "destructive" });
+      console.error('Upload error:', err);
+      toast({ 
+        title: "Erro ao anexar arquivo", 
+        description: err?.message || "Erro desconhecido. Tente novamente.", 
+        variant: "destructive" 
+      });
     } finally {
       setUploading((prev) => ({ ...prev, [tripId]: false }));
       const input = document.getElementById(`file-${tripId}`) as HTMLInputElement | null;
