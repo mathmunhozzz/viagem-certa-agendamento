@@ -25,6 +25,7 @@ import { ClientForm } from '@/components/ClientForm';
 import { ClientList } from '@/components/ClientList';
 import { EmployeeTripView } from '@/components/EmployeeTripView';
 import { EmployeeWeekCalendar } from '@/components/EmployeeWeekCalendar';
+import WeeklyTeamCalendar from '@/components/WeeklyTeamCalendar';
 import { AbsenceForm } from '@/components/AbsenceForm';
 import { AbsenceList } from '@/components/AbsenceList';
 import { CreditCardForm } from '@/components/CreditCardForm';
@@ -163,6 +164,13 @@ const Index = () => {
                   </Badge>
                 )}
               </TabsTrigger>
+              <TabsTrigger
+                value="team-calendar"
+                className="data-[state=active]:bg-travel-primary data-[state=active]:text-white font-semibold p-2 md:p-3 text-center min-h-[2.5rem]"
+              >
+                <span className="block md:hidden">👥</span>
+                <span className="hidden md:block">👥 Agenda da Equipe</span>
+              </TabsTrigger>
               {(hasRole('admin') || hasRole('manager')) && (
                 <TabsTrigger
                   value="trips-list"
@@ -272,6 +280,12 @@ const Index = () => {
                   />
                 </div>
               )}
+            </div>
+          </TabsContent>
+
+          <TabsContent value="team-calendar" className="space-y-6">
+            <div className="max-w-7xl mx-auto">
+              <WeeklyTeamCalendar />
             </div>
           </TabsContent>
 
