@@ -264,21 +264,23 @@ const Index = () => {
               {!hasRole('admin') && (
                 <AbsenceForm onAbsenceCreated={() => setAbsenceRefreshKey(prev => prev + 1)} />
               )}
-              <AbsenceList 
-                refreshTrigger={absenceRefreshKey} 
-                showAllAbsences={false}
-                hideTitle={hasRole('admin')}
-                customTitle={hasRole('admin') ? "Ausências Solicitadas/Informadas" : undefined}
-              />
+              
+              {/* Para usuários normais, mostrar apenas suas ausências */}
+              {!hasRole('admin') && (
+                <AbsenceList 
+                  refreshTrigger={absenceRefreshKey} 
+                  showAllAbsences={false}
+                />
+              )}
+              
+              {/* Para admins, mostrar todas as ausências em um só lugar */}
               {hasRole('admin') && (
-                <div className="mt-8">
-                  <h3 className="text-lg font-semibold mb-4 text-center">Todas as Ausências (Administração)</h3>
-                  <AbsenceList 
-                    refreshTrigger={absenceRefreshKey} 
-                    showAllAbsences={true}
-                    onStatusUpdated={refetchPendingCount}
-                  />
-                </div>
+                <AbsenceList 
+                  refreshTrigger={absenceRefreshKey} 
+                  showAllAbsences={true}
+                  onStatusUpdated={refetchPendingCount}
+                  customTitle="Gerenciar Ausências"
+                />
               )}
             </div>
           </TabsContent>

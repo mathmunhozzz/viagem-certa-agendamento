@@ -68,8 +68,8 @@ export function AbsenceList({
         .select('*')
         .order('created_at', { ascending: false });
 
-      // Se não for para mostrar todos (showAllAbsences=false), filtrar por funcionário
-      if (!showAllAbsences && employee?.id) {
+      // Se não for para mostrar todos E não for admin, filtrar por funcionário específico
+      if (!showAllAbsences && !isAdmin && employee?.id) {
         query = query.eq('employee_id', employee.id);
       }
 
@@ -77,8 +77,8 @@ export function AbsenceList({
 
       if (error) throw error;
 
-      // Se for para mostrar todas as ausências, buscar dados dos funcionários
-      if (showAllAbsences && data) {
+      // Sempre buscar dados dos funcionários quando necessário
+      if (data && data.length > 0) {
         const employeeIds = [...new Set(data.map(absence => absence.employee_id))];
         const { data: employees } = await supabase
           .from('employees')
@@ -188,12 +188,17 @@ export function AbsenceList({
   };
 
   const getEmployeeName = (absence: Absence) => {
-    if (showAllAbsences && absence.employees) {
+    // Sempre priorizar o nome do employee vinculado à ausência
+    if (absence.employees?.name) {
       return absence.employees.name;
     }
-    if (!showAllAbsences && employee) {
+    
+    // Fallback: se não tiver dados do employee mas tiver o employee atual
+    if (!showAllAbsences && employee?.name) {
       return employee.name;
     }
+    
+    // Último recurso
     return 'Funcionário não identificado';
   };
 
