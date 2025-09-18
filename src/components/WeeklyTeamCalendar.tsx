@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { format, startOfWeek, endOfWeek, eachDayOfInterval, addWeeks, subWeeks, isSameDay } from 'date-fns';
+import { format, startOfWeek, endOfWeek, eachDayOfInterval, addWeeks, subWeeks, isSameDay, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -93,7 +93,11 @@ export default function WeeklyTeamCalendar() {
   }, [currentWeek]);
 
   const getTripsForDate = (date: Date) => {
-    return trips.filter(trip => isSameDay(new Date(trip.trip_date), date));
+    return trips.filter(trip => {
+      const tripDate = parseISO(trip.trip_date);
+      console.log(`Comparando viagem "${trip.title}": tripDate=${format(tripDate, 'yyyy-MM-dd')} com date=${format(date, 'yyyy-MM-dd')}`);
+      return isSameDay(tripDate, date);
+    });
   };
 
   const navigateWeek = (direction: 'prev' | 'next') => {
