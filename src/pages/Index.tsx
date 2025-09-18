@@ -201,7 +201,7 @@ const Index = () => {
               {(hasRole('admin') || hasRole('manager')) && (
                 <TabsTrigger
                   value="sectors"
-                  className="data-[state=active]:bg-travel-secondary data-[state=active]:text-white font-semibold p-2 md:p-3 text-center min-h-[2.5rem]"
+                  className="hidden data-[state=active]:bg-travel-secondary data-[state=active]:text-white font-semibold p-2 md:p-3 text-center min-h-[2.5rem]"
                 >
                   <span className="block md:hidden">🏢</span>
                   <span className="hidden md:block">🏢 Setores</span>
