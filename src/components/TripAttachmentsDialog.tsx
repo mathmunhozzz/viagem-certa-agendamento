@@ -7,7 +7,8 @@ import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { Loader2, Paperclip, FileText, Image as ImageIcon, Download, Eye, AlertCircle, Upload, Plus } from 'lucide-react';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import { Loader2, Paperclip, FileText, Image as ImageIcon, Download, Eye, AlertCircle, Upload, Plus, Trash2 } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import { useUserRole } from '@/hooks/useUserRole';
 import { useCurrentEmployee } from '@/hooks/useCurrentEmployee';
@@ -26,6 +27,7 @@ interface Attachment {
   file_path: string;
   file_type: string;
   file_size: number;
+  uploaded_by: string;
   created_at: string;
 }
 
@@ -41,10 +43,35 @@ function formatBytes(bytes: number) {
 
 export function TripAttachmentsDialog({ tripId, open, onClose }: TripAttachmentsDialogProps) {
   const { toast } = useToast();
-  const { isAdmin } = useUserRole();
+  const { isAdmin, isManager } = useUserRole();
   const { employee } = useCurrentEmployee();
   const [uploading, setUploading] = useState(false);
+  const [deleting, setDeleting] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Verificar se o usuário pode fazer upload para esta viagem
+  const { data: tripData } = useQuery({
+    queryKey: ['trip-for-upload', tripId],
+    queryFn: async () => {
+      if (!tripId) return null;
+      const { data, error } = await supabase
+        .from('trips')
+        .select('employee_ids, created_by')
+        .eq('id', tripId)
+        .single();
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!tripId && open
+  });
+
+  const canUpload = useMemo(() => {
+    if (isAdmin || isManager) return true;
+    if (!employee || !tripData) return false;
+    
+    // Verificar se o funcionário está associado à viagem
+    return tripData.employee_ids?.includes(employee.id) || false;
+  }, [isAdmin, isManager, employee, tripData]);
 
   const { data, isFetching, refetch } = useQuery({
     queryKey: ['trip-attachments', tripId],
@@ -52,7 +79,7 @@ export function TripAttachmentsDialog({ tripId, open, onClose }: TripAttachments
       if (!tripId) return [] as AttachmentWithUrl[];
       const { data, error } = await supabase
         .from('trip_attachments')
-        .select('*')
+        .select('id, trip_id, employee_id, file_name, file_path, file_type, file_size, uploaded_by, created_at')
         .eq('trip_id', tripId)
         .order('created_at', { ascending: false });
       if (error) throw error;
@@ -91,7 +118,7 @@ export function TripAttachmentsDialog({ tripId, open, onClose }: TripAttachments
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (!file || !tripId) return;
+    if (!file || !tripId || !canUpload) return;
 
     // Validar tamanho do arquivo (20MB)
     if (file.size > 20 * 1024 * 1024) {
@@ -106,27 +133,20 @@ export function TripAttachmentsDialog({ tripId, open, onClose }: TripAttachments
     setUploading(true);
     
     try {
-      // Para admins, usar employee_id se disponível, senão usar o primeiro employee da viagem
+      // Usar o employee_id do usuário atual se disponível, senão usar o primeiro da viagem
       let employeeId = employee?.id;
       
+      if (!employeeId && tripData?.employee_ids && tripData.employee_ids.length > 0) {
+        employeeId = tripData.employee_ids[0];
+      }
+      
       if (!employeeId) {
-        // Buscar o primeiro employee da viagem
-        const { data: tripData } = await supabase
-          .from('trips')
-          .select('employee_ids')
-          .eq('id', tripId)
-          .single();
-        
-        if (tripData?.employee_ids && tripData.employee_ids.length > 0) {
-          employeeId = tripData.employee_ids[0];
-        } else {
-          toast({
-            title: "Erro",
-            description: "Não foi possível determinar um funcionário para associar o anexo.",
-            variant: "destructive",
-          });
-          return;
-        }
+        toast({
+          title: "Erro",
+          description: "Não foi possível determinar um funcionário para associar o anexo.",
+          variant: "destructive",
+        });
+        return;
       }
 
       const fileName = `${Date.now()}-${file.name}`;
@@ -177,6 +197,61 @@ export function TripAttachmentsDialog({ tripId, open, onClose }: TripAttachments
     }
   };
 
+  const handleDeleteAttachment = async (attachment: AttachmentWithUrl) => {
+    if (!attachment.id) return;
+    
+    setDeleting(attachment.id);
+    
+    try {
+      // Verificar se o usuário pode deletar este anexo
+      const { data: user } = await supabase.auth.getUser();
+      const canDelete = isAdmin || isManager || attachment.uploaded_by === user.user?.id;
+      
+      if (!canDelete) {
+        toast({
+          title: "Erro",
+          description: "Você não tem permissão para deletar este anexo.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Deletar do storage
+      const { error: storageError } = await supabase.storage
+        .from('trip-attachments')
+        .remove([attachment.file_path]);
+
+      if (storageError) {
+        console.warn('Erro ao deletar do storage:', storageError);
+      }
+
+      // Deletar do banco
+      const { error: dbError } = await supabase
+        .from('trip_attachments')
+        .delete()
+        .eq('id', attachment.id);
+
+      if (dbError) throw dbError;
+
+      toast({
+        title: "Sucesso",
+        description: "Anexo deletado com sucesso!",
+      });
+
+      refetch();
+
+    } catch (error: any) {
+      console.error('Erro ao deletar anexo:', error);
+      toast({
+        title: "Erro",
+        description: error.message || "Erro desconhecido ao deletar anexo.",
+        variant: "destructive",
+      });
+    } finally {
+      setDeleting(null);
+    }
+  };
+
   const hasAnyMissingUrl = useMemo(
     () => (data?.some((a) => !a.viewUrl) ? true : false),
     [data]
@@ -202,12 +277,14 @@ export function TripAttachmentsDialog({ tripId, open, onClose }: TripAttachments
           </DialogTitle>
         </DialogHeader>
         
-        {/* Seção de Upload para Admins */}
-        {isAdmin && (
+        {/* Seção de Upload */}
+        {canUpload && (
           <div className="border-b pb-4">
             <div className="flex items-center gap-2 mb-2">
               <Upload className="h-4 w-4 text-travel-primary" />
-              <span className="text-sm font-medium">Enviar Anexo (Admin)</span>
+              <span className="text-sm font-medium">
+                Enviar Anexo {(isAdmin || isManager) ? '(Admin)' : ''}
+              </span>
             </div>
             <div className="flex items-center gap-2">
               <Input
@@ -286,26 +363,63 @@ export function TripAttachmentsDialog({ tripId, open, onClose }: TripAttachments
                           )}
                         </div>
                       </div>
+                      <div className="flex items-center gap-2">
                         {att.viewUrl || att.downloadUrl ? (
-                          <div className="flex items-center gap-2">
+                          <>
                             {att.viewUrl && (
                               <Button variant="outline" size="sm" asChild>
                                 <a href={att.viewUrl} target="_blank" rel="noopener noreferrer" aria-label={`Visualizar ${att.file_name}`}>
-                                  <Eye className="h-4 w-4 mr-1" /> Visualizar
+                                  <Eye className="h-4 w-4" />
                                 </a>
                               </Button>
                             )}
                             {att.downloadUrl && (
                               <Button variant="outline" size="sm" asChild>
                                 <a href={att.downloadUrl} download target="_blank" rel="noopener noreferrer" aria-label={`Baixar ${att.file_name}`}>
-                                  <Download className="h-4 w-4 mr-1" /> Baixar
+                                  <Download className="h-4 w-4" />
                                 </a>
                               </Button>
                             )}
-                          </div>
+                          </>
                         ) : (
                           <Badge variant="outline">Sem link</Badge>
                         )}
+                        {/* Botão de deletar */}
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              disabled={deleting === att.id}
+                              className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                            >
+                              {deleting === att.id ? (
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                              ) : (
+                                <Trash2 className="h-4 w-4" />
+                              )}
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                Tem certeza que deseja excluir o arquivo "{att.file_name}"? 
+                                Esta ação não pode ser desfeita.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                              <AlertDialogAction
+                                onClick={() => handleDeleteAttachment(att)}
+                                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                              >
+                                Excluir
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      </div>
                     </li>
                   ))}
                 </ul>
