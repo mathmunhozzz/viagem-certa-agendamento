@@ -1,13 +1,16 @@
 
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState, useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, Paperclip, FileText, Image as ImageIcon, Download, Eye, AlertCircle } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Loader2, Paperclip, FileText, Image as ImageIcon, Download, Eye, AlertCircle, Upload, Plus } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
+import { useUserRole } from '@/hooks/useUserRole';
+import { useCurrentEmployee } from '@/hooks/useCurrentEmployee';
 
 interface TripAttachmentsDialogProps {
   tripId: string | null;
@@ -38,6 +41,10 @@ function formatBytes(bytes: number) {
 
 export function TripAttachmentsDialog({ tripId, open, onClose }: TripAttachmentsDialogProps) {
   const { toast } = useToast();
+  const { isAdmin } = useUserRole();
+  const { employee } = useCurrentEmployee();
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { data, isFetching, refetch } = useQuery({
     queryKey: ['trip-attachments', tripId],
@@ -82,6 +89,94 @@ export function TripAttachmentsDialog({ tripId, open, onClose }: TripAttachments
     if (open) refetch();
   }, [open, refetch]);
 
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file || !tripId) return;
+
+    // Validar tamanho do arquivo (20MB)
+    if (file.size > 20 * 1024 * 1024) {
+      toast({
+        title: "Arquivo muito grande",
+        description: "O arquivo deve ter no máximo 20MB.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setUploading(true);
+    
+    try {
+      // Para admins, usar employee_id se disponível, senão usar o primeiro employee da viagem
+      let employeeId = employee?.id;
+      
+      if (!employeeId) {
+        // Buscar o primeiro employee da viagem
+        const { data: tripData } = await supabase
+          .from('trips')
+          .select('employee_ids')
+          .eq('id', tripId)
+          .single();
+        
+        if (tripData?.employee_ids && tripData.employee_ids.length > 0) {
+          employeeId = tripData.employee_ids[0];
+        } else {
+          toast({
+            title: "Erro",
+            description: "Não foi possível determinar um funcionário para associar o anexo.",
+            variant: "destructive",
+          });
+          return;
+        }
+      }
+
+      const fileName = `${Date.now()}-${file.name}`;
+      const filePath = `${tripId}/${employeeId}/${fileName}`;
+
+      // Upload do arquivo para o storage
+      const { error: uploadError } = await supabase.storage
+        .from('trip-attachments')
+        .upload(filePath, file);
+
+      if (uploadError) throw uploadError;
+
+      // Criar registro na tabela
+      const { error: dbError } = await supabase
+        .from('trip_attachments')
+        .insert({
+          trip_id: tripId,
+          employee_id: employeeId,
+          file_name: file.name,
+          file_path: filePath,
+          file_type: file.type,
+          file_size: file.size,
+          uploaded_by: (await supabase.auth.getUser()).data.user?.id || ''
+        });
+
+      if (dbError) throw dbError;
+
+      toast({
+        title: "Sucesso",
+        description: "Anexo enviado com sucesso!",
+      });
+
+      // Limpar input e recarregar dados
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+      refetch();
+
+    } catch (error: any) {
+      console.error('Erro ao fazer upload:', error);
+      toast({
+        title: "Erro no upload",
+        description: error.message || "Erro desconhecido ao enviar arquivo.",
+        variant: "destructive",
+      });
+    } finally {
+      setUploading(false);
+    }
+  };
+
   const hasAnyMissingUrl = useMemo(
     () => (data?.some((a) => !a.viewUrl) ? true : false),
     [data]
@@ -106,6 +201,45 @@ export function TripAttachmentsDialog({ tripId, open, onClose }: TripAttachments
             Anexos da Viagem
           </DialogTitle>
         </DialogHeader>
+        
+        {/* Seção de Upload para Admins */}
+        {isAdmin && (
+          <div className="border-b pb-4">
+            <div className="flex items-center gap-2 mb-2">
+              <Upload className="h-4 w-4 text-travel-primary" />
+              <span className="text-sm font-medium">Enviar Anexo (Admin)</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Input
+                ref={fileInputRef}
+                type="file"
+                onChange={handleFileUpload}
+                disabled={uploading}
+                className="flex-1"
+                accept=".pdf,.jpg,.jpeg,.png,.gif,.doc,.docx,.xls,.xlsx"
+              />
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploading}
+              >
+                {uploading ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Plus className="h-4 w-4" />
+                )}
+              </Button>
+            </div>
+            {uploading && (
+              <div className="flex items-center gap-2 mt-2 text-sm text-muted-foreground">
+                <Loader2 className="h-3 w-3 animate-spin" />
+                Enviando arquivo...
+              </div>
+            )}
+          </div>
+        )}
+
         <div className="space-y-4">
           {isFetching ? (
             <div className="flex items-center gap-2 text-muted-foreground">
