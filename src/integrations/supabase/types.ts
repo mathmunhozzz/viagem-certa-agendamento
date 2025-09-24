@@ -471,6 +471,7 @@ export type Database = {
           due_date: string | null
           id: string
           priority: string | null
+          request_number: string | null
           sector_id: string | null
           status: Database["public"]["Enums"]["ticket_status"]
           tags: string[]
@@ -486,6 +487,7 @@ export type Database = {
           due_date?: string | null
           id?: string
           priority?: string | null
+          request_number?: string | null
           sector_id?: string | null
           status?: Database["public"]["Enums"]["ticket_status"]
           tags?: string[]
@@ -501,6 +503,7 @@ export type Database = {
           due_date?: string | null
           id?: string
           priority?: string | null
+          request_number?: string | null
           sector_id?: string | null
           status?: Database["public"]["Enums"]["ticket_status"]
           tags?: string[]
