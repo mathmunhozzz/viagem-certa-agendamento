@@ -20,11 +20,36 @@ interface AbsenceFormProps {
 
 export function AbsenceForm({ onAbsenceCreated }: AbsenceFormProps) {
   const { toast } = useToast();
-  const { employee } = useCurrentEmployee();
+  const { employee, loading: employeeLoading } = useCurrentEmployee();
   const [loading, setLoading] = useState(false);
   const [startDate, setStartDate] = useState<Date>();
   const [endDate, setEndDate] = useState<Date>();
   const [reason, setReason] = useState('');
+
+  // Mostrar loading enquanto carrega dados do funcionário
+  if (employeeLoading) {
+    return (
+      <Card className="bg-gradient-to-br from-background via-background to-muted/20 border border-muted/50 shadow-xl animate-fade-in">
+        <CardHeader className="bg-gradient-to-r from-primary/10 to-secondary/10 rounded-t-lg">
+          <CardTitle className="flex items-center gap-3 text-xl">
+            <div className="p-2 bg-primary/20 rounded-lg">
+              <Plus className="h-6 w-6 text-primary" />
+            </div>
+            Solicitar Ausência
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="py-12">
+          <div className="flex flex-col items-center justify-center space-y-4">
+            <div className="relative">
+              <div className="animate-spin rounded-full h-12 w-12 border-4 border-primary/20 border-t-primary"></div>
+              <div className="absolute inset-0 rounded-full h-12 w-12 border-4 border-transparent border-r-secondary animate-spin" style={{ animationDirection: 'reverse', animationDuration: '1.5s' }}></div>
+            </div>
+            <p className="text-muted-foreground text-lg font-medium animate-pulse">Carregando dados do funcionário...</p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

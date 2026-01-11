@@ -170,6 +170,7 @@ export type Database = {
       employees: {
         Row: {
           auth_user_id: string | null
+          cpf: string | null
           created_at: string
           email: string | null
           id: string
@@ -179,6 +180,7 @@ export type Database = {
         }
         Insert: {
           auth_user_id?: string | null
+          cpf?: string | null
           created_at?: string
           email?: string | null
           id?: string
@@ -188,6 +190,7 @@ export type Database = {
         }
         Update: {
           auth_user_id?: string | null
+          cpf?: string | null
           created_at?: string
           email?: string | null
           id?: string
@@ -473,6 +476,7 @@ export type Database = {
           priority: string | null
           request_number: string | null
           sector_id: string | null
+          source: string | null
           status: Database["public"]["Enums"]["ticket_status"]
           tags: string[]
           title: string
@@ -489,6 +493,7 @@ export type Database = {
           priority?: string | null
           request_number?: string | null
           sector_id?: string | null
+          source?: string | null
           status?: Database["public"]["Enums"]["ticket_status"]
           tags?: string[]
           title: string
@@ -505,6 +510,7 @@ export type Database = {
           priority?: string | null
           request_number?: string | null
           sector_id?: string | null
+          source?: string | null
           status?: Database["public"]["Enums"]["ticket_status"]
           tags?: string[]
           title?: string
@@ -803,13 +809,13 @@ export type Database = {
         Returns: boolean
       }
       get_client_municipalities: {
-        Args: Record<PropertyKey, never>
+        Args: never
         Returns: {
           municipality: string
         }[]
       }
       get_clients_public: {
-        Args: Record<PropertyKey, never>
+        Args: never
         Returns: {
           id: string
           municipality: string
