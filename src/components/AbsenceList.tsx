@@ -42,8 +42,8 @@ export function AbsenceList({
   customTitle
 }: AbsenceListProps) {
   const { toast } = useToast();
-  const { employee } = useCurrentEmployee();
-  const { role } = useUserRole();
+  const { employee, loading: employeeLoading } = useCurrentEmployee();
+  const { role, loading: roleLoading } = useUserRole();
   const [absences, setAbsences] = useState<Absence[]>([]);
   const [loading, setLoading] = useState(true);
   const [observationDialog, setObservationDialog] = useState<{
@@ -151,8 +151,16 @@ export function AbsenceList({
   };
 
   useEffect(() => {
+    // Aguardar carregamento do role e employee antes de buscar
+    if (roleLoading) return;
+    
+    // Se não é admin e não tem employee ainda, aguardar
+    if (!showAllAbsences && role !== 'admin' && employeeLoading) {
+      return;
+    }
+    
     fetchAbsences();
-  }, [refreshTrigger, employee?.id, showAllAbsences]);
+  }, [refreshTrigger, employee?.id, showAllAbsences, employeeLoading, roleLoading, role]);
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -211,7 +219,10 @@ export function AbsenceList({
     return start;
   };
 
-  if (loading) {
+  // Mostrar loading enquanto carrega role, employee ou ausências
+  const isLoadingData = loading || roleLoading || (!showAllAbsences && role !== 'admin' && employeeLoading);
+  
+  if (isLoadingData) {
     return (
       <Card className="bg-gradient-to-br from-background via-background to-muted/20 border border-muted/50 shadow-xl">
         <CardHeader className="bg-gradient-to-r from-primary/10 to-secondary/10 rounded-t-lg">
