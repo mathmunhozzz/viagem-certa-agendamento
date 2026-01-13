@@ -14,6 +14,48 @@ export type Database = {
   }
   public: {
     Tables: {
+      backup_requests: {
+        Row: {
+          admin_observation: string | null
+          approved_at: string | null
+          approved_by: string | null
+          city_name: string
+          created_at: string
+          download_link: string | null
+          id: string
+          reason: string
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          admin_observation?: string | null
+          approved_at?: string | null
+          approved_by?: string | null
+          city_name: string
+          created_at?: string
+          download_link?: string | null
+          id?: string
+          reason: string
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          admin_observation?: string | null
+          approved_at?: string | null
+          approved_by?: string | null
+          city_name?: string
+          created_at?: string
+          download_link?: string | null
+          id?: string
+          reason?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       cities: {
         Row: {
           created_at: string
