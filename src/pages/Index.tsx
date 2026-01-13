@@ -3,6 +3,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useUserRole } from '@/hooks/useUserRole';
 import { useAccountStatus } from '@/hooks/useAccountStatus';
 import { usePendingAbsences } from '@/hooks/usePendingAbsences';
+import { usePendingBackupRequests } from '@/hooks/usePendingBackupRequests';
 import { Navigate } from 'react-router-dom';
 import { Header } from '@/components/Header';
 import { TripCalendar } from '@/components/TripCalendar';
@@ -28,6 +29,8 @@ import { EmployeeWeekCalendar } from '@/components/EmployeeWeekCalendar';
 import WeeklyTeamCalendar from '@/components/WeeklyTeamCalendar';
 import { AbsenceForm } from '@/components/AbsenceForm';
 import { AbsenceList } from '@/components/AbsenceList';
+import { BackupRequestForm } from '@/components/BackupRequestForm';
+import { BackupRequestList } from '@/components/BackupRequestList';
 import { CreditCardForm } from '@/components/CreditCardForm';
 import { CreditCardList } from '@/components/CreditCardList';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -40,6 +43,7 @@ const Index = () => {
   const { hasRole, isManager } = useUserRole();
   const { accountStatus, loading: statusLoading, isApproved } = useAccountStatus();
   const { pendingCount, refetch: refetchPendingCount } = usePendingAbsences();
+  const { count: pendingBackupCount, refetch: refetchPendingBackupCount } = usePendingBackupRequests();
   const [refreshKey, setRefreshKey] = useState(0);
   const [vehicleRefreshKey, setVehicleRefreshKey] = useState(0);
   const [sectorRefreshKey, setSectorRefreshKey] = useState(0);
@@ -47,6 +51,7 @@ const Index = () => {
   const [clientRefreshKey, setClientRefreshKey] = useState(0);
   const [creditCardRefreshKey, setCreditCardRefreshKey] = useState(0);
   const [absenceRefreshKey, setAbsenceRefreshKey] = useState(0);
+  const [backupRefreshKey, setBackupRefreshKey] = useState(0);
   const [showUserManagement, setShowUserManagement] = useState(false);
   const [newTripOpen, setNewTripOpen] = useState(false);
 
@@ -161,6 +166,21 @@ const Index = () => {
                     className="absolute -top-2 -right-2 h-5 w-5 p-0 flex items-center justify-center text-xs font-bold rounded-full"
                   >
                     {pendingCount}
+                  </Badge>
+                )}
+              </TabsTrigger>
+              <TabsTrigger
+                value="backups"
+                className="data-[state=active]:bg-travel-secondary data-[state=active]:text-white font-semibold p-2 md:p-3 text-center min-h-[2.5rem] relative"
+              >
+                <span className="block md:hidden">💾</span>
+                <span className="hidden md:block">💾 Backups</span>
+                {hasRole('admin') && pendingBackupCount > 0 && (
+                  <Badge 
+                    variant="destructive" 
+                    className="absolute -top-2 -right-2 h-5 w-5 p-0 flex items-center justify-center text-xs font-bold rounded-full"
+                  >
+                    {pendingBackupCount}
                   </Badge>
                 )}
               </TabsTrigger>
@@ -282,6 +302,18 @@ const Index = () => {
                   customTitle="Gerenciar Ausências"
                 />
               )}
+            </div>
+          </TabsContent>
+
+          <TabsContent value="backups" className="space-y-6">
+            <div className="max-w-4xl mx-auto space-y-6">
+              {!hasRole('admin') && (
+                <BackupRequestForm onSuccess={() => {
+                  setBackupRefreshKey(prev => prev + 1);
+                  refetchPendingBackupCount();
+                }} />
+              )}
+              <BackupRequestList refreshTrigger={backupRefreshKey} />
             </div>
           </TabsContent>
 
