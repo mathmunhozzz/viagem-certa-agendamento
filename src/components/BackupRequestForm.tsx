@@ -16,6 +16,7 @@ interface BackupRequestFormProps {
 export function BackupRequestForm({ onSuccess }: BackupRequestFormProps) {
   const { user } = useAuth();
   const [cityName, setCityName] = useState('');
+  const [systemName, setSystemName] = useState('');
   const [reason, setReason] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -32,6 +33,11 @@ export function BackupRequestForm({ onSuccess }: BackupRequestFormProps) {
       return;
     }
 
+    if (!systemName.trim()) {
+      toast.error('Informe o nome do sistema');
+      return;
+    }
+
     if (!reason.trim()) {
       toast.error('Informe o motivo da solicitação');
       return;
@@ -43,6 +49,7 @@ export function BackupRequestForm({ onSuccess }: BackupRequestFormProps) {
       const { error } = await supabase.from('backup_requests').insert({
         user_id: user.id,
         city_name: cityName.trim(),
+        system_name: systemName.trim(),
         reason: reason.trim(),
       });
 
@@ -50,6 +57,7 @@ export function BackupRequestForm({ onSuccess }: BackupRequestFormProps) {
 
       toast.success('Solicitação de backup enviada com sucesso!');
       setCityName('');
+      setSystemName('');
       setReason('');
       onSuccess?.();
     } catch (error: any) {
@@ -80,6 +88,17 @@ export function BackupRequestForm({ onSuccess }: BackupRequestFormProps) {
               placeholder="Digite o nome da cidade"
               value={cityName}
               onChange={(e) => setCityName(e.target.value)}
+              disabled={loading}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="systemName">Sistema *</Label>
+            <Input
+              id="systemName"
+              placeholder="Ex: Sistema de Vendas, ERP, etc."
+              value={systemName}
+              onChange={(e) => setSystemName(e.target.value)}
               disabled={loading}
             />
           </div>
