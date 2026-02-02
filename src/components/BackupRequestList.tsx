@@ -8,19 +8,23 @@ import { useUserRole } from '@/hooks/useUserRole';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { Database, Clock, CheckCircle, XCircle, Copy, ExternalLink, MessageSquare } from 'lucide-react';
+import { Database, Clock, CheckCircle, XCircle, Copy, ExternalLink, MessageSquare, User, Monitor } from 'lucide-react';
 import { BackupRequestResponseDialog } from './BackupRequestResponseDialog';
 
 interface BackupRequest {
   id: string;
   user_id: string;
   city_name: string;
+  system_name: string | null;
   reason: string;
   status: string;
   admin_observation: string | null;
   download_link: string | null;
   created_at: string;
   approved_at: string | null;
+  profiles?: {
+    name: string;
+  };
 }
 
 interface BackupRequestListProps {
@@ -46,7 +50,24 @@ export function BackupRequestList({ refreshTrigger }: BackupRequestListProps) {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setRequests(data || []);
+      
+      // Fetch profile names for each request
+      const requestsWithProfiles = await Promise.all(
+        (data || []).map(async (request) => {
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('name')
+            .eq('user_id', request.user_id)
+            .single();
+          
+          return {
+            ...request,
+            profiles: profile || undefined,
+          } as BackupRequest;
+        })
+      );
+      
+      setRequests(requestsWithProfiles);
     } catch (error: any) {
       console.error('Erro ao buscar solicitações:', error);
       toast.error('Erro ao carregar solicitações');
@@ -155,6 +176,21 @@ export function BackupRequestList({ refreshTrigger }: BackupRequestListProps) {
                       <span className="font-semibold text-lg">{request.city_name}</span>
                       {getStatusBadge(request.status)}
                     </div>
+                    
+                    {request.system_name && (
+                      <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                        <Monitor className="h-3.5 w-3.5" />
+                        <span>Sistema: <strong>{request.system_name}</strong></span>
+                      </div>
+                    )}
+                    
+                    {isAdmin && request.profiles?.name && (
+                      <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                        <User className="h-3.5 w-3.5" />
+                        <span>Solicitante: <strong>{request.profiles.name}</strong></span>
+                      </div>
+                    )}
+                    
                     <p className="text-sm text-muted-foreground">
                       Solicitado em {format(new Date(request.created_at), "dd 'de' MMMM 'de' yyyy 'às' HH:mm", { locale: ptBR })}
                     </p>

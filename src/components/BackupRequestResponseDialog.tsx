@@ -19,8 +19,12 @@ import { Check, X, Link } from 'lucide-react';
 interface BackupRequest {
   id: string;
   city_name: string;
+  system_name: string | null;
   reason: string;
   user_id: string;
+  profiles?: {
+    name: string;
+  };
 }
 
 interface BackupRequestResponseDialogProps {
@@ -83,8 +87,16 @@ export function BackupRequestResponseDialog({
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle>Responder Solicitação de Backup</DialogTitle>
-          <DialogDescription>
-            Cidade: <strong>{request?.city_name}</strong>
+          <DialogDescription asChild>
+            <div className="space-y-1">
+              <p>Cidade: <strong>{request?.city_name}</strong></p>
+              {request?.system_name && (
+                <p>Sistema: <strong>{request.system_name}</strong></p>
+              )}
+              {request?.profiles?.name && (
+                <p>Solicitante: <strong>{request.profiles.name}</strong></p>
+              )}
+            </div>
           </DialogDescription>
         </DialogHeader>
 
