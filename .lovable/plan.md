@@ -1,80 +1,102 @@
 
 
-## Plano: Adicionar Nome do Usuário e Sistema na Lista de Backups
+## Plano: Fortalecer Segurança contra Injeção de Sessão via Console
 
-### Problema Identificado
-Atualmente a lista de solicitações de backup mostra apenas:
-- Nome da cidade
-- Motivo
-- Status
+### Problema
+Atualmente, o sistema usa `localStorage` para persistir tokens de sessão do Supabase. Um atacante pode injetar tokens JWT no localStorage via console do navegador e ganhar acesso ao sistema.
 
-Falta mostrar:
-1. **Nome do usuário** que solicitou
-2. **Sistema** que ele precisa do backup
+### Realidade Importante
+Com Supabase (e qualquer sistema JWT client-side), é impossível impedir 100% a injeção de tokens **válidos** no client. Porém, podemos adicionar camadas de proteção:
 
-### Solução
+### Mudanças Propostas
 
-#### 1. Adicionar Coluna "system_name" na Tabela
-Criar uma migração para adicionar o campo `system_name` na tabela `backup_requests`:
+#### 1. Validar sessão no servidor a cada carregamento (useAuth.tsx)
+- Após `getSession()`, chamar `supabase.auth.getUser()` que faz uma requisição ao servidor Supabase para validar o token (não confia apenas no JWT local)
+- Se `getUser()` falhar, fazer logout automático e limpar localStorage
+- Isso impede tokens expirados, revogados ou fabricados de funcionar
 
-```sql
-ALTER TABLE backup_requests 
-ADD COLUMN system_name text;
-```
+#### 2. Verificar account_status no servidor (useAccountStatus.tsx)
+- Já existe e já consulta o banco — isso é bom
+- Garantir que mesmo com token injetado, o RLS bloqueia acesso (já está configurado nas tabelas)
 
-#### 2. Atualizar BackupRequestForm.tsx
-Adicionar um novo campo de input para o usuário informar o sistema:
-- Campo: "Sistema" (input de texto)
-- Placeholder: "Ex: Sistema de Vendas, ERP, etc."
-- Será enviado junto com a solicitação
+#### 3. Adicionar validação periódica da sessão (useAuth.tsx)
+- A cada X minutos, re-validar com `getUser()` no servidor
+- Se o token for inválido/revogado, fazer logout automático
 
-#### 3. Atualizar BackupRequestList.tsx
-Modificar a query para fazer join com a tabela `profiles` e buscar o nome do usuário:
-
-```typescript
-const { data, error } = await supabase
-  .from('backup_requests')
-  .select(`
-    *,
-    profiles:user_id (name)
-  `)
-  .order('created_at', { ascending: false });
-```
-
-Exibir na interface:
-- **Solicitante:** Nome do usuário (do join com profiles)
-- **Sistema:** Nome do sistema solicitado
-- Cidade, motivo, status (já existem)
-
-#### 4. Atualizar BackupRequestResponseDialog.tsx
-Mostrar também o sistema e o nome do solicitante no dialog de resposta do admin.
-
----
+#### 4. Usar `signOut({ scope: 'global' })` no logout
+- Revogar todas as sessões do usuário no servidor, não apenas a local
 
 ### Arquivos a Modificar
 
 | Arquivo | Alteração |
 |---------|-----------|
-| Nova migração SQL | Adicionar coluna `system_name` |
-| `src/components/BackupRequestForm.tsx` | Adicionar campo "Sistema" |
-| `src/components/BackupRequestList.tsx` | Join com profiles + exibir nome e sistema |
-| `src/components/BackupRequestResponseDialog.tsx` | Mostrar sistema e solicitante |
+| `src/hooks/useAuth.tsx` | Adicionar validação server-side com `getUser()`, re-validação periódica, logout global |
 
----
+### Detalhes Técnicos
 
-### Resultado Visual Esperado
+```typescript
+// Em useAuth.tsx - validação server-side
+useEffect(() => {
+  const { data: { subscription } } = supabase.auth.onAuthStateChange(
+    async (event, session) => {
+      if (session) {
+        // Validar token no servidor (não confiar só no JWT local)
+        const { data: { user }, error } = await supabase.auth.getUser();
+        if (error || !user) {
+          // Token inválido/fabricado - forçar logout
+          await supabase.auth.signOut();
+          setSession(null);
+          setUser(null);
+          setLoading(false);
+          return;
+        }
+        setUser(user);
+      }
+      setSession(session);
+      if (!session) setUser(null);
+      setLoading(false);
+    }
+  );
 
-Para o admin, cada solicitação mostrará:
+  // Validação inicial
+  supabase.auth.getUser().then(({ data: { user }, error }) => {
+    if (error || !user) {
+      supabase.auth.signOut();
+      setSession(null);
+      setUser(null);
+    } else {
+      setUser(user);
+      supabase.auth.getSession().then(({ data: { session } }) => {
+        setSession(session);
+      });
+    }
+    setLoading(false);
+  });
+
+  // Re-validação periódica (a cada 5 minutos)
+  const interval = setInterval(async () => {
+    const { error } = await supabase.auth.getUser();
+    if (error) {
+      await supabase.auth.signOut();
+      setSession(null);
+      setUser(null);
+    }
+  }, 5 * 60 * 1000);
+
+  return () => {
+    subscription.unsubscribe();
+    clearInterval(interval);
+  };
+}, []);
+
+// Logout global
+const signOut = async () => {
+  await supabase.auth.signOut({ scope: 'global' });
+};
 ```
-┌─────────────────────────────────────────────────────┐
-│ 📍 Cidade: São Paulo                    [Pendente]  │
-│ 💻 Sistema: ERP Financeiro                          │
-│ 👤 Solicitante: João Silva                          │
-│ 📅 Solicitado em 02 de Fevereiro de 2026 às 10:30  │
-│                                                     │
-│ Motivo:                                             │
-│ Preciso dos dados de vendas de Janeiro...           │
-│                                         [Responder] │
-└─────────────────────────────────────────────────────┘
-```
+
+### O que isso protege
+- Tokens fabricados/inválidos injetados via console são rejeitados pelo servidor
+- Tokens revogados (ex: após logout) param de funcionar em até 5 minutos
+- O RLS no banco já protege os dados mesmo se o token for válido mas o usuário não tiver permissão
 
