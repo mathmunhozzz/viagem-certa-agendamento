@@ -19,21 +19,66 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    let isActive = true;
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        setSession(session);
-        setUser(session?.user ?? null);
+      async (event, currentSession) => {
+        if (!isActive) return;
+
+        if (currentSession) {
+          const { data: { user: validatedUser }, error } = await supabase.auth.getUser();
+          if (!isActive) return;
+          if (error || !validatedUser) {
+            console.warn('Token inválido detectado, forçando logout');
+            await supabase.auth.signOut();
+            setSession(null);
+            setUser(null);
+            setLoading(false);
+            return;
+          }
+          setUser(validatedUser);
+          setSession(currentSession);
+        } else {
+          setSession(null);
+          setUser(null);
+        }
         setLoading(false);
       }
     );
 
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
+    // Validação inicial no servidor
+    supabase.auth.getUser().then(async ({ data: { user: validatedUser }, error }) => {
+      if (!isActive) return;
+      if (error || !validatedUser) {
+        await supabase.auth.signOut();
+        setSession(null);
+        setUser(null);
+        setLoading(false);
+        return;
+      }
+      setUser(validatedUser);
+      const { data: { session: s } } = await supabase.auth.getSession();
+      if (!isActive) return;
+      setSession(s);
       setLoading(false);
     });
 
-    return () => subscription.unsubscribe();
+    // Re-validação periódica a cada 5 minutos
+    const interval = setInterval(async () => {
+      const { error } = await supabase.auth.getUser();
+      if (error) {
+        console.warn('Sessão expirada/inválida, forçando logout');
+        await supabase.auth.signOut();
+        setSession(null);
+        setUser(null);
+      }
+    }, 5 * 60 * 1000);
+
+    return () => {
+      isActive = false;
+      subscription.unsubscribe();
+      clearInterval(interval);
+    };
   }, []);
 
   const signUp = async (email: string, password: string, name: string) => {
@@ -61,7 +106,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const signOut = async () => {
-    await supabase.auth.signOut();
+    await supabase.auth.signOut({ scope: 'global' });
   };
 
   const value = {
