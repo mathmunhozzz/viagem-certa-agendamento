@@ -1,4 +1,4 @@
-import { useState, useEffect, createContext, useContext } from 'react';
+import { useState, useEffect, createContext, useContext, useRef } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -17,91 +17,84 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const isValidating = useRef(false);
 
   useEffect(() => {
     let isActive = true;
 
+    // 1. Listen to auth state changes - use session data directly, NO async Supabase calls here
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, currentSession) => {
+      (_event, currentSession) => {
         if (!isActive) return;
-
-        if (currentSession) {
-          const { data: { user: validatedUser }, error } = await supabase.auth.getUser();
-          if (!isActive) return;
-          if (error || !validatedUser) {
-            console.warn('Token inválido detectado, forçando logout');
-            await supabase.auth.signOut();
-            setSession(null);
-            setUser(null);
-            setLoading(false);
-            return;
-          }
-          setUser(validatedUser);
-          setSession(currentSession);
-        } else {
-          setSession(null);
-          setUser(null);
-        }
+        setSession(currentSession);
+        setUser(currentSession?.user ?? null);
         setLoading(false);
       }
     );
 
-    // Validação inicial no servidor
-    supabase.auth.getUser().then(async ({ data: { user: validatedUser }, error }) => {
+    // 2. Get initial session (fast, from local storage)
+    supabase.auth.getSession().then(({ data: { session: initialSession } }) => {
       if (!isActive) return;
-      if (error || !validatedUser) {
-        await supabase.auth.signOut();
-        setSession(null);
-        setUser(null);
-        setLoading(false);
-        return;
-      }
-      setUser(validatedUser);
-      const { data: { session: s } } = await supabase.auth.getSession();
-      if (!isActive) return;
-      setSession(s);
+      setSession(initialSession);
+      setUser(initialSession?.user ?? null);
       setLoading(false);
+
+      // 3. Background server-side validation (non-blocking)
+      if (initialSession) {
+        validateServerSide();
+      }
     });
 
-    // Re-validação periódica a cada 5 minutos
-    const interval = setInterval(async () => {
-      const { error } = await supabase.auth.getUser();
-      if (error) {
-        console.warn('Sessão expirada/inválida, forçando logout');
-        await supabase.auth.signOut();
-        setSession(null);
-        setUser(null);
-      }
+    // 4. Safety timeout - never stay loading forever
+    const timeout = setTimeout(() => {
+      if (isActive) setLoading(false);
+    }, 10000);
+
+    // 5. Periodic re-validation every 5 minutes
+    const interval = setInterval(() => {
+      validateServerSide();
     }, 5 * 60 * 1000);
 
     return () => {
       isActive = false;
       subscription.unsubscribe();
+      clearTimeout(timeout);
       clearInterval(interval);
     };
   }, []);
 
+  // Server-side validation - runs outside of onAuthStateChange to avoid deadlocks
+  const validateServerSide = async () => {
+    if (isValidating.current) return;
+    isValidating.current = true;
+    try {
+      const { error } = await supabase.auth.getUser();
+      if (error) {
+        console.warn('Sessão inválida detectada, forçando logout');
+        await supabase.auth.signOut();
+      }
+    } catch (e) {
+      // Network error - don't logout, just skip
+    } finally {
+      isValidating.current = false;
+    }
+  };
+
   const signUp = async (email: string, password: string, name: string) => {
     const redirectUrl = `${window.location.origin}/`;
-    
     const { error } = await supabase.auth.signUp({
       email,
       password,
       options: {
         emailRedirectTo: redirectUrl,
-        data: {
-          name: name
-        }
+        data: { name }
       }
     });
     return { error };
   };
 
   const signIn = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password
-    });
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
     return { error };
   };
 
@@ -109,17 +102,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     await supabase.auth.signOut({ scope: 'global' });
   };
 
-  const value = {
-    user,
-    session,
-    loading,
-    signUp,
-    signIn,
-    signOut
-  };
-
   return (
-    <AuthContext.Provider value={value}>
+    <AuthContext.Provider value={{ user, session, loading, signUp, signIn, signOut }}>
       {children}
     </AuthContext.Provider>
   );
