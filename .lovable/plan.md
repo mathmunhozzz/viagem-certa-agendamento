@@ -1,102 +1,42 @@
 
 
-## Plano: Fortalecer Segurança contra Injeção de Sessão via Console
+## Plano: Corrigir Bug de Carregamento Infinito no Login
 
-### Problema
-Atualmente, o sistema usa `localStorage` para persistir tokens de sessão do Supabase. Um atacante pode injetar tokens JWT no localStorage via console do navegador e ganhar acesso ao sistema.
+### Problema Identificado
+O `useAuth.tsx` chama `supabase.auth.getUser()` **dentro** do callback `onAuthStateChange`. A documentação do Supabase alerta que chamadas async ao Supabase dentro desse callback podem causar **deadlocks** -- o callback fica esperando a resposta do servidor, mas o Supabase client está travado esperando o callback terminar. Isso causa o "carregando infinito".
 
-### Realidade Importante
-Com Supabase (e qualquer sistema JWT client-side), é impossível impedir 100% a injeção de tokens **válidos** no client. Porém, podemos adicionar camadas de proteção:
+Além disso, quando `getUser()` falha dentro do callback, ele chama `signOut()`, que dispara outro `onAuthStateChange`, criando um possível loop infinito.
 
-### Mudanças Propostas
+### Solução
 
-#### 1. Validar sessão no servidor a cada carregamento (useAuth.tsx)
-- Após `getSession()`, chamar `supabase.auth.getUser()` que faz uma requisição ao servidor Supabase para validar o token (não confia apenas no JWT local)
-- Se `getUser()` falhar, fazer logout automático e limpar localStorage
-- Isso impede tokens expirados, revogados ou fabricados de funcionar
+#### Modificar `src/hooks/useAuth.tsx`
 
-#### 2. Verificar account_status no servidor (useAccountStatus.tsx)
-- Já existe e já consulta o banco — isso é bom
-- Garantir que mesmo com token injetado, o RLS bloqueia acesso (já está configurado nas tabelas)
+1. **No `onAuthStateChange`**: Usar apenas os dados que já vêm no callback (session/user) para atualizar o state imediatamente, SEM fazer chamadas async ao Supabase. Isso elimina o deadlock.
 
-#### 3. Adicionar validação periódica da sessão (useAuth.tsx)
-- A cada X minutos, re-validar com `getUser()` no servidor
-- Se o token for inválido/revogado, fazer logout automático
+2. **Validação server-side separada**: Fazer a validação com `getUser()` fora do callback, como uma operação independente que roda após o state ser atualizado.
 
-#### 4. Usar `signOut({ scope: 'global' })` no logout
-- Revogar todas as sessões do usuário no servidor, não apenas a local
+3. **Timeout de segurança**: Adicionar um timeout de 10 segundos para garantir que `loading` nunca fique `true` infinitamente.
 
-### Arquivos a Modificar
+4. **Manter re-validação periódica**: Continuar com a verificação a cada 5 minutos, mas de forma que não cause loops.
+
+### Lógica Corrigida (resumo)
+
+```text
+onAuthStateChange:
+  → Se tem session: setUser(session.user), setSession(session)
+  → Se não tem: setUser(null), setSession(null)
+  → setLoading(false)
+  → (Depois, em background, validar com getUser() sem bloquear)
+
+Inicialização:
+  → getSession() para estado inicial (rápido, local)
+  → Depois getUser() para validar no servidor
+  → Timeout de 10s como fallback
+```
+
+### Arquivo a Modificar
 
 | Arquivo | Alteração |
 |---------|-----------|
-| `src/hooks/useAuth.tsx` | Adicionar validação server-side com `getUser()`, re-validação periódica, logout global |
-
-### Detalhes Técnicos
-
-```typescript
-// Em useAuth.tsx - validação server-side
-useEffect(() => {
-  const { data: { subscription } } = supabase.auth.onAuthStateChange(
-    async (event, session) => {
-      if (session) {
-        // Validar token no servidor (não confiar só no JWT local)
-        const { data: { user }, error } = await supabase.auth.getUser();
-        if (error || !user) {
-          // Token inválido/fabricado - forçar logout
-          await supabase.auth.signOut();
-          setSession(null);
-          setUser(null);
-          setLoading(false);
-          return;
-        }
-        setUser(user);
-      }
-      setSession(session);
-      if (!session) setUser(null);
-      setLoading(false);
-    }
-  );
-
-  // Validação inicial
-  supabase.auth.getUser().then(({ data: { user }, error }) => {
-    if (error || !user) {
-      supabase.auth.signOut();
-      setSession(null);
-      setUser(null);
-    } else {
-      setUser(user);
-      supabase.auth.getSession().then(({ data: { session } }) => {
-        setSession(session);
-      });
-    }
-    setLoading(false);
-  });
-
-  // Re-validação periódica (a cada 5 minutos)
-  const interval = setInterval(async () => {
-    const { error } = await supabase.auth.getUser();
-    if (error) {
-      await supabase.auth.signOut();
-      setSession(null);
-      setUser(null);
-    }
-  }, 5 * 60 * 1000);
-
-  return () => {
-    subscription.unsubscribe();
-    clearInterval(interval);
-  };
-}, []);
-
-// Logout global
-const signOut = async () => {
-  await supabase.auth.signOut({ scope: 'global' });
-};
-```
-
-### O que isso protege
-- Tokens fabricados/inválidos injetados via console são rejeitados pelo servidor
-- Tokens revogados (ex: após logout) param de funcionar em até 5 minutos
-- O RLS no banco já protege os dados mesmo se o token for válido mas o usuário não tiver permissão
+| `src/hooks/useAuth.tsx` | Remover `getUser()` de dentro do `onAuthStateChange`, usar session diretamente, adicionar timeout de segurança |
 
