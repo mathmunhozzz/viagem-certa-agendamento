@@ -1,0 +1,1 @@
+UPDATE public.employee_absences SET created_at = '2026-04-28 04:30:05.130199+00', updated_at = '2026-04-28 04:30:05.130199+00' WHERE id = 'b4c82a99-74f9-4558-b241-9c0ec9dc5f8d';
