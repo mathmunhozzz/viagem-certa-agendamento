@@ -1,42 +1,47 @@
+## Diagnóstico
 
+Verifiquei o sistema. Aqui está a situação atual:
 
-## Plano: Corrigir Bug de Carregamento Infinito no Login
+### O que JÁ funciona
+- **Criar funcionário** (Aba "👤 Funcionários"): admin e gerente conseguem criar via `EmployeeForm`. ✅
+- **Vincular funcionário a usuário**: cada linha da lista de funcionários tem um botão que abre o `EmployeeLinkDialog`. ✅
+- **Gerenciar usuários existentes** (Aba "👤 Usuários" + botão "Usuários" no header): admin pode aprovar/rejeitar contas, mudar papel (user/manager/admin) e redefinir senha. ✅
 
-### Problema Identificado
-O `useAuth.tsx` chama `supabase.auth.getUser()` **dentro** do callback `onAuthStateChange`. A documentação do Supabase alerta que chamadas async ao Supabase dentro desse callback podem causar **deadlocks** -- o callback fica esperando a resposta do servidor, mas o Supabase client está travado esperando o callback terminar. Isso causa o "carregando infinito".
+### O que NÃO existe (origem da sua dúvida)
+- **Não há botão "Criar Usuário"** em lugar nenhum. Hoje, novos usuários só entram no sistema **se eles mesmos se cadastrarem em `/auth`** e depois o admin aprova. Não existe um fluxo "admin cria o usuário direto com email/senha".
+- **Gerente não vê a aba/botão "Usuários"**: por código, é admin-only (`hasRole('admin')`). Por isso você não acha nada logado como gerente.
 
-Além disso, quando `getUser()` falha dentro do callback, ele chama `signOut()`, que dispara outro `onAuthStateChange`, criando um possível loop infinito.
+## Plano
 
-### Solução
+### 1. Criar Edge Function `admin-create-user`
+- Recebe `{ email, password, name, role, accountStatus }`.
+- Valida que quem chama é admin (via JWT + `has_role`).
+- Usa `supabase.auth.admin.createUser` (service role) para criar o usuário já com email confirmado.
+- O trigger `handle_new_user` já cria o profile automaticamente.
+- Depois insere o `role` desejado em `user_roles` e atualiza `account_status` em `profiles` (por padrão já cria `approved` para não precisar aprovar de novo).
 
-#### Modificar `src/hooks/useAuth.tsx`
+### 2. Botão "➕ Novo Usuário" em `UserManagement`
+- No topo da página de Gerenciamento de Usuários, adicionar botão que abre um Dialog com formulário:
+  - Nome, Email, Senha, Papel (user/gerente/admin), Status inicial (aprovado por padrão).
+- Ao confirmar, chama a edge function acima e recarrega a lista.
 
-1. **No `onAuthStateChange`**: Usar apenas os dados que já vêm no callback (session/user) para atualizar o state imediatamente, SEM fazer chamadas async ao Supabase. Isso elimina o deadlock.
+### 3. Acesso para Gerente (opcional — confirme abaixo)
+Hoje só admin vê "Usuários". Posso:
+- **Opção A**: manter admin-only (mais seguro).
+- **Opção B**: deixar gerente também ver a aba, mas **sem** poder promover ninguém a admin nem criar admins.
 
-2. **Validação server-side separada**: Fazer a validação com `getUser()` fora do callback, como uma operação independente que roda após o state ser atualizado.
+### 4. Pequena melhoria de UX nos Funcionários
+- Adicionar um destaque/aviso visual no `EmployeeList` quando o funcionário ainda não está vinculado a um usuário (já existe o botão, mas vou deixar mais óbvio com um badge "Sem login" e tooltip).
 
-3. **Timeout de segurança**: Adicionar um timeout de 10 segundos para garantir que `loading` nunca fique `true` infinitamente.
+### Arquivos afetados
 
-4. **Manter re-validação periódica**: Continuar com a verificação a cada 5 minutos, mas de forma que não cause loops.
+| Arquivo | Mudança |
+|---|---|
+| `supabase/functions/admin-create-user/index.ts` | **Novo**: cria usuário via service role, valida admin |
+| `supabase/config.toml` | Registrar a função (verify_jwt = true) |
+| `src/components/UserManagement.tsx` | Botão + Dialog "Novo Usuário" |
+| `src/components/EmployeeList.tsx` | Badge "Sem login" para não vinculados |
+| `src/pages/Index.tsx` / `Header.tsx` | (Se opção B) liberar aba Usuários para gerente |
 
-### Lógica Corrigida (resumo)
-
-```text
-onAuthStateChange:
-  → Se tem session: setUser(session.user), setSession(session)
-  → Se não tem: setUser(null), setSession(null)
-  → setLoading(false)
-  → (Depois, em background, validar com getUser() sem bloquear)
-
-Inicialização:
-  → getSession() para estado inicial (rápido, local)
-  → Depois getUser() para validar no servidor
-  → Timeout de 10s como fallback
-```
-
-### Arquivo a Modificar
-
-| Arquivo | Alteração |
-|---------|-----------|
-| `src/hooks/useAuth.tsx` | Remover `getUser()` de dentro do `onAuthStateChange`, usar session diretamente, adicionar timeout de segurança |
-
+### Pergunta antes de implementar
+Quer que **gerente** também possa criar/gerenciar usuários, ou mantenho **apenas admin** com essa permissão?
