@@ -33,6 +33,43 @@ export const UserManagement = () => {
     userEmail: ''
   });
   const [newPassword, setNewPassword] = useState('');
+  const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const [creating, setCreating] = useState(false);
+  const [newUser, setNewUser] = useState({
+    name: '',
+    email: '',
+    password: '',
+    role: 'user' as 'user' | 'manager' | 'admin',
+    accountStatus: 'approved' as 'approved' | 'pending',
+  });
+
+  const handleCreateUser = async () => {
+    if (!newUser.name || !newUser.email || !newUser.password) {
+      toast.error('Preencha nome, email e senha');
+      return;
+    }
+    if (newUser.password.length < 6) {
+      toast.error('Senha deve ter pelo menos 6 caracteres');
+      return;
+    }
+    setCreating(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('admin-create-user', {
+        body: newUser,
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      toast.success(`Usuário ${newUser.email} criado com sucesso`);
+      setCreateDialogOpen(false);
+      setNewUser({ name: '', email: '', password: '', role: 'user', accountStatus: 'approved' });
+      fetchProfiles();
+    } catch (error: any) {
+      console.error('Erro ao criar usuário:', error);
+      toast.error(`Erro ao criar usuário: ${error.message || 'Erro desconhecido'}`);
+    } finally {
+      setCreating(false);
+    }
+  };
 
   useEffect(() => {
     fetchProfiles();
