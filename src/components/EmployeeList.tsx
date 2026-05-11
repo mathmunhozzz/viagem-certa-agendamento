@@ -5,9 +5,10 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Trash2, Search, Users, Mail, Briefcase, Link2 } from "lucide-react";
+import { Trash2, Search, Users, Mail, Briefcase, Link2, Pencil } from "lucide-react";
 import { SectorSelect } from "./SectorSelect";
 import { EmployeeLinkDialog } from "./EmployeeLinkDialog";
+import { EmployeeEditDialog } from "./EmployeeEditDialog";
 
 interface Employee {
   id: string;
