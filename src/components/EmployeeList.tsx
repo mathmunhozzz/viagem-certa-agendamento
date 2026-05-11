@@ -35,6 +35,8 @@ export function EmployeeList({ refreshKey }: EmployeeListProps) {
   const { toast } = useToast();
   const [linkOpen, setLinkOpen] = useState(false);
   const [selectedEmployee, setSelectedEmployee] = useState<{ id: string; name: string } | null>(null);
+  const [editOpen, setEditOpen] = useState(false);
+  const [editEmployeeId, setEditEmployeeId] = useState<string>("");
 
   const fetchEmployees = async () => {
     try {
