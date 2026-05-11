@@ -42,6 +42,55 @@ export const UserManagement = () => {
     role: 'user' as 'user' | 'manager' | 'admin',
     accountStatus: 'approved' as 'approved' | 'pending',
   });
+  const [editDialog, setEditDialog] = useState<{ open: boolean; userId: string; name: string }>({
+    open: false, userId: '', name: '',
+  });
+  const [editSaving, setEditSaving] = useState(false);
+  const [deletingUserId, setDeletingUserId] = useState<string | null>(null);
+
+  const handleEditName = async () => {
+    if (!editDialog.name.trim()) {
+      toast.error('Nome não pode ficar vazio');
+      return;
+    }
+    setEditSaving(true);
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ name: editDialog.name.trim() })
+        .eq('user_id', editDialog.userId);
+      if (error) throw error;
+      setProfiles((prev) =>
+        prev.map((p) => (p.user_id === editDialog.userId ? { ...p, name: editDialog.name.trim() } : p))
+      );
+      toast.success('Nome atualizado');
+      setEditDialog({ open: false, userId: '', name: '' });
+    } catch (error: any) {
+      console.error(error);
+      toast.error('Erro ao atualizar nome');
+    } finally {
+      setEditSaving(false);
+    }
+  };
+
+  const handleDeleteUser = async (userId: string, name: string) => {
+    if (!confirm(`Excluir o usuário "${name}"? Esta ação é irreversível.`)) return;
+    setDeletingUserId(userId);
+    try {
+      const { data, error } = await supabase.functions.invoke('admin-delete-user', {
+        body: { userId },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      setProfiles((prev) => prev.filter((p) => p.user_id !== userId));
+      toast.success('Usuário excluído');
+    } catch (error: any) {
+      console.error(error);
+      toast.error(`Erro ao excluir: ${error.message || 'Erro desconhecido'}`);
+    } finally {
+      setDeletingUserId(null);
+    }
+  };
 
   const handleCreateUser = async () => {
     if (!newUser.name || !newUser.email || !newUser.password) {
