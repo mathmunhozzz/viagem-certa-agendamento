@@ -514,6 +514,27 @@ export const UserManagement = () => {
                         </div>
                       </DialogContent>
                     </Dialog>
+
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="w-full"
+                      onClick={() => setEditDialog({ open: true, userId: profile.user_id, name: profile.name })}
+                    >
+                      <Pencil className="h-4 w-4 mr-1" />
+                      Editar
+                    </Button>
+
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="text-red-600 border-red-600 hover:bg-red-50 w-full"
+                      disabled={deletingUserId === profile.user_id}
+                      onClick={() => handleDeleteUser(profile.user_id, profile.name)}
+                    >
+                      <Trash2 className="h-4 w-4 mr-1" />
+                      {deletingUserId === profile.user_id ? 'Excluindo...' : 'Excluir'}
+                    </Button>
                   </div>
                 </div>
               </div>
