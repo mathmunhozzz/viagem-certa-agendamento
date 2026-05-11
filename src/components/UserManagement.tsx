@@ -8,7 +8,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
-import { Check, X, User, UserCog, Key } from 'lucide-react';
+import { Check, X, User, UserCog, Key, UserPlus } from 'lucide-react';
 
 interface Profile {
   user_id: string;
