@@ -8,7 +8,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
-import { Check, X, User, UserCog, Key } from 'lucide-react';
+import { Check, X, User, UserCog, Key, UserPlus } from 'lucide-react';
 
 interface Profile {
   user_id: string;
@@ -33,6 +33,43 @@ export const UserManagement = () => {
     userEmail: ''
   });
   const [newPassword, setNewPassword] = useState('');
+  const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const [creating, setCreating] = useState(false);
+  const [newUser, setNewUser] = useState({
+    name: '',
+    email: '',
+    password: '',
+    role: 'user' as 'user' | 'manager' | 'admin',
+    accountStatus: 'approved' as 'approved' | 'pending',
+  });
+
+  const handleCreateUser = async () => {
+    if (!newUser.name || !newUser.email || !newUser.password) {
+      toast.error('Preencha nome, email e senha');
+      return;
+    }
+    if (newUser.password.length < 6) {
+      toast.error('Senha deve ter pelo menos 6 caracteres');
+      return;
+    }
+    setCreating(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('admin-create-user', {
+        body: newUser,
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      toast.success(`Usuário ${newUser.email} criado com sucesso`);
+      setCreateDialogOpen(false);
+      setNewUser({ name: '', email: '', password: '', role: 'user', accountStatus: 'approved' });
+      fetchProfiles();
+    } catch (error: any) {
+      console.error('Erro ao criar usuário:', error);
+      toast.error(`Erro ao criar usuário: ${error.message || 'Erro desconhecido'}`);
+    } finally {
+      setCreating(false);
+    }
+  };
 
   useEffect(() => {
     fetchProfiles();
@@ -190,9 +227,101 @@ export const UserManagement = () => {
 
   return (
     <div className="p-6 space-y-6">
-      <div className="flex items-center gap-2">
-        <UserCog className="h-6 w-6" />
-        <h1 className="text-2xl font-bold">Gerenciamento de Usuários</h1>
+      <div className="flex items-center justify-between gap-2 flex-wrap">
+        <div className="flex items-center gap-2">
+          <UserCog className="h-6 w-6" />
+          <h1 className="text-2xl font-bold">Gerenciamento de Usuários</h1>
+        </div>
+        <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
+          <DialogTrigger asChild>
+            <Button className="gap-2">
+              <UserPlus className="h-4 w-4" />
+              Novo Usuário
+            </Button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Criar Novo Usuário</DialogTitle>
+              <DialogDescription>
+                O usuário será criado já confirmado e poderá entrar imediatamente.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="new-user-name">Nome</Label>
+                <Input
+                  id="new-user-name"
+                  value={newUser.name}
+                  onChange={(e) => setNewUser({ ...newUser, name: e.target.value })}
+                  placeholder="Nome completo"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="new-user-email">Email</Label>
+                <Input
+                  id="new-user-email"
+                  type="email"
+                  value={newUser.email}
+                  onChange={(e) => setNewUser({ ...newUser, email: e.target.value })}
+                  placeholder="email@exemplo.com"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="new-user-password">Senha</Label>
+                <Input
+                  id="new-user-password"
+                  type="password"
+                  value={newUser.password}
+                  onChange={(e) => setNewUser({ ...newUser, password: e.target.value })}
+                  placeholder="Mínimo 6 caracteres"
+                  minLength={6}
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Perfil</Label>
+                  <Select
+                    value={newUser.role}
+                    onValueChange={(v) => setNewUser({ ...newUser, role: v as any })}
+                  >
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="user">Usuário</SelectItem>
+                      <SelectItem value="manager">Gerente</SelectItem>
+                      <SelectItem value="admin">Admin</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Status</Label>
+                  <Select
+                    value={newUser.accountStatus}
+                    onValueChange={(v) => setNewUser({ ...newUser, accountStatus: v as any })}
+                  >
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="approved">Aprovado</SelectItem>
+                      <SelectItem value="pending">Pendente</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div className="flex gap-2 pt-2">
+                <Button onClick={handleCreateUser} disabled={creating} className="flex-1">
+                  {creating ? 'Criando...' : 'Criar Usuário'}
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => setCreateDialogOpen(false)}
+                  disabled={creating}
+                  className="flex-1"
+                >
+                  Cancelar
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
 
       <div className="grid gap-4">

@@ -11,3 +11,6 @@ verify_jwt = true
 
 [functions.admin-list-auth-users]
 verify_jwt = true
+
+[functions.admin-create-user]
+verify_jwt = true
