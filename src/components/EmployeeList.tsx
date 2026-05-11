@@ -202,7 +202,18 @@ export function EmployeeList({ refreshKey }: EmployeeListProps) {
                   className="flex items-center justify-between p-4 border rounded-lg"
                 >
                   <div className="flex-1">
-                    <h3 className="font-medium">{employee.name}</h3>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <h3 className="font-medium">{employee.name}</h3>
+                      {employee.auth_user_id ? (
+                        <Badge variant="secondary" className="bg-green-100 text-green-800 hover:bg-green-100">
+                          <Link2 className="h-3 w-3 mr-1" /> Com login
+                        </Badge>
+                      ) : (
+                        <Badge variant="secondary" className="bg-orange-100 text-orange-800 hover:bg-orange-100">
+                          Sem login
+                        </Badge>
+                      )}
+                    </div>
                     
                     {employee.email && (
                       <div className="flex items-center gap-1 text-sm text-muted-foreground mt-1">
