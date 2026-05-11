@@ -244,13 +244,20 @@ export function EmployeeList({ refreshKey }: EmployeeListProps) {
                       Criado em: {new Date(employee.created_at).toLocaleDateString()}
                     </p>
 
-                    <div className="mt-3">
+                    <div className="mt-3 flex flex-wrap gap-2">
                       <Button
                         variant="outline"
                         size="sm"
                         onClick={() => openLinkDialog(employee)}
                       >
                         <Link2 className="h-4 w-4 mr-2" /> Vincular Profissional
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => { setEditEmployeeId(employee.id); setEditOpen(true); }}
+                      >
+                        <Pencil className="h-4 w-4 mr-2" /> Editar
                       </Button>
                     </div>
                   </div>
@@ -272,6 +279,12 @@ export function EmployeeList({ refreshKey }: EmployeeListProps) {
           employeeId={selectedEmployee?.id || ""}
           employeeName={selectedEmployee?.name || ""}
           onLinked={() => { setLinkOpen(false); fetchEmployees(); }}
+        />
+        <EmployeeEditDialog
+          open={editOpen}
+          onOpenChange={setEditOpen}
+          employeeId={editEmployeeId}
+          onSaved={fetchEmployees}
         />
       </CardContent>
     </Card>
