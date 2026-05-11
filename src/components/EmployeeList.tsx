@@ -5,9 +5,10 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Trash2, Search, Users, Mail, Briefcase, Link2 } from "lucide-react";
+import { Trash2, Search, Users, Mail, Briefcase, Link2, Pencil } from "lucide-react";
 import { SectorSelect } from "./SectorSelect";
 import { EmployeeLinkDialog } from "./EmployeeLinkDialog";
+import { EmployeeEditDialog } from "./EmployeeEditDialog";
 
 interface Employee {
   id: string;
@@ -34,6 +35,8 @@ export function EmployeeList({ refreshKey }: EmployeeListProps) {
   const { toast } = useToast();
   const [linkOpen, setLinkOpen] = useState(false);
   const [selectedEmployee, setSelectedEmployee] = useState<{ id: string; name: string } | null>(null);
+  const [editOpen, setEditOpen] = useState(false);
+  const [editEmployeeId, setEditEmployeeId] = useState<string>("");
 
   const fetchEmployees = async () => {
     try {
@@ -241,13 +244,20 @@ export function EmployeeList({ refreshKey }: EmployeeListProps) {
                       Criado em: {new Date(employee.created_at).toLocaleDateString()}
                     </p>
 
-                    <div className="mt-3">
+                    <div className="mt-3 flex flex-wrap gap-2">
                       <Button
                         variant="outline"
                         size="sm"
                         onClick={() => openLinkDialog(employee)}
                       >
                         <Link2 className="h-4 w-4 mr-2" /> Vincular Profissional
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => { setEditEmployeeId(employee.id); setEditOpen(true); }}
+                      >
+                        <Pencil className="h-4 w-4 mr-2" /> Editar
                       </Button>
                     </div>
                   </div>
@@ -269,6 +279,12 @@ export function EmployeeList({ refreshKey }: EmployeeListProps) {
           employeeId={selectedEmployee?.id || ""}
           employeeName={selectedEmployee?.name || ""}
           onLinked={() => { setLinkOpen(false); fetchEmployees(); }}
+        />
+        <EmployeeEditDialog
+          open={editOpen}
+          onOpenChange={setEditOpen}
+          employeeId={editEmployeeId}
+          onSaved={fetchEmployees}
         />
       </CardContent>
     </Card>

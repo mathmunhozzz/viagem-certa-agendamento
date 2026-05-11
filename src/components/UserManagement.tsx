@@ -8,7 +8,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
-import { Check, X, User, UserCog, Key, UserPlus } from 'lucide-react';
+import { Check, X, User, UserCog, Key, UserPlus, Pencil, Trash2 } from 'lucide-react';
 
 interface Profile {
   user_id: string;
@@ -42,6 +42,55 @@ export const UserManagement = () => {
     role: 'user' as 'user' | 'manager' | 'admin',
     accountStatus: 'approved' as 'approved' | 'pending',
   });
+  const [editDialog, setEditDialog] = useState<{ open: boolean; userId: string; name: string }>({
+    open: false, userId: '', name: '',
+  });
+  const [editSaving, setEditSaving] = useState(false);
+  const [deletingUserId, setDeletingUserId] = useState<string | null>(null);
+
+  const handleEditName = async () => {
+    if (!editDialog.name.trim()) {
+      toast.error('Nome não pode ficar vazio');
+      return;
+    }
+    setEditSaving(true);
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ name: editDialog.name.trim() })
+        .eq('user_id', editDialog.userId);
+      if (error) throw error;
+      setProfiles((prev) =>
+        prev.map((p) => (p.user_id === editDialog.userId ? { ...p, name: editDialog.name.trim() } : p))
+      );
+      toast.success('Nome atualizado');
+      setEditDialog({ open: false, userId: '', name: '' });
+    } catch (error: any) {
+      console.error(error);
+      toast.error('Erro ao atualizar nome');
+    } finally {
+      setEditSaving(false);
+    }
+  };
+
+  const handleDeleteUser = async (userId: string, name: string) => {
+    if (!confirm(`Excluir o usuário "${name}"? Esta ação é irreversível.`)) return;
+    setDeletingUserId(userId);
+    try {
+      const { data, error } = await supabase.functions.invoke('admin-delete-user', {
+        body: { userId },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      setProfiles((prev) => prev.filter((p) => p.user_id !== userId));
+      toast.success('Usuário excluído');
+    } catch (error: any) {
+      console.error(error);
+      toast.error(`Erro ao excluir: ${error.message || 'Erro desconhecido'}`);
+    } finally {
+      setDeletingUserId(null);
+    }
+  };
 
   const handleCreateUser = async () => {
     if (!newUser.name || !newUser.email || !newUser.password) {
@@ -465,6 +514,27 @@ export const UserManagement = () => {
                         </div>
                       </DialogContent>
                     </Dialog>
+
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="w-full"
+                      onClick={() => setEditDialog({ open: true, userId: profile.user_id, name: profile.name })}
+                    >
+                      <Pencil className="h-4 w-4 mr-1" />
+                      Editar
+                    </Button>
+
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="text-red-600 border-red-600 hover:bg-red-50 w-full"
+                      disabled={deletingUserId === profile.user_id}
+                      onClick={() => handleDeleteUser(profile.user_id, profile.name)}
+                    >
+                      <Trash2 className="h-4 w-4 mr-1" />
+                      {deletingUserId === profile.user_id ? 'Excluindo...' : 'Excluir'}
+                    </Button>
                   </div>
                 </div>
               </div>
@@ -481,6 +551,38 @@ export const UserManagement = () => {
           </Card>
         )}
       </div>
+
+      <Dialog open={editDialog.open} onOpenChange={(open) => !open && setEditDialog({ open: false, userId: '', name: '' })}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Editar Usuário</DialogTitle>
+            <DialogDescription>Atualize o nome exibido do usuário.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="edit-user-name">Nome</Label>
+              <Input
+                id="edit-user-name"
+                value={editDialog.name}
+                onChange={(e) => setEditDialog({ ...editDialog, name: e.target.value })}
+              />
+            </div>
+            <div className="flex gap-2">
+              <Button onClick={handleEditName} disabled={editSaving} className="flex-1">
+                {editSaving ? 'Salvando...' : 'Salvar'}
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => setEditDialog({ open: false, userId: '', name: '' })}
+                disabled={editSaving}
+                className="flex-1"
+              >
+                Cancelar
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
