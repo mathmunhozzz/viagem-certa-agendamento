@@ -551,6 +551,38 @@ export const UserManagement = () => {
           </Card>
         )}
       </div>
+
+      <Dialog open={editDialog.open} onOpenChange={(open) => !open && setEditDialog({ open: false, userId: '', name: '' })}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Editar Usuário</DialogTitle>
+            <DialogDescription>Atualize o nome exibido do usuário.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="edit-user-name">Nome</Label>
+              <Input
+                id="edit-user-name"
+                value={editDialog.name}
+                onChange={(e) => setEditDialog({ ...editDialog, name: e.target.value })}
+              />
+            </div>
+            <div className="flex gap-2">
+              <Button onClick={handleEditName} disabled={editSaving} className="flex-1">
+                {editSaving ? 'Salvando...' : 'Salvar'}
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => setEditDialog({ open: false, userId: '', name: '' })}
+                disabled={editSaving}
+                className="flex-1"
+              >
+                Cancelar
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
