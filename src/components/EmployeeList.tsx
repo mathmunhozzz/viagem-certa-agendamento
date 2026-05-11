@@ -15,6 +15,7 @@ interface Employee {
   email: string | null;
   position: string | null;
   created_at: string;
+  auth_user_id: string | null;
   sectors: Array<{
     id: string;
     name: string;
