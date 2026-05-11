@@ -45,6 +45,7 @@ export function EmployeeList({ refreshKey }: EmployeeListProps) {
           email,
           position,
           created_at,
+          auth_user_id,
           employee_sectors!inner (
             sectors (
               id,
@@ -68,6 +69,7 @@ export function EmployeeList({ refreshKey }: EmployeeListProps) {
             email: item.email,
             position: item.position,
             created_at: item.created_at,
+            auth_user_id: item.auth_user_id ?? null,
             sectors: []
           });
         }
